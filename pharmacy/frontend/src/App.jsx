@@ -22,7 +22,7 @@ import AddCustomer from './pages/AddCustomer';
 import PointOfSales from './pages/PointOfSales';
 import StaffSalesDashboard from './pages/StaffSalesDashboard';
 import SaleReturn from './pages/SaleReturn';
-import StaffRegistration from './pages/StaffRegistraion';
+import StaffRegistration from './pages/StaffRegistration';
 import SupermarketDashboard from './pages/SupermarketDashboard';
 import SupermarketInventory from './pages/SupermarketInventory';
 import AddNewProduct from './pages/AddNewProduct';

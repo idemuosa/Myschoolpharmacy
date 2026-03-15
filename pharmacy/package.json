@@ -45,7 +45,7 @@
   },
   "build": {
     "appId": "com.josiah.pharmacy",
-    "productName": "JosiahPharmacy",
+    "productName": "josiapharmacy",
     "directories": {
       "output": "dist_electron"
     },

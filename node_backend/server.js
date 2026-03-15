@@ -7,7 +7,11 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 
-// Health Check Endpoint
+// Health Check Endpoints
+app.get('/', (req, res) => {
+  res.send('Pharmacy WebSocket Server is running');
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'Node.js WebSocket Server is up and running!' });
 });

@@ -21,7 +21,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from api.views import health_check
+
 urlpatterns = [
+    path('', health_check, name='root_health'),
+    path('health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api/login/', TokenObtainPairView.as_view(), name='login_alias'),

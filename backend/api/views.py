@@ -273,4 +273,7 @@ def reset_password(request):
                 return Response({'error': 'Unauthorized: Only staff accounts can be reset.'}, status=status.HTTP_403_FORBIDDEN)
         except User.DoesNotExist:
             return Response({'error': f'User {username} not found'}, status=status.HTTP_404_NOT_FOUND)
-    return Response({'error': 'Username is required.'}, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health_check(request):
+    return Response({"status": "healthy", "message": "Pharmacy API is running"})
