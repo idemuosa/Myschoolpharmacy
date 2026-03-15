@@ -267,17 +267,19 @@ class ReportsView(viewsets.ViewSet):
 @permission_classes([AllowAny])
 def reset_password(request):
     username = request.data.get('username', '').lower()
-    if username:
-        try:
-            user = User.objects.get(username=username)
-            if user.is_staff:
-                user.set_password('admin123')
-                user.save()
-                return Response({'message': f'Password for {username} has been reset to admin123'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Unauthorized: Only staff accounts can be reset.'}, status=status.HTTP_403_FORBIDDEN)
-        except User.DoesNotExist:
-            return Response({'error': f'User {username} not found'}, status=status.HTTP_404_NOT_FOUND)
+    if not username:
+        return Response({'error': 'Username is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(username=username)
+        if user.is_staff:
+            user.set_password('admin123')
+            user.save()
+            return Response({'message': f'Password for {username} has been reset to admin123'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Unauthorized: Only staff accounts can be reset.'}, status=status.HTTP_403_FORBIDDEN)
+    except User.DoesNotExist:
+        return Response({'error': f'User {username} not found'}, status=status.HTTP_404_NOT_FOUND)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):

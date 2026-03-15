@@ -23,6 +23,22 @@ class StaffSerializer(serializers.ModelSerializer):
         model = Staff
         fields = '__all__'
 
+    def create(self, validated_data):
+        # Create the staff member first
+        staff = Staff.objects.create(**validated_data)
+        
+        # Automatically create a corresponding Django User for login
+        # We use employee_id as username and a default password
+        username = staff.employee_id.lower()
+        if not User.objects.filter(username=username).exists():
+            User.objects.create_user(
+                username=username,
+                email=staff.email,
+                password='admin123',
+                is_staff=True # Allow access to staff features
+            )
+        return staff
+
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer

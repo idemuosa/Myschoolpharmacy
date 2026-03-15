@@ -13,10 +13,9 @@ const AdminLogin = () => {
   const [shopName, setShopName] = useState('Josiah Pharmacy and Stores');
 
   useEffect(() => {
-    const controller = new AbortController();
     const fetchBranding = async () => {
       try {
-        const res = await api.get('settings/', { signal: controller.signal });
+        const res = await api.get('settings/');
         if (res.data && res.data.length > 0) {
           setShopName(res.data[0].shop_name);
         }
@@ -25,7 +24,6 @@ const AdminLogin = () => {
       }
     };
     fetchBranding();
-    return () => controller.abort();
   }, []);
 
   const { login } = useContext(AuthContext);
@@ -47,7 +45,7 @@ const AdminLogin = () => {
         <div className="login-header text-center">
           <div className="login-logo text-sm font-black mx-auto mb-4">P</div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase font-outfit">{shopName}</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 px-4 italic underline decoration-emerald-500/30">Clinical Personnel Portal</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 px-4 italic underline decoration-emerald-500/30">Pharmacy and Clinical Consultation Portal</p>
         </div>
         <form className="login-form mt-8 space-y-4" onSubmit={handleSubmit}>
           <div className="form-group space-y-1.5">
