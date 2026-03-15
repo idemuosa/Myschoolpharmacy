@@ -156,12 +156,12 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     serializer_class = SystemSettingsSerializer
 
     def get_authenticators(self):
-        if self.action in ['list', 'retrieve']:
+        if getattr(self, 'action', None) in ['list', 'retrieve']:
             return []
         return super().get_authenticators()
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if getattr(self, 'action', None) in ['list', 'retrieve']:
             return [AllowAny()]
         return super().get_permissions()
 
