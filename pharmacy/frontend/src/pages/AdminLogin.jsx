@@ -13,9 +13,10 @@ const AdminLogin = () => {
   const [shopName, setShopName] = useState('Josiah Pharmacy and Stores');
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchBranding = async () => {
       try {
-        const res = await api.get('settings/');
+        const res = await api.get('settings/', { signal: controller.signal });
         if (res.data && res.data.length > 0) {
           setShopName(res.data[0].shop_name);
         }
@@ -24,6 +25,7 @@ const AdminLogin = () => {
       }
     };
     fetchBranding();
+    return () => controller.abort();
   }, []);
 
   const { login } = useContext(AuthContext);

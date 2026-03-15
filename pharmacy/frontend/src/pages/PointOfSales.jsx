@@ -24,8 +24,9 @@ const PointOfSales = () => {
   const scanInputRef = useRef(null);
 
   useEffect(() => {
-    fetchProducts();
-    fetchStaff();
+    const controller = new AbortController();
+    fetchProducts(controller.signal);
+    fetchStaff(controller.signal);
 
     // Auto-focus the scan input on mount
     if (scanInputRef.current) {
@@ -49,22 +50,25 @@ const PointOfSales = () => {
     };
 
     window.addEventListener('keydown', handleGlobalScan);
-    return () => window.removeEventListener('keydown', handleGlobalScan);
+    return () => {
+      controller.abort();
+      window.removeEventListener('keydown', handleGlobalScan);
+    };
   }, []);
 
-  const fetchStaff = async () => {
+  const fetchStaff = async (signal) => {
     try {
-      const response = await staffService.getStaff();
-      setStaffList(response.data);
+      const response = await staffService.getStaff({ signal });
+      setStaffList(response.data?.results || response.data || []);
     } catch (err) {
       console.error("Failed to fetch staff", err);
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (signal) => {
     try {
-      const response = await drugService.getDrugs();
-      setProducts(response.data);
+      const response = await drugService.getDrugs({ signal });
+      setProducts(response.data?.results || response.data || []);
     } catch (error) {
       console.error("Error fetching products:", error);
       toast.error("Failed to load inventory products.");

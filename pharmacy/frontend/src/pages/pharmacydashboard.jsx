@@ -25,15 +25,15 @@ const PharmacyDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({ shop_name: 'Josiah Pharmacy', location: "St. Mary's" });
 
-  const fetchData = async () => {
+  const fetchData = async (signal) => {
     try {
       setLoading(true);
       const [statsRes, drugRes, scriptsRes, customerRes, settingsRes] = await Promise.all([
-        reportService.getDashboardStats(),
-        drugService.getDrugs(),
-        api.get('prescriptions/'),
-        api.get('customers/'),
-        settingsService.getSettings()
+        reportService.getDashboardStats({ signal }),
+        drugService.getDrugs({ signal }),
+        api.get('prescriptions/', { signal }),
+        api.get('customers/', { signal }),
+        settingsService.getSettings({ signal })
       ]);
 
       if (settingsRes.data && settingsRes.data.length > 0) {
@@ -41,16 +41,19 @@ const PharmacyDashboard = () => {
       }
 
       const data = statsRes.data;
-      const allDrugs = Array.isArray(drugRes.data) ? drugRes.data : (drugRes.data.results || []);
+      const allDrugs = drugRes.data?.results || drugRes.data || [];
       const lowStock = allDrugs.filter(d => d.stock <= d.reorder_level);
 
       setLowStockDrugs(lowStock.slice(0, 5)); // Show top 5 low stock
 
+      const scripts = scriptsRes.data?.results || scriptsRes.data || [];
+      const customers = customerRes.data?.results || customerRes.data || [];
+
       setStats({
         revenue: data.total_revenue,
-        scripts: scriptsRes.data.filter(p => p.status === 'Pending').length,
+        scripts: scripts.filter(p => p.status === 'Pending').length,
         lowStock: lowStock.length,
-        customers: customerRes.data.length
+        customers: customers.length
       });
 
     } catch (error) {
@@ -61,7 +64,8 @@ const PharmacyDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    const controller = new AbortController();
+    fetchData(controller.signal);
 
     socket.on('alert_new_prescription', (data) => {
         toast.success(`ALERT: New Prescription Received! ID: ${data.prescriptionId}`, {
@@ -72,6 +76,7 @@ const PharmacyDashboard = () => {
     });
 
     return () => {
+        controller.abort();
         socket.off('alert_new_prescription');
     };
   }, []);

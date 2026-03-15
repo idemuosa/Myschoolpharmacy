@@ -1,7 +1,7 @@
 import api from './api';
 
 const staffService = {
-  getStaff: () => api.get('staff/'),
+  getStaff: (config = {}) => api.get('staff/', config),
 };
 
 export default staffService;

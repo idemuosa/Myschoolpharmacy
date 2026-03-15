@@ -13,13 +13,15 @@ const InventoryTurnover = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchInventory();
+    const controller = new AbortController();
+    fetchInventory(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchInventory = async () => {
+  const fetchInventory = async (signal) => {
     try {
-      const response = await api.get('drugs/');
-      setDrugs(response.data);
+      const response = await api.get('drugs/', { signal });
+      setDrugs(response.data?.results || response.data || []);
     } catch (error) {
        console.error("Error fetching inventory for report:", error);
     } finally {

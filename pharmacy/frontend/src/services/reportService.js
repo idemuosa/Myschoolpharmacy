@@ -1,9 +1,9 @@
 import api from './api';
 
 const reportService = {
-  getInventoryTurnover: () => api.get('reports/inventory-turnover/'),
-  getSalesReport: () => api.get('reports/sales/'),
-  getDashboardStats: () => api.get('reports/dashboard-stats/'),
+  getInventoryTurnover: (config = {}) => api.get('reports/inventory-turnover/', config),
+  getSalesReport: (config = {}) => api.get('reports/sales/', config),
+  getDashboardStats: (config = {}) => api.get('reports/dashboard-stats/', config),
 };
 
 export default reportService;

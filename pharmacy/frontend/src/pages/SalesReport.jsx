@@ -20,13 +20,15 @@ const SalesReport = () => {
   });
 
   useEffect(() => {
-    fetchSales();
+    const controller = new AbortController();
+    fetchSales(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchSales = async () => {
+  const fetchSales = async (signal) => {
     try {
-      const response = await api.get('sales/');
-      const sales = response.data;
+      const response = await api.get('sales/', { signal });
+      const sales = response.data?.results || response.data || [];
       setSalesData(sales);
       
       const total = sales.reduce((acc, s) => acc + parseFloat(s.total_amount || 0), 0);

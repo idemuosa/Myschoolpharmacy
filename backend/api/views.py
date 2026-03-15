@@ -155,6 +155,11 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     queryset = SystemSettings.objects.all()
     serializer_class = SystemSettingsSerializer
 
+    def get_authenticators(self):
+        if self.action in ['list', 'retrieve']:
+            return []
+        return super().get_authenticators()
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]

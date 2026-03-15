@@ -12,12 +12,14 @@ const StaffManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchStaff();
+    const controller = new AbortController();
+    fetchStaff(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchStaff = async () => {
+  const fetchStaff = async (signal) => {
     try {
-      const response = await api.get('staff/');
+      const response = await api.get('staff/', { signal });
       setStaffData(response.data);
     } catch (error) {
        console.error("Error fetching staff:", error);
