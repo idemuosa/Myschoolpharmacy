@@ -3,6 +3,7 @@ services:
   - type: web
     name: pharmacy-api
     env: python
+    plan: free
     rootDir: backend
     buildCommand: "./build.sh"
     startCommand: "gunicorn core.wsgi:application"
@@ -22,6 +23,7 @@ services:
   - type: web
     name: pharmacy-socket
     env: node
+    plan: free
     rootDir: node_backend
     buildCommand: "npm install"
     startCommand: "node server.js"
