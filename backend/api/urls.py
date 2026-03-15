@@ -1,0 +1,27 @@
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import CategoryViewSet, DrugViewSet, StaffViewSet, CustomerViewSet, PrescriptionViewSet, SaleViewSet, SaleReturnViewSet, ProductViewSet, SupermarketSaleViewSet, reset_password, SystemSettingsViewSet, update_profile, ReportsView, UserViewSet
+
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='users')
+router.register(r'categories', CategoryViewSet)
+router.register(r'settings', SystemSettingsViewSet)
+# ... (existing routes)
+router.register(r'drugs', DrugViewSet)
+router.register(r'staff', StaffViewSet)
+router.register(r'customers', CustomerViewSet)
+router.register(r'prescriptions', PrescriptionViewSet)
+router.register(r'sales', SaleViewSet)
+router.register(r'returns', SaleReturnViewSet)
+router.register(r'products', ProductViewSet)
+router.register(r'supermarket-sales', SupermarketSaleViewSet)
+router.register(r'reports', ReportsView, basename='reports')
+
+urlpatterns = [
+    path('', include(router.urls)),
+    path('reset-password/', reset_password, name='reset-password'),
+    path('update-profile/', update_profile, name='update-profile'),
+    path('reports/dashboard-stats/', SaleViewSet.as_view({'get': 'dashboard_stats'}), name='dashboard-stats'),
+    path('reports/sales/', SaleViewSet.as_view({'get': 'list'}), name='reports-sales'),
+    path('reports/inventory-turnover/', DrugViewSet.as_view({'get': 'list'}), name='reports-inventory'),
+]

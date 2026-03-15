@@ -1,0 +1,298 @@
+/* Pharmacy Dashboard Styles */
+
+.dashboard-view {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .dashboard-header {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-bottom: 40px;
+    gap: 24px;
+  }
+}
+
+.header-title-group h1 {
+  font-size: 24px;
+  margin-bottom: 2px;
+}
+
+.header-subtitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-operational {
+  font-weight: 800;
+  color: var(--success);
+}
+
+.date-badge {
+  background: white;
+  border: 1px solid var(--border-main);
+  padding: 12px 20px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+
+.date-badge i {
+  color: var(--primary);
+  font-size: 18px;
+}
+
+/* KPI Metrics - Reuse metrics-grid from Inventory if global, or define specific ones */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .metrics-grid {
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+}
+
+.metric-card {
+  background: white;
+  border-radius: var(--radius-2xl);
+  padding: 24px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 160px;
+  transition: var(--transition-main);
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-premium);
+}
+
+.metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.metric-trend {
+  font-size: 12px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.trend-up { background: var(--primary-light); color: var(--primary); }
+.trend-warning { background: #fff7ed; color: #f59e0b; }
+
+.metric-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+/* Modules Grid */
+.section-marker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.marker-dot {
+  width: 8px;
+  height: 24px;
+  background: var(--primary);
+  border-radius: 99px;
+}
+
+.section-marker h2 {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .modules-grid {
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+}
+
+.module-card {
+  background: white;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition-main);
+  display: flex;
+  flex-direction: column;
+}
+
+.module-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-premium);
+}
+
+.module-content {
+  padding: 28px;
+  flex: 1;
+}
+
+.module-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 24px;
+  transition: var(--transition-main);
+}
+
+.module-card:hover .module-icon {
+  transform: scale(1.1);
+  background: var(--primary);
+  color: white;
+}
+
+.module-content h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.module-content p {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.module-footer {
+  background: #fcfcfd;
+  padding: 16px 28px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: var(--transition-main);
+}
+
+.module-card:hover .module-footer {
+  background: #f1f5f9;
+}
+
+.footer-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.footer-icon {
+  color: var(--border-main);
+  transition: var(--transition-main);
+}
+
+.module-card:hover .footer-icon {
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+/* Quick Task */
+.quick-task {
+  border: 2px dashed #a7f3d0;
+  background: rgba(16, 185, 129, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 260px;
+}
+
+.quick-task:hover {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: var(--primary);
+}
+
+.add-circle {
+  width: 56px;
+  height: 56px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-main);
+}
+
+.quick-task:hover .add-circle {
+  transform: scale(1.1) rotate(90deg);
+}
+
+.quick-task h3 {
+  color: var(--primary);
+  font-size: 17px;
+  font-weight: 900;
+}

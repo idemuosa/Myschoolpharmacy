@@ -1,0 +1,386 @@
+import React, { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import drugService from '../services/drugService';
+import categoryService from '../services/categoryService';
+import { AuthContext } from '../context/AuthContext';
+import {
+  FaSearch, FaBell, FaPlus, FaThLarge, FaCashRegister, FaBox,
+  FaUsers, FaClipboardList, FaCog, FaPills, FaExclamationTriangle,
+  FaClock, FaMoneyBillWave, FaFilter, FaFileExport, FaChevronLeft, FaChevronRight, FaEdit, FaTimes, FaTrash
+} from 'react-icons/fa';
+
+const InventoryManagement = () => {
+  const { user } = useContext(AuthContext);
+  const [inventoryData, setInventoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categories, setCategories] = useState([]);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategory, setEditingCategory] = useState(null);
+
+  useEffect(() => {
+    fetchDrugs();
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryService.getCategories();
+      setCategories(response.data.results || response.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchDrugs = async () => {
+    try {
+      const response = await drugService.getDrugs();
+      const drugs = response.data.results || response.data;
+      setInventoryData(Array.isArray(drugs) ? drugs : []);
+    } catch (error) {
+      console.error("Error fetching inventory data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryColorClass = (category) => {
+    const categoryMap = {
+      'Analgesic': 'bg-purple-50 text-purple-600',
+      'Antibiotic': 'bg-blue-50 text-blue-600',
+      'Antihistamine': 'bg-orange-50 text-orange-600',
+      'Antihypertensive': 'bg-orange-50 text-orange-600',
+      'Antidiabetic': 'bg-orange-50 text-orange-600',
+      'Antimalarial': 'bg-orange-50 text-orange-600',
+      'Antipyretic': 'bg-orange-50 text-orange-600',
+      'Infusions': 'bg-orange-50 text-orange-600',
+      'Antiseptics': 'bg-orange-50 text-orange-600',
+      'Methylated Spirit': 'bg-orange-50 text-orange-600',
+      'Antidiarrheal': 'bg-orange-50 text-orange-600',
+      'Antifungal': 'bg-orange-50 text-orange-600',
+      'Haematinics': 'bg-orange-50 text-orange-600',
+      'Expectorants': 'bg-orange-50 text-orange-600',
+      'Antacids': 'bg-orange-50 text-orange-600',
+      // Add more categories as needed
+    };
+    return categoryMap[category] || 'bg-emerald-50 text-emerald-600';
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    try {
+      await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Pharmacy' });
+      setNewCategoryName('');
+      fetchCategories();
+    } catch (error) {
+      console.error("Error adding category:", error);
+    }
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!editingCategory || !newCategoryName.trim()) return;
+    try {
+      await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Pharmacy' });
+      setEditingCategory(null);
+      setNewCategoryName('');
+      fetchCategories();
+    } catch (error) {
+      console.error("Error updating category:", error);
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm("Are you sure? Items in this category will be unassigned.")) return;
+    try {
+      await categoryService.deleteCategory(id);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    }
+  };
+
+  return (
+    <div className="w-full space-y-6 animate-in fade-in duration-500 text-sm py-8 px-4 md:px-6 lg:px-8">
+
+      {/* Top Header */}
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase font-outfit">Inventory Control</h1>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Medication Stock</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+          <div className="flex items-center gap-0 w-full sm:w-[300px] bg-white border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-50 focus-within:border-emerald-500 transition-all shadow-sm">
+            <input
+              type="text"
+              placeholder="Search medications..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 pl-4 pr-3 py-2 text-xs font-bold outline-none border-none bg-transparent"
+            />
+            <button className="w-7 h-9 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-emerald-500 border-l border-slate-100 transition-colors shrink-0">
+              <FaSearch className="text-sm" />
+            </button>
+          </div>
+
+          {user?.isAdmin && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setEditingCategory(null); setNewCategoryName(''); setIsCategoryModalOpen(true); }}
+                className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border bg-white text-emerald-600 border-emerald-200"
+              >
+                <FaPlus /> Add Category
+              </button>
+              <button
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border bg-white text-slate-700"
+              >
+                <FaEdit /> Edit Categories
+              </button>
+              <Link to="/inventory/new" className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border">
+                <FaPlus /> New Entry
+              </Link>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Stock Items</span>
+            <FaBox className="text-slate-300 text-[12px]" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-lg font-black text-slate-900 tabular-nums">{loading ? "..." : inventoryData.length}</p>
+            <p className="text-[10px] font-bold text-emerald-500 uppercase">Items </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-red-500">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Low Stock</span>
+            <FaExclamationTriangle className="text-red-300 text-[12px]" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-lg font-black text-slate-900 tabular-nums">
+              {loading ? "..." : inventoryData.filter(item => (item.stock || 0) <= (item.reorder_level || 10)).length}
+            </p>
+            <p className="text-[10px] font-bold text-red-500 uppercase">Alerts</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-orange-500">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Expiry</span>
+            <FaClock className="text-orange-300 text-[12px]" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-lg font-black text-slate-900 tabular-nums">
+              {loading ? "..." : inventoryData.filter(item => {
+                if (!item.expiry_date) return false;
+                const expiry = new Date(item.expiry_date);
+                const diff = (expiry - new Date()) / (1000 * 60 * 60 * 24);
+                return diff > 0 && diff <= 30;
+              }).length}
+            </p>
+            <p className="text-[10px] font-bold text-orange-500 uppercase">30 Days</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Value</span>
+            <FaMoneyBillWave className="text-indigo-300 text-[12px]" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-lg font-black text-slate-900 tabular-nums">
+              ${loading ? "..." : inventoryData.reduce((acc, item) => acc + (parseFloat(item.unit_price) * (item.stock || 0)), 0).toLocaleString()}
+            </p>
+            <p className="text-[10px] font-bold text-indigo-500 uppercase">Total</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-2 rounded-xl border border-slate-200">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+          {['All', ...categories.filter(c => c.type === 'Pharmacy').map(c => c.name)].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1 whitespace-nowrap rounded-lg text-[11px] font-black uppercase tracking-tight transition-all border ${selectedCategory === cat
+                ? 'bg-emerald-500 text-white border-emerald-500'
+                : 'bg-white text-slate-400 border-slate-50 hover:border-slate-200'
+                }`}
+            >
+              {cat === 'All' ? 'Complete' : cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none">
+            <FaFilter /> Filters
+          </button>
+          <button className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none">
+            <FaFileExport /> CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Data Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Medication</th>
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Category</th>
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Dosage</th>
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Stock</th>
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Price</th>
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Expiry</th>
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center tracking-tighter">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {inventoryData
+                .filter(item => {
+                  const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (item.generic_name && item.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                  const drugCategory = (item.category_name || "").toLowerCase();
+                  const targetCategory = selectedCategory.toLowerCase();
+                  const matchesCategory = selectedCategory === 'All' ||
+                    drugCategory === targetCategory ||
+                    (selectedCategory === 'Antibiotics' && drugCategory.includes('antibiotic')) ||
+                    (selectedCategory === 'Analgesics' && drugCategory.includes('analgesic'));
+
+                  return matchesSearch && matchesCategory;
+                })
+                .map((item) => {
+                  const isLow = (item.stock || 0) <= (item.reorder_level || 10);
+
+                  // Expiry alert: within 2 months (60 days)
+                  const isExpiring = item.expiry_date &&
+                    (new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24) < 60;
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-5 py-3 min-w-[150px]">
+                        <p className="text-[13px] font-black text-slate-900 group-hover:text-emerald-600 uppercase transition-colors">{item.name}</p>
+                        <span className="text-[12px] font-bold text-slate-500 italic truncate block max-w-[100px]">{item.generic_name}</span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight ${getCategoryColorClass(item.category_name)}`}>
+                          {item.category_name || "Uncategorized"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-center font-bold text-slate-600 text-[12px]">{item.dosage}</td>
+                      <td className="px-5 py-3">
+                        <span className={`text-[13px] font-black tabular-nums ${isLow ? 'text-red-600' : 'text-slate-900'}`}>
+                          {item.stock}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right font-black text-slate-900 text-[13px] tabular-nums">${item.unit_price}</td>
+                      <td className="px-5 py-3 text-center min-w-[100px]">
+                        <span className={`text-[12px] font-black tabular-nums ${isExpiring ? 'text-red-500 animate-pulse' : 'text-slate-500'}`}>
+                          {item.expiry_date || "N/A"}
+                          {isExpiring && <span className="block text-[7px] text-red-600 mt-0.5">!! RED ALERT: EXPIRING SOON !!</span>}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${isLow ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          {isLow ? "Low Stock" : "In Stock"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        {user?.isAdmin && (
+                          <div className="flex justify-center">
+                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all">
+                              <FaEdit className="text-sm" />
+                            </Link>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Category Management Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-in zoom-in duration-300">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Manage Categories</h2>
+              <button onClick={() => setIsCategoryModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg">
+                <FaTimes className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Category name..."
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all outline-none"
+                />
+                <button
+                  onClick={editingCategory ? handleUpdateCategory : handleAddCategory}
+                  className="btn-pharmacy px-4 py-2 text-[12px]"
+                >
+                  {editingCategory ? 'Update' : 'Add'}
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                {categories.filter(c => c.type === 'Pharmacy').map(cat => (
+                  <div key={cat.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 group">
+                    <span className="text-[12px] font-bold text-slate-700 uppercase">{cat.name}</span>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
+                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                      >
+                        <FaEdit className="text-xs" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(cat.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <FaTrash className="text-xs" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="px-4 py-2 text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default InventoryManagement;

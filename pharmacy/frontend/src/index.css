@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px; /* Reduced for more compact UI */
+}
+
+body {
+  margin: 0;
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Typography utilities */
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Button Base - White background, Green text/border */
+.btn-pharmacy {
+  @apply bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-50 transition-all font-bold rounded-lg px-4 py-2 flex items-center justify-center gap-2;
+}
+
+.btn-pharmacy-primary {
+  @apply bg-emerald-500 text-white border-2 border-emerald-500 hover:bg-emerald-600 transition-all font-bold rounded-lg px-4 py-2 flex items-center justify-center gap-2 shadow-sm shadow-emerald-100;
+}
+
+/* Global Responsive Utilities */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.table-responsive {
+  @apply overflow-x-auto w-full;
+}

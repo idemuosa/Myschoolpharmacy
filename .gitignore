@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+dist_electron/
+.env
+.env.local
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
