@@ -1,21 +1,19 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000/api/categories/';
+import api from './api';
 
 const getCategories = () => {
-    return axios.get(API_URL);
+    return api.get('categories/');
 };
 
 const addCategory = (data) => {
-    return axios.post(API_URL, data);
+    return api.post('categories/', data);
 };
 
 const updateCategory = (id, data) => {
-    return axios.put(`${API_URL}${id}/`, data);
+    return api.put(`categories/${id}/`, data);
 };
 
 const deleteCategory = (id) => {
-    return axios.delete(`${API_URL}${id}/`);
+    return api.delete(`categories/${id}/`);
 };
 
 export default {

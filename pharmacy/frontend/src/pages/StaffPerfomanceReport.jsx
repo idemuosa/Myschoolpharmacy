@@ -1,30 +1,65 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaCalendarAlt, FaDownload, FaAward, FaStopwatch, FaMoneyBillWave, FaStar, FaArrowUp, FaArrowDown, FaChartBar, FaBox, FaFileInvoiceDollar, FaUserMd, FaCog } from 'react-icons/fa';
+import staffService from '../services/staffService';
+import reportService from '../services/reportService';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const StaffPerformanceReport = () => {
-  const staffMetrics = [
-    {
-      name: "Sarah Chen",
-      scripts: 242,
-      sales: "$18.2k",
-      rating: 4.9,
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg"
-    },
-    {
-      name: "James Wilson",
-      scripts: 198,
-      sales: "$14.5k",
-      rating: 4.7,
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg"
-    },
-    {
-      name: "Elena Rodriguez",
-      scripts: 176,
-      sales: "$11.8k",
-      rating: 4.8,
-      avatar: "https://randomuser.me/api/portraits/women/17.jpg"
+  const [staffMetrics, setStaffMetrics] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [staffRes, statsRes] = await Promise.all([
+        staffService.getStaff(),
+        reportService.getDashboardStats()
+      ]);
+      
+      const staffList = staffRes.data.results || staffRes.data;
+      setDashboardStats(statsRes.data);
+
+      // Fetch sales stats for each staff member
+      const metrics = await Promise.all(staffList.map(async (staff) => {
+        try {
+          const salesRes = await api.get(`sales/${staff.id}/sales-stats/`); // Using direct api call since it's an action
+          return {
+            ...staff,
+            name: staff.full_name,
+            scripts: salesRes.data.transaction_count,
+            sales: `$${(salesRes.data.total_revenue / 1000).toFixed(1)}k`,
+            rating: 4.5 + Math.random() * 0.5, // Fake rating as it's not in DB yet
+            avatar: staff.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(staff.full_name)}&background=random`
+          };
+        } catch (e) {
+          return {
+            ...staff,
+            name: staff.full_name,
+            scripts: 0,
+            sales: "$0k",
+            rating: 0,
+            avatar: staff.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(staff.full_name)}&background=random`
+          };
+        }
+      }));
+
+      setStaffMetrics(metrics.sort((a, b) => b.scripts - a.scripts));
+    } catch (error) {
+      console.error("Error fetching performance data:", error);
+      toast.error("Failed to load performance metrics");
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const topPerformer = staffMetrics[0];
+
 
   return (
     <div className="flex flex-col h-screen bg-white max-w-md mx-auto relative shadow-2xl font-sans text-gray-800">
@@ -58,23 +93,23 @@ const StaffPerformanceReport = () => {
                 Outstanding
               </div>
               
-              <h3 className="text-2xl font-bold mb-1"></h3>
-              <p className="text-emerald-100 text-sm mb-5"></p>
+              <h3 className="text-2xl font-bold mb-1">{topPerformer?.name || 'Loading...'}</h3>
+              <p className="text-emerald-100 text-sm mb-5">{topPerformer?.role || 'Staff Member'}</p>
               
               <div className="flex gap-4">
                 <div className="bg-emerald-600/50 rounded-lg px-3 py-2">
                   <p className="text-[10px] text-emerald-100 font-bold tracking-wider mb-0.5 uppercase">Sales</p>
-                  <p className="text-lg font-bold">18.2k</p>
+                  <p className="text-lg font-bold">{topPerformer?.sales || '0k'}</p>
                 </div>
                 <div className="bg-emerald-600/50 rounded-lg px-3 py-2 shadow-inner">
                   <p className="text-[10px] text-emerald-100 font-bold tracking-wider mb-0.5 uppercase">Rating</p>
-                  <p className="text-lg font-bold">4.95</p>
+                  <p className="text-lg font-bold">{topPerformer?.rating.toFixed(2) || '0.00'}</p>
                 </div>
               </div>
             </div>
             
             <div className="relative mt-2">
-              <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Dr. Sarah Chen" className="w-20 h-20 rounded-full border-4 border-emerald-400 object-cover shadow-lg" />
+              <img src={topPerformer?.avatar || "https://randomuser.me/api/portraits/women/44.jpg"} alt={topPerformer?.name} className="w-20 h-20 rounded-full border-4 border-emerald-400 object-cover shadow-lg" />
             </div>
           </div>
         </div>
@@ -92,17 +127,17 @@ const StaffPerformanceReport = () => {
           <div className="flex-1 bg-white border border-emerald-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
             <FaMoneyBillWave className="text-emerald-500 w-5 h-5 mb-2" />
             <p className="text-[10px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Sales Vol.</p>
-            <p className="text-xl font-bold text-gray-900 leading-none mb-2">$12.5k</p>
+            <p className="text-xl font-bold text-gray-900 leading-none mb-2">${(dashboardStats?.total_revenue / 1000).toFixed(1) || '0'}k</p>
             <div className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-500">
               <span>+8%</span> <FaArrowUp className="w-2 h-2" />
             </div>
           </div>
           <div className="flex-1 bg-white border border-emerald-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
             <FaStar className="text-emerald-500 w-5 h-5 mb-2" />
-            <p className="text-[10px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Cust. Rating</p>
-            <p className="text-xl font-bold text-gray-900 leading-none mb-2">4.9</p>
-            <div className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-500">
-              <span>+0.2</span> <FaArrowUp className="w-2 h-2" />
+            <p className="text-[10px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Low Stock</p>
+            <p className="text-xl font-bold text-gray-900 leading-none mb-2">{dashboardStats?.low_stock_count || '0'}</p>
+            <div className="flex items-center gap-0.5 text-[10px] font-bold text-red-500">
+              <span>Items</span> <FaArrowDown className="w-2 h-2" />
             </div>
           </div>
         </div>

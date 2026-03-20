@@ -60,9 +60,8 @@ const AddNewDrugs = () => {
    const fetchDrug = async () => {
       try {
          setLoading(true);
-         const response = await drugService.getDrugs();
-         const data = response.data.results || response.data;
-         const drug = Array.isArray(data) ? data.find(d => d.id == id) : null;
+         const response = await drugService.getDrug(id);
+         const drug = response.data;
 
          if (drug) {
             const formatDate = (dateStr) => {

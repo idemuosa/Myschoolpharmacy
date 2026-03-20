@@ -1,7 +1,7 @@
 import api from './api';
 
 const productService = {
-    getProducts: () => api.get('products/'),
+    getProducts: (config = {}) => api.get('products/', config),
     getProduct: (id) => api.get(`products/${id}/`),
     addProduct: (data) => api.post('products/', data),
     updateProduct: (id, data) => api.put(`products/${id}/`, data),

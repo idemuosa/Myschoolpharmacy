@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import axios from 'axios';
 import { 
   FaArrowLeft, FaMoneyBillWave, FaUsers, FaShoppingCart, 
   FaCalendarAlt, FaUserMd, FaChartLine 
@@ -15,35 +16,43 @@ const StaffSalesDashboard = () => {
     const [selectedStaff, setSelectedStaff] = useState(id || '');
 
     useEffect(() => {
-        fetchStaffList();
+        const controller = new AbortController();
+        fetchStaffList(controller.signal);
+        return () => controller.abort();
     }, []);
 
     useEffect(() => {
+        const controller = new AbortController();
         if (selectedStaff) {
-            fetchStats(selectedStaff);
+            fetchStats(selectedStaff, controller.signal);
         }
+        return () => controller.abort();
     }, [selectedStaff]);
 
-    const fetchStaffList = async () => {
+    const fetchStaffList = async (signal) => {
         try {
-            const response = await api.get('staff/');
-            setStaffList(response.data);
-            if (!selectedStaff && response.data.length > 0) {
-                setSelectedStaff(response.data[0].id);
+            const response = await api.get('staff/', { signal });
+            const data = response.data.results || response.data;
+            setStaffList(data);
+            if (!selectedStaff && data.length > 0) {
+                setSelectedStaff(data[0].id);
             }
         } catch (err) {
+            if (axios.isCancel(err)) return;
             console.error("Failed to fetch staff list", err);
         }
     };
 
-    const fetchStats = async (staffId) => {
+    const fetchStats = async (staffId, signal) => {
         try {
             setLoading(true);
-            const response = await api.get(`sales/${staffId}/sales-stats/`);
+            const response = await api.get(`sales/${staffId}/sales-stats/`, { signal });
             setStats(response.data);
         } catch (err) {
+            if (axios.isCancel(err)) return;
             console.error("Failed to fetch staff stats", err);
         } finally {
+            if (signal && signal.aborted) return;
             setLoading(false);
         }
     };

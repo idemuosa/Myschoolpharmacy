@@ -32,6 +32,7 @@ import SupermarketPOS from './pages/SupermarketPOS';
 import ForgotPassword from './pages/ForgotPassword';
 import Settings from './pages/Settings';
 import NotificationSettings from './pages/NotificationSettings';
+import StaffPerformanceReport from './pages/StaffPerfomanceReport';
 import './App.css';
 
 function App() {
@@ -91,6 +92,13 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <StaffAttendanceReport />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/reports/performance" element={
+            <PrivateRoute>
+              <Layout>
+                <StaffPerformanceReport />
               </Layout>
             </PrivateRoute>
           } />

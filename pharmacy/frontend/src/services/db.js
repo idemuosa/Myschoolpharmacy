@@ -5,6 +5,7 @@ export const db = new Dexie('PharmacyDB');
 db.version(1).stores({
   drugs: '++id, name, category, sku',
   sales: '++id, customer_id, total_amount, date, status',
+  returns: '++id, sale_id, reason, date',
   customers: '++id, name, phone',
   syncQueue: '++id, action, table, data, timestamp'
 });

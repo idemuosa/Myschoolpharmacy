@@ -7,6 +7,7 @@ import {
   FaPlus, FaMinus, FaSearch, FaShoppingCart, FaUserTie, FaUndo, FaTimes, FaBarcode, FaPrint
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const SupermarketPOS = () => {
   const [cart, setCart] = useState([]);
@@ -23,8 +24,9 @@ const SupermarketPOS = () => {
    const scanInputRef = useRef(null);
 
   useEffect(() => {
-    fetchProducts();
-    fetchStaff();
+    const controller = new AbortController();
+    fetchProducts(controller.signal);
+    fetchStaff(controller.signal);
     
     // Auto-focus the scan input on mount
     if (scanInputRef.current) {
@@ -48,26 +50,32 @@ const SupermarketPOS = () => {
     };
 
     window.addEventListener('keydown', handleGlobalScan);
-    return () => window.removeEventListener('keydown', handleGlobalScan);
+    return () => {
+      controller.abort();
+      window.removeEventListener('keydown', handleGlobalScan);
+    };
   }, []);
 
-  const fetchStaff = async () => {
+  const fetchStaff = async (signal) => {
     try {
-      const response = await staffService.getStaff();
+      const response = await staffService.getStaff({ signal });
       setStaffList(response.data);
     } catch (err) {
+      if (axios.isCancel(err)) return;
       console.error("Failed to fetch staff", err);
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (signal) => {
     try {
-      const response = await productService.getProducts();
+      const response = await productService.getProducts({ signal });
       setProducts(response.data);
     } catch (error) {
+       if (axios.isCancel(error)) return;
        console.error("Error fetching products:", error);
        toast.error("Failed to load supermarket inventory.");
     } finally {
+       if (signal && signal.aborted) return;
        setLoading(false);
     }
   };

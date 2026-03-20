@@ -1,7 +1,7 @@
 import api from './api';
 
 const prescriptionService = {
-  getPrescriptions: () => api.get('prescriptions/'),
+  getPrescriptions: (config = {}) => api.get('prescriptions/', config),
   getPrescription: (id) => api.get(`prescriptions/${id}/`),
   createPrescription: (prescriptionData) => api.post('prescriptions/', prescriptionData),
   updatePrescription: (id, prescriptionData) => api.patch(`prescriptions/${id}/`, prescriptionData),

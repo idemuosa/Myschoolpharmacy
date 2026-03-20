@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import prescriptionService from '../services/prescriptionService';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import { 
   FaArrowLeft, FaPrint, FaDownload, FaCheckCircle, 
   FaExclamationCircle, FaUserInjured, FaUserMd, 
@@ -14,12 +15,14 @@ const DetailPrescriptionReview = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPendingPrescription();
+    const controller = new AbortController();
+    fetchPendingPrescription(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchPendingPrescription = async () => {
+  const fetchPendingPrescription = async (signal) => {
     try {
-      const response = await prescriptionService.getPrescriptions();
+      const response = await prescriptionService.getPrescriptions({ signal });
       const pending = response.data.find(p => p.status === 'Pending');
       if (pending) {
          setPrescription(pending);
@@ -27,9 +30,11 @@ const DetailPrescriptionReview = () => {
          setPrescription(null);
       }
     } catch (error) {
+       if (axios.isCancel(error)) return;
        console.error("Error fetching prescriptions:", error);
        toast.error("Failed to load prescription queue.");
     } finally {
+       if (signal && signal.aborted) return;
        setLoading(false);
     }
   };
