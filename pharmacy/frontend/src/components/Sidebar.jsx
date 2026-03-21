@@ -1,15 +1,17 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import settingsService from '../services/settingsService';
 import {
   FaThLarge, FaCashRegister, FaBox,
   FaBriefcaseMedical,
   FaChartLine, FaUsers, FaCog,
-  FaShoppingCart, FaSignOutAlt, FaTimes
+  FaShoppingCart, FaSignOutAlt, FaTimes,
+  FaUserPlus, FaArrowLeft
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
   const [shopName, setShopName] = useState('pharmacylogo');
 
@@ -47,6 +49,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     `}>
       <div className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center text-lg"
+            title="Go Back"
+          >
+            <FaArrowLeft />
+          </button>
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">
             <FaBriefcaseMedical />
           </div>

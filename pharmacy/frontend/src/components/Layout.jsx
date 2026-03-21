@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
-import { FaBars } from 'react-icons/fa';
-import { useLocation } from 'react-router-dom';
+import { FaBars, FaArrowLeft } from 'react-icons/fa';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Close sidebar on route change (mobile)
-  React.useEffect(() => {
+  useEffect(() => {
     setIsSidebarOpen(false);
   }, [location]);
+
+  // Global Back arrow key listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // If user presses ArrowLeft and isn't in an input/textarea
+      if (e.key === 'ArrowLeft' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        navigate(-1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden text-base">
