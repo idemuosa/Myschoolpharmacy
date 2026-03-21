@@ -35,6 +35,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Customers', icon: <FaUsers />, path: '/customers' },
     { name: 'Reports', icon: <FaChartLine />, path: '/reports/sales' },
     { name: 'Staff List', icon: <FaUsers />, path: '/staff' },
+    { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new' },
     { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards' },
     { name: 'Settings', icon: <FaCog />, path: '/settings' },
   ];
