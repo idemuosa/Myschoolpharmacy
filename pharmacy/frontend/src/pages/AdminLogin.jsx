@@ -10,7 +10,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [shopName, setShopName] = useState('Josiah Pharmacy and Stores');
+  const [shopName, setShopName] = useState('Pharmacy');
 
   useEffect(() => {
     const fetchBranding = async () => {
@@ -93,9 +93,7 @@ const AdminLogin = () => {
           </button>
         </form>
 
-        <div className="login-footer mt-8 text-[9px] font-black text-slate-300 uppercase tracking-widest">
-          Vault Security Active • <a href="#" className="text-slate-400 hover:text-emerald-500">Node Logs</a>
-        </div>
+
       </div>
     </div>
   );

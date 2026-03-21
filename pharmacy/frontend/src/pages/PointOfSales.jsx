@@ -378,7 +378,26 @@ const PointOfSales = () => {
               <div className="flex justify-between"><span>TX ID:</span><span className="font-black">{lastSale.id}</span></div>
               <div className="flex justify-between"><span>Total:</span><span className="font-black">${lastSale.total.toFixed(2)}</span></div>
             </div>
-            <button className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[12px] font-black uppercase" onClick={() => setLastSale(null)}>Done</button>
+            <div className="mb-4 text-[12px] max-h-32 overflow-y-auto pr-1">
+              <div className="font-bold border-b border-slate-100 pb-1 mb-2 text-center">Items</div>
+              <div className="space-y-1">
+                {lastSale.items && lastSale.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-slate-600">
+                    <span className="truncate pr-2">{item.name} x{item.quantity}</span>
+                    <span className="font-black shrink-0">${(item.unitPrice * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                className="w-full py-3 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 text-[12px] font-black uppercase flex items-center justify-center gap-2" 
+                onClick={() => window.print()}
+              >
+                <FaPrint /> Print
+              </button>
+              <button className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[12px] font-black uppercase" onClick={() => setLastSale(null)}>Done</button>
+            </div>
           </div>
         </div>
       )}

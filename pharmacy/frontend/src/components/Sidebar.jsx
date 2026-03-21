@@ -11,7 +11,7 @@ import {
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { logout } = useContext(AuthContext);
-  const [shopName, setShopName] = useState('Josiah Pharmacy');
+  const [shopName, setShopName] = useState('pharmacylogo');
 
   useEffect(() => {
     const fetchBranding = async () => {

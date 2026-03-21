@@ -23,7 +23,7 @@ const PharmacyDashboard = () => {
   });
   const [lowStockDrugs, setLowStockDrugs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState({ shop_name: 'Josiah Pharmacy', location: "St. Mary's" });
+  const [settings, setSettings] = useState({ shop_name: 'pharmacylogo', location: "St. Mary's" });
 
   const fetchData = async (signal) => {
     try {

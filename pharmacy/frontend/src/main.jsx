@@ -4,18 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import syncService from './services/syncService';
 
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then(registration => {
-        console.log('SW registered: ', registration);
-      })
-      .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
-      });
-  });
-}
+// Service Worker registration is handled by vite-plugin-pwa if enabled
 
 // Global Online/Offline Listeners
 window.addEventListener('online', () => {

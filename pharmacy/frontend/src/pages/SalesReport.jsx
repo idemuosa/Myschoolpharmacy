@@ -11,6 +11,7 @@ const SalesReport = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All');
   const [salesData, setSalesData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     daily: 0,
@@ -51,6 +52,40 @@ const SalesReport = () => {
     }
   };
 
+  const filteredSales = salesData.filter(sale => 
+    (sale.customer_name && sale.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (sale.id && sale.id.toString().includes(searchTerm))
+  );
+
+  const exportCSV = () => {
+    if (filteredSales.length === 0) return;
+    
+    const headers = ["ID", "Customer", "Staff", "Date", "Value", "Status"];
+    const rows = filteredSales.map(sale => [
+        sale.id,
+        sale.customer_name || 'Guest',
+        sale.staff_name || 'Sys',
+        new Date(sale.created_at).toLocaleString(),
+        sale.total_amount,
+        'Paid'
+    ]);
+    
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(e => e.map(f => `"${String(f).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'sales_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex flex-col flex-1 text-sm">
         
@@ -64,6 +99,8 @@ const SalesReport = () => {
               <input 
                 type="text" 
                 placeholder="Search audit trail..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-transparent rounded-lg text-xs font-bold focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all outline-none"
               />
             </div>
@@ -182,10 +219,10 @@ const SalesReport = () => {
               <div className="px-6 py-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/20">
                  <h2 className="text-xs font-black text-slate-900 uppercase tracking-tight">Audit Trail</h2>
                  <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-100 rounded-lg text-[11px] font-black text-slate-500 uppercase tracking-widest">
-                        Filter
+                    <button className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-100 rounded-lg text-[11px] font-black text-slate-500 uppercase tracking-widest cursor-default">
+                        Filtered ({filteredSales.length})
                     </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-none">
+                    <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-none hover:bg-emerald-600 transition-colors">
                         CSV
                     </button>
                  </div>
@@ -208,7 +245,7 @@ const SalesReport = () => {
                     {loading ? (
                        <tr><td colSpan="7" className="py-10 text-center text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Syncing...</td></tr>
                     ) : (
-                      salesData.map((txn, index) => (
+                      filteredSales.map((txn, index) => (
                         <tr key={index} className="hover:bg-slate-50 transition-colors group">
                           <td className="py-4 px-6 text-[12px] font-black text-slate-500 uppercase tabular-nums">#{txn.id}</td>
                           <td className="py-4 px-6">

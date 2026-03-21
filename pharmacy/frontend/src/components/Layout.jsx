@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
             >
               <FaBars className="text-xl" />
             </button>
-            <span className="font-outfit font-bold tracking-tight">Josiah Pharmacy</span>
+            <span className="font-outfit font-bold tracking-tight">pharmacylogo</span>
           </div>
         </header>
 

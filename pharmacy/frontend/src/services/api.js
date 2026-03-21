@@ -40,7 +40,8 @@ api.interceptors.response.use(
     if (error.response && (error.response.status === 401 || error.response.status === 403) && !originalRequest._retry) {
       
       // Don't try to refresh if we're already on the login page
-      if (window.location.pathname.includes('/login')) {
+      // Check both pathname (for dev) and hash (for prod/webview HashRouter)
+      if (window.location.pathname.includes('/login') || window.location.hash.includes('/login')) {
         return Promise.reject(error);
       }
       
@@ -66,7 +67,7 @@ api.interceptors.response.use(
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('username');
-          window.location.href = '/login';
+          window.location.hash = '#/login';
         }
       } else {
         // No refresh token available, redirect to login
@@ -74,7 +75,7 @@ api.interceptors.response.use(
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('username');
-        window.location.href = '/login';
+        window.location.hash = '#/login';
       }
     }
     return Promise.reject(error);
