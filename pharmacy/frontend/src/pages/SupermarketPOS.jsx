@@ -10,7 +10,10 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const SupermarketPOS = () => {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    const saved = localStorage.getItem('supermarket_cart');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -55,6 +58,10 @@ const SupermarketPOS = () => {
       window.removeEventListener('keydown', handleGlobalScan);
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('supermarket_cart', JSON.stringify(cart));
+  }, [cart]);
 
   const fetchStaff = async (signal) => {
     try {
