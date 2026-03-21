@@ -283,4 +283,4 @@ def reset_password(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
-    return Response({"status": "healthy", "message": "Pharmacy API is running"})
+    return Response({"status": "healthy", "version": "1.0.2", "message": "Pharmacy API is running"})

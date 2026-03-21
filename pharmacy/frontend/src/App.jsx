@@ -1,9 +1,12 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
+import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+import api from './services/api';
+import { APP_VERSION } from './config';
 
 // Import Pages
 import AdminLogin from './pages/AdminLogin';
@@ -36,6 +39,47 @@ import StaffPerformanceReport from './pages/StaffPerfomanceReport';
 import './App.css';
 
 function App() {
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  useEffect(() => {
+    const checkUpdate = async () => {
+      try {
+        const res = await api.get('health-check/');
+        if (res.data && res.data.version && res.data.version !== APP_VERSION) {
+          setUpdateAvailable(true);
+          toast((t) => (
+            <div className="flex flex-col gap-2">
+              <span className="font-bold">New Update Available!</span>
+              <p className="text-xs text-gray-600">A new version of the app is available. Your data will be preserved.</p>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  window.location.reload();
+                }}
+                className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition"
+              >
+                Reload to update
+              </button>
+            </div>
+          ), {
+            duration: Infinity,
+            position: 'bottom-right',
+            icon: '🚀'
+          });
+        }
+      } catch (err) {
+        console.error("Update check failed", err);
+      }
+    };
+
+    // Check on mount
+    checkUpdate();
+    
+    // Check every 5 minutes
+    const interval = setInterval(checkUpdate, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
