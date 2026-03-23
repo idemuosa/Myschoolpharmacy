@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import customerService from '../services/customerService';
 import toast from 'react-hot-toast';
-import { FaUserPlus, FaTimes, FaUser, FaHistory, FaPlus } from 'react-icons/fa';
+import { FaUserPlus, FaTimes, FaUser, FaHistory, FaPlus, FaCamera } from 'react-icons/fa';
+import { useRef, useEffect } from 'react';
 
 const AddCustomer = () => {
   const navigate = useNavigate();
@@ -18,7 +19,45 @@ const AddCustomer = () => {
     chronic_conditions: '',
     medications: '',
     gender: 'Male',
+    photo: null,
   });
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setIsCameraOpen(true);
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      toast.error("Camera access failed.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (canvasRef.current && videoRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      canvasRef.current.width = videoRef.current.videoWidth;
+      canvasRef.current.height = videoRef.current.videoHeight;
+      context.drawImage(videoRef.current, 0, 0);
+      const dataUrl = canvasRef.current.toDataURL('image/png');
+      setFormData(prev => ({ ...prev, photo: dataUrl }));
+      stopCamera();
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -78,6 +117,45 @@ const AddCustomer = () => {
                        <span className="text-[12px] font-black text-slate-900 uppercase tracking-widest">Personal Identification</span>
                     </div>
                     
+                    <div className="flex flex-col items-center mb-8">
+                       <div className="relative w-32 h-32 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 overflow-hidden border border-slate-200 shadow-inner">
+                          {isCameraOpen ? (
+                             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
+                          ) : formData.photo ? (
+                             <img src={formData.photo} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                             <FaUser className="w-10 h-10 text-slate-300" />
+                          )}
+                          
+                          {!isCameraOpen && (
+                             <button onClick={startCamera} className="absolute bottom-2 right-2 bg-emerald-500 text-white p-2 rounded-lg shadow-lg">
+                                <FaCamera className="w-3 h-3" />
+                             </button>
+                          )}
+                       </div>
+                       
+                       {isCameraOpen && (
+                          <div className="flex gap-2 mb-4 w-full max-w-[200px]">
+                             <button onClick={capturePhoto} className="flex-1 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Capture</button>
+                             <button onClick={stopCamera} className="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-[9px]"><FaTimes /></button>
+                          </div>
+                       )}
+
+                       <canvas ref={canvasRef} className="hidden" />
+                       
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-emerald-500 transition-colors">
+                          Load Passport
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                             const file = e.target.files?.[0];
+                             if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => setFormData(prev => ({ ...prev, photo: reader.result }));
+                                reader.readAsDataURL(file);
+                             }
+                          }} />
+                       </label>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4 mb-4">
                        <div className="space-y-1.5">
                           <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">First Name</label>

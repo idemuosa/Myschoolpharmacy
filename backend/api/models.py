@@ -48,6 +48,7 @@ class Customer(models.Model):
     allergies = models.TextField(blank=True, null=True)
     chronic_conditions = models.TextField(blank=True, null=True)
     medications = models.TextField(blank=True, null=True)
+    photo = models.TextField(blank=True, null=True) # Storing data URL for simplicity
     status = models.CharField(max_length=50, default='Active')
 
     def __str__(self):
