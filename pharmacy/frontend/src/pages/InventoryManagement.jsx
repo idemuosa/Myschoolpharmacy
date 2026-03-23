@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import {
   FaSearch, FaBell, FaPlus, FaThLarge, FaCashRegister, FaBox,
   FaUsers, FaClipboardList, FaCog, FaPills, FaExclamationTriangle,
-  FaClock, FaMoneyBillWave, FaFilter, FaFileExport, FaChevronLeft, FaChevronRight, FaEdit, FaTimes, FaTrash
+  FaClock, FaMoneyBill, FaFilter, FaFileExport, FaChevronLeft, FaChevronRight, FaEdit, FaTimes, FaTrash
 } from 'react-icons/fa';
 
 const InventoryManagement = () => {
@@ -19,6 +19,7 @@ const InventoryManagement = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Low Stock', '30 Days Expiry', '100 Days Expiry'
 
   useEffect(() => {
     fetchDrugs();
@@ -101,6 +102,77 @@ const InventoryManagement = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (inventoryData.length === 0) return;
+    
+    const headers = ['Name', 'Generic Name', 'Category', 'Dosage', 'Form', 'Stock', 'Unit Price', 'Expiry Date', 'Status'];
+    const rows = filteredData.map(item => [
+      item.name,
+      item.generic_name || '',
+      item.category_name || 'Uncategorized',
+      item.dosage || '',
+      item.form || '',
+      item.stock || 0,
+      item.unit_price || 0,
+      item.expiry_date || 'N/A',
+      (item.stock || 0) <= (item.reorder_level || 10) ? 'Low Stock' : 'In Stock'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(e => e.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `inventory_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getDaysToExpiry = (expiryDate) => {
+    if (!expiryDate) return null;
+    const diff = new Date(expiryDate) - new Date();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const formatExpiryTime = (expiryDate) => {
+    const days = getDaysToExpiry(expiryDate);
+    if (days === null) return 'N/A';
+    if (days < 0) return 'Expired';
+    
+    const months = Math.floor(days / 30);
+    const remainingDays = days % 30;
+    
+    if (months > 0) {
+      return `${months}m ${remainingDays}d`;
+    }
+    return `${days}d`;
+  };
+
+  const filteredData = inventoryData.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.generic_name && item.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const drugCategory = (item.category_name || "").toLowerCase();
+    const targetCategory = selectedCategory.toLowerCase();
+    const matchesCategory = selectedCategory === 'All' || drugCategory === targetCategory;
+
+    const daysToExpiry = getDaysToExpiry(item.expiry_date);
+    const isLow = (item.stock || 0) <= (item.reorder_level || 10);
+    
+    let matchesFilter = true;
+    if (activeFilter === 'Low Stock') matchesFilter = isLow;
+    else if (activeFilter === '30 Days Expiry') matchesFilter = daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 30;
+    else if (activeFilter === '100 Days Expiry') matchesFilter = daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 100;
+
+    return matchesSearch && matchesCategory && matchesFilter;
+  });
+
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-500 text-sm py-8 px-4 md:px-6 lg:px-8">
 
@@ -161,7 +233,10 @@ const InventoryManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-red-500">
+        <div 
+          onClick={() => setActiveFilter(activeFilter === 'Low Stock' ? 'All' : 'Low Stock')}
+          className={`cursor-pointer bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-red-500 transition-all ${activeFilter === 'Low Stock' ? 'ring-2 ring-red-100 bg-red-50/10' : ''}`}
+        >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Low Stock</span>
             <FaExclamationTriangle className="text-red-300 text-[12px]" />
@@ -174,7 +249,10 @@ const InventoryManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-orange-500">
+        <div 
+          onClick={() => setActiveFilter(activeFilter === '30 Days Expiry' ? 'All' : '30 Days Expiry')}
+          className={`cursor-pointer bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-orange-500 transition-all ${activeFilter === '30 Days Expiry' ? 'ring-2 ring-orange-100 bg-orange-50/10' : ''}`}
+        >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Expiry</span>
             <FaClock className="text-orange-300 text-[12px]" />
@@ -182,10 +260,8 @@ const InventoryManagement = () => {
           <div className="flex items-baseline gap-1">
             <p className="text-lg font-black text-slate-900 tabular-nums">
               {loading ? "..." : inventoryData.filter(item => {
-                if (!item.expiry_date) return false;
-                const expiry = new Date(item.expiry_date);
-                const diff = (expiry - new Date()) / (1000 * 60 * 60 * 24);
-                return diff > 0 && diff <= 30;
+                const diff = getDaysToExpiry(item.expiry_date);
+                return diff !== null && diff > 0 && diff <= 30;
               }).length}
             </p>
             <p className="text-[10px] font-bold text-orange-500 uppercase">30 Days</p>
@@ -195,7 +271,7 @@ const InventoryManagement = () => {
         <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Value</span>
-            <FaMoneyBillWave className="text-indigo-300 text-[12px]" />
+            <FaMoneyBill className="text-indigo-300 text-[12px]" />
           </div>
           <div className="flex items-baseline gap-1">
             <p className="text-lg font-black text-slate-900 tabular-nums">
@@ -224,10 +300,25 @@ const InventoryManagement = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none">
-            <FaFilter /> Filters
+          <button 
+            onClick={() => setActiveFilter(activeFilter === '100 Days Expiry' ? 'All' : '100 Days Expiry')}
+            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all ${activeFilter === '100 Days Expiry' ? 'bg-blue-500 text-white border-blue-500' : ''}`}
+          >
+            <FaClock /> 100 Days
           </button>
-          <button className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none">
+          <button 
+            onClick={() => {
+              if (activeFilter !== 'All') setActiveFilter('All');
+              else setActiveFilter('Low Stock');
+            }}
+            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : ''}`}
+          >
+            <FaFilter /> Low Stock
+          </button>
+          <button 
+            onClick={handleExportCSV}
+            className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none hover:bg-slate-50 transition-all"
+          >
             <FaFileExport /> CSV
           </button>
         </div>
@@ -250,21 +341,7 @@ const InventoryManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {inventoryData
-                .filter(item => {
-                  const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (item.generic_name && item.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-                  const drugCategory = (item.category_name || "").toLowerCase();
-                  const targetCategory = selectedCategory.toLowerCase();
-                  const matchesCategory = selectedCategory === 'All' ||
-                    drugCategory === targetCategory ||
-                    (selectedCategory === 'Antibiotics' && drugCategory.includes('antibiotic')) ||
-                    (selectedCategory === 'Analgesics' && drugCategory.includes('analgesic'));
-
-                  return matchesSearch && matchesCategory;
-                })
-                .map((item) => {
+              {filteredData.map((item) => {
                   const isLow = (item.stock || 0) <= (item.reorder_level || 10);
 
                   // Expiry alert: within 2 months (60 days)
@@ -289,10 +366,13 @@ const InventoryManagement = () => {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-right font-black text-slate-900 text-[13px] tabular-nums">${item.unit_price}</td>
-                      <td className="px-5 py-3 text-center min-w-[100px]">
+                      <td className="px-5 py-3 text-center min-w-[120px]">
                         <span className={`text-[12px] font-black tabular-nums ${isExpiring ? 'text-red-500 animate-pulse' : 'text-slate-500'}`}>
-                          {item.expiry_date || "N/A"}
-                          {isExpiring && <span className="block text-[7px] text-red-600 mt-0.5">!! RED ALERT: EXPIRING SOON !!</span>}
+                          <span className="block">{item.expiry_date || "N/A"}</span>
+                          <span className="block text-[9px] font-bold uppercase tracking-tight opacity-70">
+                            {formatExpiryTime(item.expiry_date)}
+                          </span>
+                          {isExpiring && <span className="block text-[7px] text-red-600 mt-0.5 font-black">!! EXPIRING !!</span>}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-center">

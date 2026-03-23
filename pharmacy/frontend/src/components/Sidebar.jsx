@@ -7,7 +7,7 @@ import {
   FaBriefcaseMedical,
   FaChartLine, FaUsers, FaCog,
   FaShoppingCart, FaSignOutAlt, FaTimes,
-  FaUserPlus, FaArrowLeft
+  FaUserPlus, FaArrowLeft, FaMoneyBill
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -39,6 +39,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Staff List', icon: <FaUsers />, path: '/staff' },
     { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new' },
     { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards' },
+    { name: 'Expenses', icon: <FaMoneyBill />, path: '/expenses' },
+    { name: 'Financials', icon: <FaChartLine />, path: '/financials' },
     { name: 'Settings', icon: <FaCog />, path: '/settings' },
   ];
 

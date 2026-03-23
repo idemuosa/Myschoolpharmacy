@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import axios from 'axios';
 import { 
-  FaArrowLeft, FaMoneyBillWave, FaUsers, FaShoppingCart, 
+  FaArrowLeft, FaMoneyBill, FaUsers, FaShoppingCart, 
   FaCalendarAlt, FaUserMd, FaChartLine 
 } from 'react-icons/fa';
 
@@ -99,7 +99,7 @@ const StaffSalesDashboard = () => {
                             {/* Revenue */}
                             <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:border-emerald-200 transition-all">
                                 <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-4">
-                                    <FaMoneyBillWave className="text-emerald-500 w-4 h-4" />
+                                    <FaMoneyBill className="text-emerald-500 w-4 h-4" />
                                 </div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Total Revenue</p>
                                 <p className="text-xl font-black text-slate-900 tracking-tight tabular-nums">${parseFloat(stats.total_revenue).toLocaleString()}</p>

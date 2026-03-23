@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings
+from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -144,3 +144,9 @@ class UserSerializer(serializers.ModelSerializer):
         elif 'password' in validated_data:
             validated_data.pop('password')
         return super().update(instance, validated_data)
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    staff_name = serializers.ReadOnlyField(source='staff.full_name')
+    class Meta:
+        model = Expense
+        fields = '__all__'

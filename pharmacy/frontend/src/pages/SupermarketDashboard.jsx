@@ -5,7 +5,7 @@ import supermarketSaleService from '../services/supermarketSaleService';
 import staffService from '../services/staffService';
 import { AuthContext } from '../context/AuthContext';
 import {
-   FaCalendarAlt, FaMoneyBillWave, FaShoppingCart, FaExclamationTriangle, FaUsers,
+   FaCalendarAlt, FaMoneyBill, FaShoppingCart, FaExclamationTriangle, FaUsers,
    FaThLarge, FaBox, FaChartLine, FaCog, FaPlus, FaSearch, FaBell
 } from 'react-icons/fa';
 
@@ -108,7 +108,7 @@ const SupermarketDashboard = () => {
                {/* KPI Stats */}
                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
-                     <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><FaMoneyBillWave /></div>
+                     <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><FaMoneyBill /></div>
                      <div>
                         <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Revenue</p>
                         <p className="text-sm font-black text-slate-900 tabular-nums">${stats.revenue.toLocaleString()}</p>

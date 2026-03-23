@@ -13,7 +13,7 @@ class ApiService {
     try {
       final response = await _dio.get('drugs/');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
+        final List<dynamic> data = response.data['results'] ?? response.data;
         return data.map((json) => Drug.fromJson(json)).toList();
       } else {
         throw Exception('Failed to load drugs');
@@ -23,14 +23,36 @@ class ApiService {
     }
   }
 
-  Future<Drug> getDrugDetails(int id) async {
+  Future<List<Map<String, dynamic>>> getExpenses() async {
     try {
-      final response = await _dio.get('drugs/$id/');
-      if (response.statusCode == 200) {
-        return Drug.fromJson(response.data);
-      } else {
-        throw Exception('Failed to load drug details');
-      }
+      final response = await _dio.get('expenses/');
+      final List<dynamic> data = response.data['results'] ?? response.data;
+      return data.cast<Map<String, dynamic>>();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> addExpense(Map<String, dynamic> data) async {
+    try {
+      await _dio.post('expenses/', data: data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> deleteExpense(int id) async {
+    try {
+      await _dio.delete('expenses/$id/');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getFinancialSummary() async {
+    try {
+      final response = await _dio.get('expenses/financial-summary/');
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       rethrow;
     }

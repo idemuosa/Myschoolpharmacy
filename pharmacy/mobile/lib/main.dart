@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/drug_provider.dart';
+import 'providers/expense_provider.dart';
 import 'screens/drug_list_screen.dart';
+import 'screens/expense_screen.dart';
+import 'screens/financials_screen.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => DrugProvider()),
+        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
       ],
       child: const MyApp(),
     ),
@@ -31,7 +35,12 @@ class MyApp extends StatelessWidget {
           centerTitle: true,
         ),
       ),
-      home: const DrugListScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const DrugListScreen(),
+        '/expenses': (context) => const ExpenseScreen(),
+        '/financials': (context) => const FinancialsScreen(),
+      },
     );
   }
 }

@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import {
   FaSearch, FaPlus, FaBox,
   FaExclamationTriangle,
-  FaMoneyBillWave, FaFilter, FaFileExport, FaEdit, FaThLarge, FaTimes, FaTrash
+  FaMoneyBill, FaFilter, FaFileExport, FaEdit, FaThLarge, FaTimes, FaTrash
 } from 'react-icons/fa';
 
 const SupermarketInventory = () => {
@@ -174,7 +174,7 @@ const SupermarketInventory = () => {
         <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-blue-500">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest">Total Valuation</span>
-            <FaMoneyBillWave className="text-blue-300 text-[10px]" />
+            <FaMoneyBill className="text-blue-300 text-[10px]" />
           </div>
           <div className="flex items-baseline gap-1">
             <p className="text-lg font-black text-slate-900 tabular-nums">

@@ -1,0 +1,30 @@
+# Dockerfile for building the Flutter Android APK
+FROM cirrusci/android-sdk:33
+
+# Set environment variables
+ENV FLUTTER_HOME=/opt/flutter
+ENV PATH=$PATH:$FLUTTER_HOME/bin
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    unzip \
+    libglu1-mesa \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Flutter SDK (matching the requested version)
+RUN git clone https://github.com/flutter/flutter.git $FLUTTER_HOME \
+    && cd $FLUTTER_HOME && git checkout 3.19.0
+
+# Set workspace
+WORKDIR /app
+
+# Copy project files
+COPY . .
+
+# Run flutter doctor to ensure everything is set up
+RUN flutter doctor
+
+# Run build
+RUN flutter build apk --release

@@ -78,8 +78,10 @@ const DetailPrescriptionReview = () => {
            <div>
               <div className="flex items-center gap-2 mb-0.5">
                  <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none uppercase">{prescription.prescription_id}</h1>
-                 <span className="bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-black border border-orange-100 flex items-center gap-1 uppercase tracking-widest">
-                    Verification
+                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 uppercase tracking-widest ${
+                    prescription.status === 'Pending' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                 }`}>
+                    {prescription.status}
                  </span>
               </div>
               <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Submitted: {new Date(prescription.created_at).toLocaleDateString()}</p>
@@ -122,7 +124,9 @@ const DetailPrescriptionReview = () => {
                              <div className="w-5/6 h-1 bg-slate-50 rounded"></div>
                              <div className="w-4/6 h-1 bg-slate-50 rounded"></div>
                          </div>
-                         <div className="w-full h-6 bg-emerald-50 border border-emerald-100 rounded mt-6"></div>
+                         <div className="w-full h-6 bg-emerald-50 border border-emerald-100 rounded mt-6 text-center text-[8px] font-black py-1">
+                            {prescription.prescription_id}
+                         </div>
                          <div className="mt-auto ml-auto w-16 h-1 bg-slate-900 rounded opacity-20"></div>
                      </div>
                   </div>
@@ -132,18 +136,16 @@ const DetailPrescriptionReview = () => {
                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                      <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-3">Recipient</h3>
-                     <p className="text-[13px] font-black text-slate-900 mb-0.5 uppercase tracking-tight">Michael Johnson</p>
-                     <p className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-widest">DOB: 11/14/1982</p>
-                     <p className="text-[11px] font-bold text-slate-500 truncate mb-2">+1 (555) 789-0123</p>
-                     <button className="text-[10px] font-black text-emerald-500 hover:underline uppercase tracking-widest">Details</button>
+                     <p className="text-[13px] font-black text-slate-900 mb-0.5 uppercase tracking-tight">{prescription.customer_name || 'Generic Patient'}</p>
+                     <p className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-widest">ID: {prescription.customer}</p>
+                     <button className="text-[10px] font-black text-emerald-500 hover:underline uppercase tracking-widest" onClick={() => navigate(`/customers/detail/${prescription.customer}`)}>Details</button>
                   </div>
 
                   <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                      <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-3">Prescriber</h3>
                      <p className="text-[13px] font-black text-slate-900 mb-0.5 uppercase tracking-tight">{prescription.prescribing_doctor || 'Dr. Unknown'}</p>
-                     <p className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-widest">NPI: 1938502841</p>
-                     <p className="text-[11px] font-bold text-slate-500 truncate mb-2">Downtown Medical</p>
-                     <button className="text-[10px] font-black text-emerald-500 hover:underline uppercase tracking-widest">Verification</button>
+                     <p className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-widest">NPI: VERIFIED</p>
+                     <p className="text-[11px] font-bold text-slate-500 truncate mb-2">Internal Registry</p>
                   </div>
                </div>
 
@@ -152,68 +154,43 @@ const DetailPrescriptionReview = () => {
             {/* Right Column (Digitized Details & Verification) */}
             <div className="lg:col-span-7 space-y-4">
                
-               {/* Digitized Prescription Form */}
+               {/* Digitized Prescription Items */}
                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                   <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-50">
                      <h2 className="text-[13px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                         <FaPills className="text-emerald-500" /> Transcription
                      </h2>
+                     <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><FaEdit /> Edit Form</button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Medication Name</label>
-                        <input 
-                          type="text" 
-                          defaultValue="Amoxicillin" 
-                          className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[13px] font-black text-slate-900 outline-none"
-                        />
-                     </div>
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Strength / Unit</label>
-                        <input 
-                          type="text" 
-                          defaultValue="500 mg" 
-                          className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[13px] font-black text-slate-900 outline-none"
-                        />
-                     </div>
+                  <div className="space-y-3">
+                     {prescription.items && prescription.items.length > 0 ? (
+                        prescription.items.map((item, idx) => (
+                           <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div className="flex-1">
+                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Drug / Strength</label>
+                                 <p className="text-[14px] font-black text-slate-900 uppercase">{item.drug_name || `Drug ID: ${item.drug}`}</p>
+                              </div>
+                              <div className="w-24">
+                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Quantity</label>
+                                 <p className="text-[14px] font-black text-slate-900 tabular-nums">x{item.quantity}</p>
+                              </div>
+                              <div className="flex-1">
+                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Directions</label>
+                                 <p className="text-[12px] font-bold text-slate-600 italic">"{item.directions}"</p>
+                              </div>
+                           </div>
+                        ))
+                     ) : (
+                        <p className="text-center py-6 text-slate-400 font-bold italic">No digitized items found in this RX cluster.</p>
+                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Form</label>
-                        <select className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-black text-slate-900 outline-none appearance-none">
-                           <option>Capsules</option>
-                           <option>Tablets</option>
-                           <option>Liquid</option>
-                        </select>
+                  <div className="mt-4 pt-4 border-t border-slate-50">
+                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Prescriber Commentary</label>
+                     <div className="w-full bg-slate-50/50 border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-bold text-slate-600 italic">
+                        {prescription.notes || "No special handling instructions provided."}
                      </div>
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Quantity</label>
-                        <input 
-                          type="number" 
-                          defaultValue="30" 
-                          className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[13px] font-black text-slate-900 outline-none"
-                        />
-                     </div>
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Refills</label>
-                        <input 
-                          type="number" 
-                          defaultValue="0" 
-                          className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[13px] font-black text-slate-900 outline-none"
-                        />
-                     </div>
-                  </div>
-
-                  <div>
-                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Clinical Directive</label>
-                     <textarea 
-                        defaultValue={prescription.notes}
-                        readOnly
-                        rows="2"
-                        className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-bold text-slate-600 outline-none italic resize-none"
-                     ></textarea>
                   </div>
                </div>
 
@@ -238,21 +215,12 @@ const DetailPrescriptionReview = () => {
                         <span className="text-[12px] font-bold text-slate-700 uppercase tracking-tight">Allergy Scan Clear</span>
                      </label>
                   </div>
-
-                  <div className="pt-4 border-t border-slate-50">
-                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Audit Note</label>
-                     <input 
-                       type="text" 
-                       placeholder="Internal verification comment..." 
-                       className="w-full bg-white border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-bold text-slate-900 outline-none"
-                     />
-                  </div>
-
                </div>
 
             </div>
          </div>
       </main>
+
 
       <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-sm border-t border-slate-100 z-50 flex gap-3">
          <button onClick={() => handleAction('Rejected')} className="flex-1 bg-white border border-red-100 text-red-500 font-black text-[12px] py-3 rounded-xl hover:bg-red-50 uppercase tracking-widest">

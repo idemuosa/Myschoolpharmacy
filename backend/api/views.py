@@ -5,11 +5,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.db import transaction
 from django.db.models import Sum, Count, F
-from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings
+from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
 from .serializers import (
     CategorySerializer, DrugSerializer, StaffSerializer, CustomerSerializer,
     PrescriptionSerializer, SaleSerializer, SaleReturnSerializer,
-    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer, UserProfileSerializer, UserSerializer
+    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer, UserProfileSerializer, UserSerializer, ExpenseSerializer
 )
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -284,3 +284,20 @@ def reset_password(request):
 @permission_classes([AllowAny])
 def health_check(request):
     return Response({"status": "healthy", "version": "1.0.2", "message": "Pharmacy API is running"})
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    queryset = Expense.objects.all().order_by('-date')
+    serializer_class = ExpenseSerializer
+
+    @action(detail=False, methods=['get'], url_path='financial-summary')
+    def financial_summary(self, request):
+        total_revenue = Sale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+        total_expenses = Expense.objects.aggregate(total=Sum('amount'))['total'] or 0
+        net_profit = total_revenue - total_expenses
+        
+        return Response({
+            'total_revenue': total_revenue,
+            'total_expenses': total_expenses,
+            'net_profit': net_profit,
+            'balance': net_profit # "Amount left from selling goods"
+        })

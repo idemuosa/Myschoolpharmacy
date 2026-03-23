@@ -32,6 +32,28 @@ const CustomerManagement = () => {
       return `${first}${last}` || '?';
   };
 
+  const exportCustomersCSV = () => {
+    if (customers.length === 0) return;
+    const headers = ["ID", "Name", "Phone", "DOB", "Address"];
+    const rows = customers.map(c => [
+        c.id,
+        `${c.first_name} ${c.last_name}`,
+        c.phone_number,
+        c.date_of_birth,
+        c.address || ''
+    ]);
+    const csvContent = [headers.join(','), ...rows.map(e => e.map(f => `"${String(f).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'patient_registry.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-500 text-sm py-8 px-4 md:px-6 lg:px-8">
         <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -106,7 +128,7 @@ const CustomerManagement = () => {
               <h2 className="text-xs font-black text-slate-900 uppercase tracking-tight">Access Registry</h2>
               <div className="flex items-center gap-2">
                  <button className="btn-pharmacy text-[10px] px-3 py-1 border shadow-none"><FaFilter /> Refine</button>
-                 <button className="btn-pharmacy text-[10px] px-3 py-1 border shadow-none"><FaDownload /> Log</button>
+                 <button onClick={exportCustomersCSV} className="btn-pharmacy text-[10px] px-3 py-1 border shadow-none hover:bg-emerald-500 hover:text-white transition-all"><FaDownload /> Log</button>
               </div>
            </div>
            

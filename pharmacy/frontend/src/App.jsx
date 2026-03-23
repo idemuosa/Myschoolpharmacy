@@ -31,11 +31,14 @@ import SupermarketInventory from './pages/SupermarketInventory';
 import AddNewProduct from './pages/AddNewProduct';
 import PatientPage from './pages/PatientPage';
 import Prescription from './pages/Prescription';
+import PrescriptionManagement from './pages/PrescriptionManagement';
 import SupermarketPOS from './pages/SupermarketPOS';
 import ForgotPassword from './pages/ForgotPassword';
 import Settings from './pages/Settings';
 import NotificationSettings from './pages/NotificationSettings';
 import StaffPerformanceReport from './pages/StaffPerfomanceReport';
+import ExpenseManagement from './pages/ExpenseManagement';
+import Financials from './pages/Financials';
 import './App.css';
 
 function App() {
@@ -146,6 +149,20 @@ function App() {
               </Layout>
             </PrivateRoute>
           } />
+          <Route path="/expenses" element={
+            <PrivateRoute>
+              <Layout>
+                <ExpenseManagement />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/financials" element={
+            <PrivateRoute>
+              <Layout>
+                <Financials />
+              </Layout>
+            </PrivateRoute>
+          } />
           <Route path="/pos" element={
             <PrivateRoute>
               <Layout>
@@ -174,10 +191,17 @@ function App() {
                </Layout>
              </PrivateRoute>
            } />
-           <Route path="/prescriptions/new" element={
+            <Route path="/prescriptions/new" element={
+               <PrivateRoute>
+                 <Layout>
+                   <Prescription />
+                 </Layout>
+               </PrivateRoute>
+             } />
+           <Route path="/prescriptions/manage" element={
               <PrivateRoute>
                 <Layout>
-                  <Prescription />
+                  <PrescriptionManagement />
                 </Layout>
               </PrivateRoute>
             } />

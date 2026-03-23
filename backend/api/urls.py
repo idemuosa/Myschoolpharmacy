@@ -4,7 +4,7 @@ from .views import (
     CategoryViewSet, DrugViewSet, StaffViewSet, CustomerViewSet, 
     PrescriptionViewSet, SaleViewSet, SaleReturnViewSet, ProductViewSet, 
     SupermarketSaleViewSet, reset_password, SystemSettingsViewSet, 
-    update_profile, ReportsView, UserViewSet, health_check
+    update_profile, ReportsView, UserViewSet, health_check, ExpenseViewSet
 )
 
 router = DefaultRouter()
@@ -19,6 +19,7 @@ router.register(r'sales', SaleViewSet)
 router.register(r'returns', SaleReturnViewSet)
 router.register(r'products', ProductViewSet)
 router.register(r'supermarket-sales', SupermarketSaleViewSet)
+router.register(r'expenses', ExpenseViewSet)
 router.register(r'reports', ReportsView, basename='reports')
 
 urlpatterns = [

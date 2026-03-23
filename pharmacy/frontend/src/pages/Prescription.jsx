@@ -73,7 +73,7 @@ const Prescription = () => {
             setLoading(true);
             await prescriptionService.createPrescription(formData);
             toast.success("Prescription synchronized successfully!");
-            navigate('/prescriptions/review');
+            navigate('/prescriptions/manage');
         } catch (error) {
             console.error("Submission failed", error);
             toast.error("Failed to sync prescription. Check your connection.");

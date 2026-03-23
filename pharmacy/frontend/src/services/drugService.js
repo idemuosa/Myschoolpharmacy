@@ -6,10 +6,14 @@ const drugService = {
     try {
       if (navigator.onLine) {
         const response = await api.get('drugs/', config);
-        // Update local cache
-        await db.drugs.clear();
-        await db.drugs.bulkAdd(response.data);
-        return response;
+        const drugs = response.data.results || response.data;
+        
+        if (Array.isArray(drugs) && drugs.length > 0) {
+          // Update local cache: Use put to merge/update instead of clear() + bulkAdd()
+          // This prevents wiping out everything if the server returns something unexpected
+          await db.drugs.bulkPut(drugs);
+        }
+        return { data: drugs };
       }
     } catch (error) {
       console.error("Network failed, fetching from local DB", error);

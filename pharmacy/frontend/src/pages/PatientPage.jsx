@@ -19,13 +19,29 @@ const PatientPage = () => {
     const [drugs, setDrugs] = useState([]);
     const [prescriptionItems, setPrescriptionItems] = useState([]);
     const [prescriptions, setPrescriptions] = useState([]);
+    const [sales, setSales] = useState([]);
     const [isPrescribing, setIsPrescribing] = useState(false);
 
     useEffect(() => {
         fetchPatientData();
         fetchDrugs();
         fetchPrescriptions();
+        fetchSales();
     }, [id]);
+
+    const fetchSales = async () => {
+        try {
+            const response = await api.get('sales/');
+            const allSales = response.data.results || response.data;
+            // Filter sales for this specific patient
+            const patientSales = Array.isArray(allSales) 
+                ? allSales.filter(s => s.customer === parseInt(id))
+                : [];
+            setSales(patientSales);
+        } catch (error) {
+            console.error("Failed to fetch sales history", error);
+        }
+    };
 
     const fetchPrescriptions = async () => {
         try {
@@ -364,6 +380,43 @@ const PatientPage = () => {
                                  </div>
                             </div>
 
+                            <div className="space-y-4">
+                                 <div className="flex items-center gap-2">
+                                     <FaHistory className="text-slate-400" />
+                                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Dispensary & Purchase History</p>
+                                 </div>
+                                 
+                                 <div className="space-y-3">
+                                     {sales.length === 0 ? (
+                                         <p className="text-[11px] font-bold text-slate-400 italic bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                             No purchase records found for this patient.
+                                         </p>
+                                     ) : (
+                                         sales.map((sale) => (
+                                             <div key={sale.id} className="bg-white p-4 rounded-xl border border-slate-100 space-y-2 shadow-sm hover:border-emerald-200 transition-all">
+                                                 <div className="flex justify-between items-center pb-2 border-b border-slate-50">
+                                                     <div className="flex items-center gap-2">
+                                                        <span className="text-[12px] font-black text-slate-900">#{sale.id}</span>
+                                                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-black uppercase">SALE</span>
+                                                     </div>
+                                                     <span className="text-[10px] font-bold text-slate-400 uppercase">{new Date(sale.created_at).toLocaleDateString()}</span>
+                                                 </div>
+                                                 <div className="flex justify-between items-end">
+                                                     <div className="space-y-1">
+                                                         <p className="text-[10px] font-extrabold text-slate-400 uppercase">Total Amount</p>
+                                                         <p className="text-[14px] font-black text-emerald-600 tabular-nums">${sale.total_amount}</p>
+                                                     </div>
+                                                     <div className="text-right">
+                                                         <p className="text-[10px] font-extrabold text-slate-400 uppercase">Staff</p>
+                                                         <p className="text-[11px] font-bold text-slate-600">{sale.staff_name || 'System'}</p>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         ))
+                                     )}
+                                 </div>
+                            </div>
+
                             <div className="space-y-2 pt-4 border-t border-slate-100">
                                  <div className="flex items-center gap-2">
                                      <FaNotesMedical className="text-slate-400" />
@@ -376,8 +429,18 @@ const PatientPage = () => {
 
                            <div className="grid grid-cols-2 gap-4">
                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Prescription Activity</p>
-                                   <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{prescriptions.length} Records</p>
+                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Patient Activity</p>
+                                   <div className="flex justify-between items-center">
+                                       <div className="text-center">
+                                           <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{prescriptions.length}</p>
+                                           <p className="text-[8px] font-black text-slate-400 uppercase">Rx</p>
+                                       </div>
+                                       <div className="w-px h-6 bg-slate-200"></div>
+                                       <div className="text-center">
+                                           <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{sales.length}</p>
+                                           <p className="text-[8px] font-black text-slate-400 uppercase">Sales</p>
+                                       </div>
+                                   </div>
                                </div>
                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Address Information</p>

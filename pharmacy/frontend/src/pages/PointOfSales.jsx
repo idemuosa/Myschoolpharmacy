@@ -158,6 +158,11 @@ const PointOfSales = () => {
       targetCategory.includes(drugCategory.replace(/s$/, ''));
 
     return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    // FEFO Logic: Sort by expiry date (soonest first)
+    if (!a.expiry_date) return 1;
+    if (!b.expiry_date) return -1;
+    return new Date(a.expiry_date) - new Date(b.expiry_date);
   });
 
   const totalAmount = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0) * 1.05; // Including 5% VAT
@@ -187,6 +192,7 @@ const PointOfSales = () => {
       setLastSale({
         id: txId,
         pharmacist: staffList.find(s => s.id == staffId),
+        sellerName: staffList.find(s => s.id == staffId)?.full_name || 'N/A',
         items: cart,
         total: totalAmount,
         date: new Date().toLocaleString()
@@ -383,6 +389,7 @@ const PointOfSales = () => {
             </div>
             <div className="space-y-2 text-[12px] mb-4 pb-4 border-b border-dashed">
               <div className="flex justify-between"><span>TX ID:</span><span className="font-black">{lastSale.id}</span></div>
+              <div className="flex justify-between"><span>Seller:</span><span className="font-black">{lastSale.sellerName}</span></div>
               <div className="flex justify-between"><span>Total:</span><span className="font-black">${lastSale.total.toFixed(2)}</span></div>
             </div>
             <div className="mb-4 text-[12px] max-h-32 overflow-y-auto pr-1">

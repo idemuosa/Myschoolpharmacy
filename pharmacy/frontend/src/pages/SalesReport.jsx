@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { 
   FaSearch, FaBell, FaPlus, FaThLarge, FaChartBar, FaBox, FaUsers, 
-  FaClipboardList, FaCog, FaMoneyBillWave, FaWallet, FaReceipt, FaShoppingCart,
+  FaClipboardList, FaCog, FaMoneyBill, FaWallet, FaReceipt, FaShoppingCart,
   FaChevronDown, FaDownload, FaFilter, FaFileExport, FaEllipsisV, FaPills
 } from 'react-icons/fa';
 
@@ -28,6 +28,7 @@ const SalesReport = () => {
 
   const fetchSales = async (signal) => {
     try {
+      setLoading(true);
       const response = await api.get('sales/', { signal });
       const sales = response.data?.results || response.data || [];
       setSalesData(sales);
@@ -47,15 +48,20 @@ const SalesReport = () => {
       });
     } catch (error) {
        console.error("Error fetching sales:", error);
+       toast.error("Failed to sync sales audit trail. Check connection.");
     } finally {
        setLoading(false);
     }
   };
 
-  const filteredSales = salesData.filter(sale => 
-    (sale.customer_name && sale.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (sale.id && sale.id.toString().includes(searchTerm))
-  );
+  const filteredSales = salesData.filter(sale => {
+    const search = searchTerm.toLowerCase();
+    const customer = (sale.customer_name || 'Guest').toLowerCase();
+    const saleId = (sale.id || '').toString();
+    const staff = (sale.staff_name || 'Sys').toLowerCase();
+    
+    return customer.includes(search) || saleId.includes(search) || staff.includes(search);
+  });
 
   const exportCSV = () => {
     if (filteredSales.length === 0) return;
@@ -124,7 +130,7 @@ const SalesReport = () => {
                 <div className="flex justify-between items-start mb-2">
                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Today</h3>
                    <div className="bg-emerald-50 text-emerald-500 p-1.5 rounded-lg text-sm">
-                      <FaMoneyBillWave />
+                      <FaMoneyBill />
                    </div>
                 </div>
                  <div className="mt-auto">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaArrowLeft, FaCalendarAlt, FaDownload, FaAward, FaStopwatch, FaMoneyBillWave, FaStar, FaArrowUp, FaArrowDown, FaChartBar, FaBox, FaFileInvoiceDollar, FaUserMd, FaCog } from 'react-icons/fa';
+import { FaArrowLeft, FaCalendarAlt, FaDownload, FaAward, FaStopwatch, FaMoneyBill, FaStar, FaArrowUp, FaArrowDown, FaChartBar, FaBox, FaFileInvoiceDollar, FaUserMd, FaCog } from 'react-icons/fa';
 import staffService from '../services/staffService';
 import reportService from '../services/reportService';
 import api from '../services/api';
@@ -125,7 +125,7 @@ const StaffPerformanceReport = () => {
             </div>
           </div>
           <div className="flex-1 bg-white border border-emerald-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <FaMoneyBillWave className="text-emerald-500 w-5 h-5 mb-2" />
+            <FaMoneyBill className="text-emerald-500 w-5 h-5 mb-2" />
             <p className="text-[10px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Sales Vol.</p>
             <p className="text-xl font-bold text-gray-900 leading-none mb-2">${(dashboardStats?.total_revenue / 1000).toFixed(1) || '0'}k</p>
             <div className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-500">
