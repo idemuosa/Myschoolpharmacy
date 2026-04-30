@@ -31,10 +31,30 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            // These values should be set via environment variables or gradle.properties
+            // for security (NEVER commit keystore files to version control)
+            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "pharmacy-release.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "pharmacy-key"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Use proper release signing configuration
+            signingConfig = signingConfigs.getByName("release")
+            
+            // Enable minification and code shrinking for production
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        
+        debug {
+            // Debug builds use debug signing
             signingConfig = signingConfigs.getByName("debug")
         }
     }

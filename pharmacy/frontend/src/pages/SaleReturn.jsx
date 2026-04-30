@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import posService from '../services/posService';
-import drugService from '../services/drugService';
 import toast from 'react-hot-toast';
 import { 
   FaArrowLeft, FaSearch, FaBox, FaUndo, FaChevronDown,

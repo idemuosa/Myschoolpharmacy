@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  FaBell, FaCog, FaUserPlus, FaCamera, FaUser,
-  FaChartPie, FaUsers, FaBox, FaChartBar, FaUserCircle, FaChevronDown, FaTimes
+  FaBell, FaCog, FaCamera, FaUser, FaTimes
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';

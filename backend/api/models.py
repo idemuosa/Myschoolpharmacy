@@ -91,11 +91,12 @@ class SaleItem(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
 
     def __str__(self):
-        return f"{self.drug.name} x {self.quantity}"
+        drug_name = self.drug.name if self.drug else "Unknown Drug"
+        return f"{drug_name} x {self.quantity}"
 
 class SaleReturn(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='returns')
-    drug = models.ForeignKey(Drug, on_delete=models.CASCADE)
+    drug = models.ForeignKey(Drug, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
     reason = models.TextField()
     refund_amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -136,7 +137,8 @@ class SupermarketSaleItem(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
 
     def __str__(self):
-        return f"{self.product.name} x {self.quantity}"
+        product_name = self.product.name if self.product else "Unknown Product"
+        return f"{product_name} x {self.quantity}"
 
 class SystemSettings(models.Model):
     shop_name = models.CharField(max_length=255, default='Josiah Pharmacy and Stores')
@@ -159,11 +161,13 @@ class SystemSettings(models.Model):
     def __str__(self):
         return self.shop_name
 
+from django.utils import timezone
+
 class Expense(models.Model):
     category = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.TextField(blank=True, null=True)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.now)
     staff = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):

@@ -231,13 +231,13 @@ const AddNewDrugs = () => {
                         <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Clinical Group</label>
                         <select
                            name="category_obj"
-                           value={formData.category_obj}
-                           onChange={handleChange}
+                           value={formData.category_obj || ""}
+                           onChange={(e) => setFormData({ ...formData, category_obj: e.target.value })}
                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-black focus:ring-2 focus:ring-emerald-50 outline-none appearance-none cursor-pointer"
                         >
                            <option value="">Select Category</option>
                            {categories.filter(c => c.type === 'Pharmacy').map(cat => (
-                              <option key={cat.id} value={cat.id}>{cat.name}</option>
+                              <option key={cat.id} value={cat.id.toString()}>{cat.name}</option>
                            ))}
                         </select>
                      </div>

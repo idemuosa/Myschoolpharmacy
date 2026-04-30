@@ -16,6 +16,7 @@ const Settings = () => {
     useEffect(() => {
         fetchSettings();
         fetchUsers();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchSettings = async () => {
@@ -46,6 +47,7 @@ const Settings = () => {
             toast.success("System branding updated!");
             setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
+            console.error(error);
             toast.error("Failed to update branding.");
         } finally {
             setLoading(false);
@@ -60,6 +62,7 @@ const Settings = () => {
             toast.success("Admin credentials updated!");
             setAdminData({ username: '', password: '' });
         } catch (error) {
+            console.error(error);
             toast.error("Failed to update credentials.");
         } finally {
             setLoading(false);
@@ -83,6 +86,7 @@ const Settings = () => {
             setNewAdmin({ username: '', password: '' });
             fetchUsers();
         } catch (error) {
+            console.error(error);
             toast.error(editingUser ? "Failed to update administrator." : "Failed to add administrator.");
         } finally {
             setLoading(false);
@@ -101,6 +105,7 @@ const Settings = () => {
             toast.success("Administrator removed");
             fetchUsers();
         } catch (error) {
+            console.error(error);
             toast.error("Failed to remove user.");
         }
     };

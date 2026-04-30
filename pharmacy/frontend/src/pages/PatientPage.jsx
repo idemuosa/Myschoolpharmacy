@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import customerService from '../services/customerService';
+import api from '../services/api';
 import { 
   FaArrowLeft, FaUserCircle, FaBriefcaseMedical, 
   FaHistory, FaNotesMedical, FaCalendarPlus, FaPlus, FaTrash, FaCapsules,
@@ -27,6 +28,7 @@ const PatientPage = () => {
         fetchDrugs();
         fetchPrescriptions();
         fetchSales();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const fetchSales = async () => {

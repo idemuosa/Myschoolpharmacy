@@ -12,6 +12,10 @@ db.version(2).stores({
   syncQueue: '++id, action, table, data, timestamp'
 });
 
+db.open().catch((err) => {
+  console.error("Failed to open db:", err.stack || err);
+});
+
 export const addToSyncQueue = async (action, table, data) => {
   await db.syncQueue.add({
     action,

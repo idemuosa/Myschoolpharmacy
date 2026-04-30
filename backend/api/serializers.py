@@ -14,9 +14,9 @@ class DrugSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_barcode(self, value):
-        if value == "":
+        if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
-        return value
+        return value.strip()
 
 class StaffSerializer(serializers.ModelSerializer):
     class Meta:
@@ -86,9 +86,9 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_barcode(self, value):
-        if value == "":
+        if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
-        return value
+        return value.strip()
 
 class SupermarketSaleItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')

@@ -34,7 +34,8 @@ const AddNewStaff = () => {
       navigate('/staff');
     } catch (error) {
       console.error("Staff save failed", error);
-      toast.error("Failed to add staff member.");
+      const errorMsg = error.response?.data ? Object.values(error.response.data).flat().join(' ') : "Failed to add staff member.";
+      toast.error(errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -182,13 +183,15 @@ const AddNewStaff = () => {
               </div>
               <input
                 type="text"
+                name="employee_id"
                 placeholder="EMP-2024-089"
                 readOnly={autoGenerate}
+                value={formData.employee_id}
+                onChange={handleChange}
                 className={`w-full border rounded-xl px-4 py-3.5 text-[15px] font-medium transition-all ${autoGenerate
                     ? 'bg-[#f1f5f9] border-[#e2e8f0] text-[#64748b] cursor-not-allowed'
                     : 'bg-[#f8fafc] border-[#e2e8f0] text-[#0f172a] focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]'
                   }`}
-                defaultValue={autoGenerate ? 'EMP-2024-089' : ''}
               />
             </div>
 

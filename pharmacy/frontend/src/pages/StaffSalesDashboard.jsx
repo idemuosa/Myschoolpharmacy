@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import axios from 'axios';
 import { 
-  FaArrowLeft, FaMoneyBill, FaUsers, FaShoppingCart, 
-  FaCalendarAlt, FaUserMd, FaChartLine 
+  FaMoneyBill, FaUsers, FaShoppingCart, 
+  FaChartLine 
 } from 'react-icons/fa';
 
 const StaffSalesDashboard = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [staffList, setStaffList] = useState([]);
@@ -52,8 +51,9 @@ const StaffSalesDashboard = () => {
             if (axios.isCancel(err)) return;
             console.error("Failed to fetch staff stats", err);
         } finally {
-            if (signal && signal.aborted) return;
-            setLoading(false);
+            if (!(signal && signal.aborted)) {
+                setLoading(false);
+            }
         }
     };
 

@@ -1,9 +1,9 @@
 # build_dist.ps1 - Automate Windows and Android Builds
 
-$ProjectRoot = "c:\Users\sagacious wizzy\Desktop\my school"
+$ProjectRoot = $PSScriptRoot
 $MobileDir = Join-Path $ProjectRoot "pharmacy\mobile"
 $FlutterSDK = Join-Path $ProjectRoot "pharmacy\flutter\bin\flutter.bat"
-$AndroidSDK = "c:\Users\sagacious wizzy\AppData\Local\Android\Sdk"
+$AndroidSDK = "$env:USERPROFILE\AppData\Local\Android\Sdk"
 
 # Set Android SDK environment for this session
 $env:ANDROID_HOME = $AndroidSDK

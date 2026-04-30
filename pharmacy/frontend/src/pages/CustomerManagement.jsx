@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import customerService from '../services/customerService';
 import { 
-  FaSearch, FaBell, FaPlus, FaUsers, FaUserCheck, FaIdCard, FaFilter, FaDownload, FaChevronRight
+  FaSearch, FaPlus, FaUsers, FaUserCheck, FaIdCard, FaFilter, FaDownload, FaChevronRight
 } from 'react-icons/fa';
 
 const CustomerManagement = () => {
@@ -18,7 +18,7 @@ const CustomerManagement = () => {
   const fetchCustomers = async () => {
     try {
       const response = await customerService.getCustomers();
-      setCustomers(response.data);
+      setCustomers(response.data.results || response.data || []);
     } catch (error) {
       console.error("Error fetching customers:", error);
     } finally {

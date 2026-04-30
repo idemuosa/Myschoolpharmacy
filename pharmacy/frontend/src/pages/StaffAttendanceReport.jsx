@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { 
-  FaSearch, FaBell, FaDownload, FaThLarge, FaBox, FaUsers, 
-  FaChartBar, FaCog, FaCalendarAlt, FaBriefcase, FaUserAlt, 
-  FaChevronLeft, FaChevronRight, FaPlusSquare, FaSignInAlt, 
+  FaSearch, FaBell, FaDownload, FaUsers, 
+  FaCalendarAlt, 
+  FaChevronLeft, FaChevronRight, FaSignInAlt, 
   FaClock, FaUserMinus
 } from 'react-icons/fa';
 
 const StaffAttendanceReport = () => {
-  const navigate = useNavigate();
   const [staff, setStaff] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStaff();
@@ -23,8 +20,6 @@ const StaffAttendanceReport = () => {
       setStaff(response.data);
     } catch (error) {
        console.error("Error fetching staff for attendance:", error);
-    } finally {
-       setLoading(false);
     }
   };
 

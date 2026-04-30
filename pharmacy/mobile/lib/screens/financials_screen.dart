@@ -34,6 +34,8 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
             final expenses = double.tryParse(data['expenses']?.toString() ?? '0') ?? 0;
             final profit = double.tryParse(data['profit']?.toString() ?? '0') ?? 0;
             final balance = revenue - expenses;
+            final salesCount = int.tryParse(data['sales_count']?.toString() ?? '0') ?? 0;
+            final avgSaleValue = salesCount > 0 ? revenue / salesCount : 0.0;
 
             return ListView(
               padding: const EdgeInsets.all(16),
@@ -53,9 +55,9 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        _buildRow('Total Sales', data['sales_count']?.toString() ?? '0'),
+                        _buildRow('Total Sales', salesCount.toString()),
                         const Divider(),
-                        _buildRow('Avg Sale Value', '₦${(revenue / (int.tryParse(data['sales_count']?.toString() ?? '1')!)).toStringAsFixed(2)}'),
+                        _buildRow('Avg Sale Value', '₦${avgSaleValue.toStringAsFixed(2)}'),
                       ],
                     ),
                   ),

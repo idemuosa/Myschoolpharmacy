@@ -31,6 +31,7 @@ const Prescription = () => {
 
     useEffect(() => {
         fetchInitialData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patientId]);
 
     const fetchInitialData = async () => {

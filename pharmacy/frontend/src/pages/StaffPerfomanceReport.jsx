@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 const StaffPerformanceReport = () => {
   const [staffMetrics, setStaffMetrics] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -16,7 +15,6 @@ const StaffPerformanceReport = () => {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
       const [staffRes, statsRes] = await Promise.all([
         staffService.getStaff(),
         reportService.getDashboardStats()
@@ -53,8 +51,6 @@ const StaffPerformanceReport = () => {
     } catch (error) {
       console.error("Error fetching performance data:", error);
       toast.error("Failed to load performance metrics");
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -31,6 +31,18 @@ services:
       - key: PORT
         value: 10000
 
+  # React Frontend
+  - type: static
+    name: pharmacy-frontend
+    env: static
+    plan: free
+    rootDir: pharmacy
+    buildCommand: "npm install && npm run build"
+    publishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://pharmacy-api.onrender.com
+
 databases:
   - name: pharmacy-db
     plan: free

@@ -2,16 +2,16 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import productService from '../services/productService';
 import supermarketSaleService from '../services/supermarketSaleService';
-import staffService from '../services/staffService';
 import { AuthContext } from '../context/AuthContext';
 import {
-   FaCalendarAlt, FaMoneyBill, FaShoppingCart, FaExclamationTriangle, FaUsers,
+   FaCalendarAlt, FaMoneyBill, FaShoppingCart, FaExclamationTriangle,
    FaThLarge, FaBox, FaChartLine, FaCog, FaPlus, FaSearch, FaBell
 } from 'react-icons/fa';
 
 const SupermarketDashboard = () => {
    const navigate = useNavigate();
    const { user } = useContext(AuthContext);
+
    const [stats, setStats] = useState({
       revenue: 0,
       transactions: 0,
@@ -33,8 +33,8 @@ const SupermarketDashboard = () => {
          const data = statsRes.data;
          const allProducts = Array.isArray(productRes.data) ? productRes.data : (productRes.data.results || []);
          setInventoryData(allProducts);
-         const lowStock = allProducts.filter(p => p.stock <= p.reorder_level);
 
+         const lowStock = allProducts.filter(p => p.stock <= p.reorder_level);
          setLowStockProducts(lowStock.slice(0, 5));
 
          setStats({
@@ -43,7 +43,6 @@ const SupermarketDashboard = () => {
             lowStock: data.low_stock_count,
             products: allProducts.length
          });
-
       } catch (error) {
          console.error("Supermarket dashboard data fetch failed", error);
       } finally {
@@ -202,7 +201,7 @@ const SupermarketDashboard = () => {
                   {modules.map(module => (
                      <div
                         key={module.name}
-                     onClick={() => navigate(module.path, { state: module.state })} 
+                        onClick={() => navigate(module.path, { state: module.state })} 
                         className="group bg-white p-3 rounded-2xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer flex flex-col items-center text-center justify-center gap-2"
                      >
                         <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center text-lg group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
@@ -230,7 +229,9 @@ const SupermarketDashboard = () => {
                   <div className="space-y-4">
                      <div className="flex items-center justify-between">
                         <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">Inventory Worth</span>
-                        <span className="text-[12px] font-black text-blue-500">${parseFloat(inventoryData?.reduce((acc, item) => acc + (parseFloat(item.unit_price) * (item.stock || 0)), 0) || 0).toLocaleString()}</span>
+                        <span className="text-[12px] font-black text-blue-500">
+                           ${parseFloat(inventoryData?.reduce((acc, item) => acc + (parseFloat(item.unit_price) * (item.stock || 0)), 0) || 0).toLocaleString()}
+                        </span>
                      </div>
                      <div className="w-full h-1 bg-slate-50 rounded-full overflow-hidden">
                         <div className="h-full bg-blue-500 w-[75%] rounded-full"></div>

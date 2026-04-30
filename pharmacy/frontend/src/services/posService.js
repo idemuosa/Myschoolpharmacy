@@ -6,9 +6,11 @@ const posService = {
     try {
       if (navigator.onLine) {
         const response = await api.get('sales/', config);
-        // Sync cache (optional: we might want to store only recent sales locally)
-        await db.sales.clear();
-        await db.sales.bulkAdd(response.data);
+        // Update local cache: Use bulkPut to merge instead of clear() + bulkAdd()
+        const sales = response.data.results || response.data;
+        if (Array.isArray(sales)) {
+          await db.sales.bulkPut(sales);
+        }
         return response;
       }
     } catch (error) {

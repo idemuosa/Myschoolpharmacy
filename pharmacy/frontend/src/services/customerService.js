@@ -6,9 +6,11 @@ const customerService = {
     try {
       if (navigator.onLine) {
         const response = await api.get('customers/', config);
-        // Update local cache
-        await db.customers.clear();
-        await db.customers.bulkAdd(response.data);
+        // Update local cache: Use bulkPut to merge instead of clear() + bulkAdd()
+        const customers = response.data.results || response.data;
+        if (Array.isArray(customers)) {
+          await db.customers.bulkPut(customers);
+        }
         return response;
       }
     } catch (error) {

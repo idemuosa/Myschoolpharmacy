@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { 
-  FaSearch, FaBell, FaPlus, FaThLarge, FaChartBar, FaBox, FaUsers, 
-  FaClipboardList, FaCog, FaMoneyBill, FaWallet, FaReceipt, FaShoppingCart,
-  FaChevronDown, FaDownload, FaFilter, FaFileExport, FaEllipsisV, FaPills
+  FaSearch, FaBell, FaPlus, FaMoneyBill, FaWallet, FaReceipt, FaShoppingCart,
+  FaChevronDown, FaEllipsisV
 } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 const SalesReport = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('All');
   const [salesData, setSalesData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -24,6 +23,7 @@ const SalesReport = () => {
     const controller = new AbortController();
     fetchSales(controller.signal);
     return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSales = async (signal) => {

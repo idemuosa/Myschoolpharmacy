@@ -3,6 +3,7 @@ from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Sum, Count, F
 from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
@@ -49,6 +50,10 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             prescription = serializer.save()
 
             for item in items_data:
+                # Validate drug exists
+                if not Drug.objects.filter(id=item['drug']).exists():
+                    raise serializers.ValidationError(f"Drug with ID {item['drug']} does not exist.")
+
                 PrescriptionItem.objects.create(
                     prescription=prescription,
                     drug_id=item['drug'],
@@ -56,7 +61,9 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
                     directions=item['directions']
                 )
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Re-serialize to include items in the response
+            full_serializer = self.get_serializer(prescription)
+            return Response(full_serializer.data, status=status.HTTP_201_CREATED)
 
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
@@ -78,9 +85,13 @@ class SaleViewSet(viewsets.ModelViewSet):
                 sale.save()
 
             for item in items_data:
-                drug = Drug.objects.get(id=item['drug'])
+                try:
+                    drug = Drug.objects.get(id=item['drug'])
+                except Drug.DoesNotExist:
+                    raise serializers.ValidationError(f"Medication ID {item['drug']} not found in inventory.")
+                
                 if drug.stock < item['quantity']:
-                    raise serializers.ValidationError(f"Not enough stock for {drug.name}")
+                    raise serializers.ValidationError(f"Insufficient stock for {drug.name}. Requested: {item['quantity']}, Available: {drug.stock}")
                 
                 SaleItem.objects.create(
                     sale=sale,
@@ -94,7 +105,9 @@ class SaleViewSet(viewsets.ModelViewSet):
                 drug.stock -= item['quantity']
                 drug.save()
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Re-serialize to include items in the response
+            full_serializer = self.get_serializer(sale)
+            return Response(full_serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='dashboard-stats')
     def dashboard_stats(self, request):
@@ -111,7 +124,7 @@ class SaleViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='sales-stats')
     def sales_stats(self, request, pk=None):
         """Get sales statistics for a specific staff member"""
-        staff = Staff.objects.get(pk=pk)
+        staff = get_object_or_404(Staff, pk=pk)
         sales = Sale.objects.filter(staff=staff)
         
         total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
@@ -141,7 +154,7 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
             serializer.save()
 
             # Update stock: put items back into inventory
-            drug = Drug.objects.get(id=drug_id)
+            drug = get_object_or_404(Drug, id=drug_id)
             drug.stock += quantity
             drug.save()
 
@@ -205,9 +218,13 @@ class SupermarketSaleViewSet(viewsets.ModelViewSet):
                 sale.save()
 
             for item in items_data:
-                product = Product.objects.get(id=item['product'])
+                try:
+                    product = Product.objects.get(id=item['product'])
+                except Product.DoesNotExist:
+                    raise serializers.ValidationError(f"Product ID {item['product']} not found in supermarket inventory.")
+                
                 if product.stock < item['quantity']:
-                    raise serializers.ValidationError(f"Not enough stock for {product.name}")
+                    raise serializers.ValidationError(f"Insufficient stock for {product.name}. Requested: {item['quantity']}, Available: {product.stock}")
                 
                 SupermarketSaleItem.objects.create(
                     sale=sale,
@@ -221,7 +238,9 @@ class SupermarketSaleViewSet(viewsets.ModelViewSet):
                 product.stock -= item['quantity']
                 product.save()
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Re-serialize to include items in the response
+            full_serializer = self.get_serializer(sale)
+            return Response(full_serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='dashboard-stats')
     def dashboard_stats(self, request):
@@ -291,13 +310,24 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='financial-summary')
     def financial_summary(self, request):
-        total_revenue = Sale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+        # Revenue from Pharmacy
+        pharmacy_revenue = Sale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+        # Revenue from Supermarket
+        supermarket_revenue = SupermarketSale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+
+        total_revenue = pharmacy_revenue + supermarket_revenue
         total_expenses = Expense.objects.aggregate(total=Sum('amount'))['total'] or 0
-        net_profit = total_revenue - total_expenses
+
+        # Sales Count
+        pharmacy_sales_count = Sale.objects.count()
+        supermarket_sales_count = SupermarketSale.objects.count()
+        total_sales_count = pharmacy_sales_count + supermarket_sales_count
+
+        profit = total_revenue - total_expenses
         
         return Response({
-            'total_revenue': total_revenue,
-            'total_expenses': total_expenses,
-            'net_profit': net_profit,
-            'balance': net_profit # "Amount left from selling goods"
+            'revenue': float(total_revenue),
+            'expenses': float(total_expenses),
+            'profit': float(profit),
+            'sales_count': total_sales_count
         })

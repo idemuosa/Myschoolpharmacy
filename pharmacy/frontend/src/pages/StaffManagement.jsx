@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
-  FaPlus, FaSearch, FaEye, FaPen, FaCalendarAlt, FaBriefcaseMedical, FaCheckCircle, FaUserShield
+  FaPlus, FaSearch, FaEye, FaPen, FaCalendarAlt, FaCheckCircle, FaUserShield
 } from 'react-icons/fa';
 
 const StaffManagement = () => {
@@ -20,7 +20,7 @@ const StaffManagement = () => {
   const fetchStaff = async (signal) => {
     try {
       const response = await api.get('staff/', { signal });
-      setStaffData(response.data);
+      setStaffData(response.data.results || response.data || []);
     } catch (error) {
        console.error("Error fetching staff:", error);
     } finally {

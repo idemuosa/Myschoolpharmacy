@@ -82,8 +82,9 @@ const SupermarketPOS = () => {
        console.error("Error fetching products:", error);
        toast.error("Failed to load supermarket inventory.");
     } finally {
-       if (signal && signal.aborted) return;
-       setLoading(false);
+       if (!(signal && signal.aborted)) {
+         setLoading(false);
+       }
     }
   };
 

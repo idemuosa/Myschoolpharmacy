@@ -6,9 +6,11 @@ const prescriptionService = {
     try {
       if (navigator.onLine) {
         const response = await api.get('prescriptions/', config);
-        // Update local cache
-        await db.prescriptions.clear();
-        await db.prescriptions.bulkAdd(response.data);
+        // Update local cache: Use bulkPut to merge instead of clear() + bulkAdd()
+        const prescriptions = response.data.results || response.data;
+        if (Array.isArray(prescriptions)) {
+          await db.prescriptions.bulkPut(prescriptions);
+        }
         return response;
       }
     } catch (error) {

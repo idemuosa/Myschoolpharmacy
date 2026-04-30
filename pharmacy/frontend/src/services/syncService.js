@@ -3,26 +3,47 @@ import { db } from './db';
 
 const syncService = {
   sync: async () => {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine) {
+      console.log('App is offline, skipping sync.');
+      return;
+    }
 
     const queue = await db.syncQueue.toArray();
+    if (queue.length === 0) {
+      console.log('Sync queue is empty.');
+      return;
+    }
+
+    console.log(`Starting sync for ${queue.length} items...`);
+    
     for (const item of queue) {
       try {
+        let response;
         if (item.action === 'CREATE') {
-          await api.post(`${item.table}/`, item.data);
+          response = await api.post(`${item.table}/`, item.data);
         } else if (item.action === 'UPDATE') {
-          await api.put(`${item.table}/${item.data.id}/`, item.data);
+          response = await api.put(`${item.table}/${item.data.id}/`, item.data);
         }
-        await db.syncQueue.delete(item.id);
+        
+        if (response && (response.status === 200 || response.status === 201)) {
+          await db.syncQueue.delete(item.id);
+          console.log(`Successfully synced ${item.table} item.`);
+        }
       } catch (error) {
-        console.error('Sync failed for item:', item, error);
-        // If it's a 4xx error, maybe remove it from queue or mark as failed
-        if (error.response && error.response.status < 500) {
-           // await db.syncQueue.delete(item.id);
+        console.error(`Sync failed for ${item.table} item:`, error.message);
+        
+        // If it's a 4xx error (except 429), it might be invalid data, 
+        // we might want to skip it to avoid blocking the queue.
+        if (error.response && error.response.status >= 400 && error.response.status < 500 && error.response.status !== 429) {
+           console.warn("Skipping item due to client error (4xx).");
+           await db.syncQueue.delete(item.id);
+        } else {
+          // For server errors or network issues, stop and retry later
+          break; 
         }
-        break; // Stop syncing if we hit a server error
       }
     }
+    console.log('Sync process completed/paused.');
   }
 };
 

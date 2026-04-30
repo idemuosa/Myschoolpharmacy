@@ -15,7 +15,7 @@ import AddNewStaff from './pages/AddNewStaff';
 import SalesReport from './pages/SalesReport';
 import InventoryTurnover from './pages/InventoryTurnover';
 import StaffAttendanceReport from './pages/StaffAttendanceReport';
-import PharmacyDashboard from './pages/pharmacydashboard';
+import PharmacyDashboard from './pages/PharmacyDashboard';
 import UploadPrescription from './pages/UploadPrescription';
 import DetailPrescriptionReview from './pages/DetailPrescriptionReview';
 import InventoryManagement from './pages/InventoryManagement';

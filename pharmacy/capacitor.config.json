@@ -1,5 +1,10 @@
 {
   "appId": "com.josiah.pharmacy",
   "appName": "josiah pharmacy and store",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "BarcodeScanner": {
+      "cameraPermissionText": "Access to camera is required for barcode scanning"
+    }
+  }
 }

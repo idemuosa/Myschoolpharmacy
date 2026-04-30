@@ -24,57 +24,74 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   void _showAddExpenseDialog() {
+    String localCategory = 'Operations';
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Expense'),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: _category,
-                  items: ['Operations', 'Utility', 'Salary', 'Rent', 'Tax', 'Others']
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _category = v!),
-                  decoration: const InputDecoration(labelText: 'Category'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Add Expense'),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: localCategory,
+                      items: ['Operations', 'Utility', 'Salary', 'Rent', 'Tax', 'Others']
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          setDialogState(() => localCategory = v);
+                        }
+                      },
+                      decoration: const InputDecoration(labelText: 'Category'),
+                    ),
+                    TextFormField(
+                      decoration: const InputDecoration(labelText: 'Amount (₦)'),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Required';
+                        if (double.tryParse(v) == null) return 'Enter a valid number';
+                        return null;
+                      },
+                      onSaved: (v) => _amount = double.parse(v!),
+                    ),
+                    TextFormField(
+                      decoration: const InputDecoration(labelText: 'Description'),
+                      validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                      onSaved: (v) => _description = v!,
+                    ),
+                  ],
                 ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Amount (₦)'),
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                  onSaved: (v) => _amount = double.parse(v!),
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Description'),
-                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                  onSaved: (v) => _description = v!,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                _formKey.currentState!.save();
-                try {
-                  await context.read<ExpenseProvider>().addExpense(_category, _amount, _description);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Expense added')));
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    _formKey.currentState!.save();
+                    try {
+                      await context.read<ExpenseProvider>().addExpense(localCategory, _amount, _description);
+                      if (context.mounted) Navigator.pop(context);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Expense added')));
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                      }
+                    }
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

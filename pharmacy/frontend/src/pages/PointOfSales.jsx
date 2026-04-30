@@ -5,7 +5,7 @@ import staffService from '../services/staffService';
 import barcodeService from '../services/barcodeService';
 import toast from 'react-hot-toast';
 import {
-  FaPlus, FaMinus, FaSearch, FaBell, FaTrashAlt, FaTimes,
+  FaPlus, FaMinus, FaSearch, FaTimes,
   FaShoppingCart, FaUserMd, FaUndo, FaReceipt, FaPrint, FaBarcode, FaCamera
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
@@ -25,7 +25,6 @@ const PointOfSales = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [lastScanned, setLastScanned] = useState(null);
-  const [autoPrint, setAutoPrint] = useState(false);
   const scanInputRef = useRef(null);
 
   useEffect(() => {
@@ -52,6 +51,7 @@ const PointOfSales = () => {
       controller.abort();
       window.removeEventListener('keydown', handleGlobalScan);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -101,25 +101,37 @@ const PointOfSales = () => {
   };
 
   const addToCart = (product) => {
-    const existing = cart.find(item => item.id === product.id);
-    if (existing) {
-      if (existing.quantity >= product.stock) {
-        toast.error("Not enough stock!");
-        return;
+    if (!product) return;
+
+    setCart(prevCart => {
+      const existing = prevCart.find(item => item.id === product.id);
+      if (existing) {
+        if (existing.quantity >= product.stock) {
+          toast.error(`Only ${product.stock} units of ${product.name} available.`);
+          return prevCart;
+        }
+        return prevCart.map(item =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      } else {
+        if (product.stock <= 0) {
+          toast.error(`${product.name} is out of stock!`);
+          return prevCart;
+        }
+        if (product.stock <= product.reorder_level) {
+          toast(
+            `${product.name} is running low on stock (${product.stock} left)`,
+            { icon: '⚠️', style: { borderRadius: '10px', background: '#333', color: '#fff' } }
+          );
+        }
+        return [...prevCart, {
+          id: product.id,
+          name: product.name,
+          unitPrice: parseFloat(product.unit_price),
+          quantity: 1
+        }];
       }
-      updateQuantity(product.id, 1);
-    } else {
-      if (product.stock <= 0) {
-        toast.error("Product out of stock!");
-        return;
-      }
-      setCart([...cart, {
-        id: product.id,
-        name: product.name,
-        unitPrice: parseFloat(product.unit_price),
-        quantity: 1
-      }]);
-    }
+    });
   };
 
   const handleMobileScan = async () => {
@@ -203,7 +215,10 @@ const PointOfSales = () => {
       fetchProducts();
     } catch (error) {
       console.error(error);
-      toast.error("Checkout failed.");
+      const serverError = error.response?.data?.detail ||
+                          (error.response?.data && Object.values(error.response.data)[0]) ||
+                          "Checkout failed. Please try again.";
+      toast.error(serverError.toString());
     } finally {
       setIsCheckingOut(false);
     }
@@ -222,12 +237,19 @@ const PointOfSales = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    const found = products.find(p => p.barcode === searchTerm || p.sku === searchTerm);
+                    const code = searchTerm.trim();
+                    if (!code) return;
+                    const found = products.find(p => p.barcode === code || p.sku === code);
                     if (found) {
                       addToCart(found);
+                      setLastScanned({
+                        name: found.name,
+                        price: found.unit_price,
+                        time: Date.now()
+                      });
                       setSearchTerm('');
                     } else {
-                      toast.error("Not found");
+                      toast.error(`Barcode "${code}" not found`);
                     }
                   }
                 }}
