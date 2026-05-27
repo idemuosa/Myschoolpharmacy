@@ -1,21 +1,24 @@
 {
   "name": "pharmacy",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Josiah Pharmacy Management System",
   "author": "Josiah",
   "type": "module",
   "main": "electron-main.cjs",
   "scripts": {
-    "start": "npm run dev",
+    "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "electron:dev": "electron .",
+    "electron:build": "npm run build && electron-builder",
+    "windows:build": "npm run build && electron-builder --win",
+    "windows:portable": "npm run build && electron-builder --win portable",
     "android:sync": "npm run build && npx cap copy && npx cap sync",
-    "android:open": "npx cap open android",
-    "windows:build": "npm run build && electron-builder"
+    "android:build": "npm run android:sync && cd android && ./gradlew assembleRelease",
+    "android:open": "npx cap open android"
   },
   "dependencies": {
     "axios": "^1.13.6",
@@ -48,12 +51,11 @@
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
     "vite": "^7.3.1",
-    "vite-plugin-pwa": "^0.21.2",
     "wait-on": "^9.0.4"
   },
   "build": {
     "appId": "com.josiah.pharmacy",
-    "productName": "josiapharmacy",
+    "productName": "JosiahPharmacyPOS",
     "directories": {
       "output": "dist_electron"
     },
@@ -68,19 +70,16 @@
         "nsis",
         "portable"
       ],
-      "certificateFile": null,
-      "certificatePassword": null,
-      "signingHashAlgorithms": [
-        "sha256"
-      ],
-      "sign": null
+      "icon": "public/favicon.ico"
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": true,
-      "allowToChangeInstallationDirectory": false,
+      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "artifactName": "${productName}.${ext}"
+      "createStartMenuShortcut": true,
+      "shortcutName": "Josiah Pharmacy POS",
+      "artifactName": "${productName}_Setup.${ext}"
     }
   }
 }

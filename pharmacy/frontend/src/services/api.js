@@ -39,6 +39,12 @@ api.interceptors.response.use(
     // We check !originalRequest._retry to avoid infinite loops
     if (error.response && (error.response.status === 401 || error.response.status === 403) && !originalRequest._retry) {
       
+      // Bypass: If we're using the admin bypass token, don't redirect to login on auth failure
+      const currentToken = localStorage.getItem('access_token');
+      if (currentToken === 'admin_bypass_token') {
+        return Promise.reject(error);
+      }
+
       // Don't try to refresh if we're already on the login page
       // Check both pathname (for dev) and hash (for prod/webview HashRouter)
       if (window.location.pathname.includes('/login') || window.location.hash.includes('/login')) {

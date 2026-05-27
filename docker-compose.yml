@@ -1,28 +1,89 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:-pharmacy_db}
+      - POSTGRES_USER=${DB_USER:-pharmacy_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-pharmacy_password}
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+
   backend:
     build: 
       context: ./backend
       dockerfile: Dockerfile
     volumes:
-      - ./backend/db.sqlite3:/app/db.sqlite3
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
+      - ./backend:/app
+      - static_volume:/app/staticfiles
     environment:
       - DEBUG=${DEBUG:-True}
       - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - DATABASE_URL=postgres://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key}
+      - DATABASE_URL=postgres://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    entrypoint: [] # Disable the default entrypoint to avoid running migrations/collectstatic in every worker
+    command: celery -A core worker -l info
     restart: always
 
   frontend:
     build: 
       context: ./pharmacy
       dockerfile: Dockerfile
-    ports:
-      - "3000:80"
     depends_on:
       - backend
     restart: always
+
+  node_backend:
+    build:
+      context: ./node_backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
+      - ACCESS_TOKEN_SECRET=${SECRET_KEY:-django-insecure-docker-dev-key}
+      - PORT=4000
+    depends_on:
+      - db
+    restart: always
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/app/staticfiles
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:
+  static_volume:

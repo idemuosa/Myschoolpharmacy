@@ -144,6 +144,26 @@ Flutter SDK not found at expected location
 - Used device's system Flutter installation
 - Build configured to check alternate locations
 
+### Issue #7: JavaScript Error in Main Process (Windows)
+**Problem:**
+"A JavaScript error occurred in the main process" popup when starting the Windows application.
+
+**Root Cause:**
+- Unhandled exceptions when the app tried to start background services (Django/Node).
+- The app attempted to access properties of `null` objects if `spawn()` failed to find Python or Node.
+- Incorrect relative paths for backends when the app was packaged/installed.
+
+**Fix Applied:**
+1. Added global `uncaughtException` handler in `electron-main.cjs` to show descriptive error dialogs instead of crashing.
+2. Implemented `try-catch` blocks around background service initialization.
+3. Added file existence checks (`fs.existsSync`) before attempting to start Python or Node services.
+4. Corrected path logic to differentiate between Development and Packaged (Production) environments.
+5. Improved process cleanup (taskkill) to prevent orphaned backend processes.
+
+**Status:** ✅ RESOLVED
+- App now starts gracefully even if backends are missing or failing.
+- Clearer error messages provided if a backend cannot be found.
+
 ---
 
 ## Summary of Error Resolution

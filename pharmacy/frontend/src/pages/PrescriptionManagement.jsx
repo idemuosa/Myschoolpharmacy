@@ -18,13 +18,14 @@ const PrescriptionManagement = () => {
   const fetchPrescriptions = async () => {
     try {
       const response = await prescriptionService.getPrescriptions();
-      const data = response.data;
-      setPrescriptions(data);
+      const data = response.data?.results || response.data || [];
+      setPrescriptions(Array.isArray(data) ? data : []);
       if (data.length > 0) {
         setSelectedPrescription(data[0]);
       }
     } catch (error) {
        console.error("Error fetching prescriptions:", error);
+       setPrescriptions([]);
     } finally {
        setLoading(false);
     }

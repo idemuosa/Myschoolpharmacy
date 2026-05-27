@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import { 
+import drugService from '../services/drugService';
+import axios from 'axios';
+import {
   FaSearch, FaBell, FaThLarge, FaBox, FaChartBar, FaClipboardList, 
   FaUsers, FaCog, FaPlusCircle, FaExchangeAlt, FaRegClock, FaClipboardCheck, 
   FaChartLine, FaDownload, FaCalendarAlt, FaBolt, FaExclamationTriangle
 } from 'react-icons/fa';
 
+// eslint-disable-next-line no-unused-vars
 const InventoryTurnover = () => {
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const [drugs, setDrugs] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,9 +24,10 @@ const InventoryTurnover = () => {
 
   const fetchInventory = async (signal) => {
     try {
-      const response = await api.get('drugs/', { signal });
+      const response = await drugService.getDrugs({ signal });
       setDrugs(response.data?.results || response.data || []);
     } catch (error) {
+       if (axios.isCancel(error)) return;
        console.error("Error fetching inventory for report:", error);
     } finally {
        setLoading(false);

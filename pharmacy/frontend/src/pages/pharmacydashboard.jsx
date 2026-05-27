@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import axios from 'axios';
 import { socket } from '../services/socket';
 import reportService from '../services/reportService';
 import drugService from '../services/drugService';
 import settingsService from '../services/settingsService';
+import customerService from '../services/customerService';
+import prescriptionService from '../services/prescriptionService';
 import toast from 'react-hot-toast';
 import { 
   FaCalendarAlt, FaMoneyBill, FaFilePrescription, FaExclamationTriangle, FaUsers,
@@ -15,6 +18,7 @@ import {
 
 const PharmacyDashboard = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
   const [stats, setStats] = useState({
     revenue: 0,
     scripts: 0,
@@ -22,27 +26,40 @@ const PharmacyDashboard = () => {
     customers: 0
   });
   const [lowStockDrugs, setLowStockDrugs] = useState([]);
+  const [financials, setFinancials] = useState({
+    total_revenue: 0,
+    total_expenses: 0,
+    net_profit: 0,
+    pharmacy_revenue: 0,
+    supermarket_revenue: 0,
+    chart_data: []
+  });
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({ shop_name: 'pharmacylogo', location: "St. Mary's" });
 
   const fetchData = async (signal) => {
     try {
       setLoading(true);
-      const [statsRes, drugRes, scriptsRes, customerRes, settingsRes] = await Promise.all([
+      const [statsRes, drugRes, scriptsRes, customerRes, settingsRes, financialRes] = await Promise.all([
         reportService.getDashboardStats({ signal }),
         drugService.getDrugs({ signal }),
-        api.get('prescriptions/', { signal }),
-        api.get('customers/', { signal }),
-        settingsService.getSettings({ signal })
+        prescriptionService.getPrescriptions({ signal }),
+        customerService.getCustomers({ signal }),
+        settingsService.getSettings({ signal }),
+        axios.get(`${api.defaults.baseURL}/expenses/financial-summary/`, { signal })
       ]);
 
       if (settingsRes.data && settingsRes.data.length > 0) {
         setSettings(settingsRes.data[0]);
       }
 
-      const data = statsRes.data;
+      if (financialRes.data) {
+        setFinancials(financialRes.data);
+      }
+
+      const data = statsRes.data || {};
       const allDrugs = drugRes.data?.results || drugRes.data || [];
-      const lowStock = allDrugs.filter(d => d.stock <= d.reorder_level);
+      const lowStock = Array.isArray(allDrugs) ? allDrugs.filter(d => d.stock <= (d.reorder_level || 0)) : [];
 
       setLowStockDrugs(lowStock.slice(0, 5)); // Show top 5 low stock
 
@@ -50,13 +67,14 @@ const PharmacyDashboard = () => {
       const customers = customerRes.data?.results || customerRes.data || [];
 
       setStats({
-        revenue: data.total_revenue,
-        scripts: scripts.filter(p => p.status === 'Pending').length,
+        revenue: data.total_revenue || 0,
+        scripts: Array.isArray(scripts) ? scripts.filter(p => p.status === 'Pending').length : 0,
         lowStock: lowStock.length,
-        customers: customers.length
+        customers: Array.isArray(customers) ? customers.length : 0
       });
 
     } catch (error) {
+      if (axios.isCancel(error)) return;
       console.error("Dashboard data fetch failed", error);
     } finally {
       setLoading(false);
@@ -75,9 +93,15 @@ const PharmacyDashboard = () => {
         fetchData();
     });
 
+    socket.on('stock_updated', (data) => {
+        console.log('Stock updated event received:', data);
+        fetchData(); // Refresh stock levels on dashboard
+    });
+
     return () => {
         controller.abort();
         socket.off('alert_new_prescription');
+        socket.off('stock_updated');
     };
   }, []);
 
@@ -99,12 +123,28 @@ const PharmacyDashboard = () => {
     <div className="space-y-4 animate-in fade-in duration-500 overflow-x-hidden text-sm">
       
       {/* Search Header */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="relative w-full max-w-[600px]">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
+          <img src="https://images.unsplash.com/photo-1587854685352-c8462d18c962?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover" />
+        </div>
+        <div className="relative w-full max-w-[600px] z-10">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
           <input 
             type="text" 
-            placeholder="Search pharmacopeia, transactions, or patients..." 
+            placeholder="Search medications, transactions, or patients..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchTerm.trim()) {
+                // Determine where to redirect based on search term
+                // Simple logic: if it's a number/id-like, maybe sales, else inventory
+                if (searchTerm.startsWith('TX-') || searchTerm.startsWith('TX')) {
+                  navigate('/reports/sales');
+                } else {
+                  navigate(`/inventory?search=${encodeURIComponent(searchTerm)}`);
+                }
+              }
+            }}
             className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all outline-none placeholder:text-slate-300"
           />
         </div>
@@ -143,15 +183,15 @@ const PharmacyDashboard = () => {
                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
                   <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><FaMoneyBill /></div>
                   <div>
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Revenue</p>
-                    <p className="text-sm font-black text-slate-900 tabular-nums">${stats.revenue.toLocaleString()}</p>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Revenue</p>
+                    <p className="text-sm font-black text-slate-900 tabular-nums">${financials.total_revenue.toLocaleString()}</p>
                   </div>
                </div>
                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><FaFilePrescription /></div>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><FaChartLine /></div>
                   <div>
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Scripts</p>
-                    <p className="text-sm font-black text-slate-900 tabular-nums">{stats.scripts}</p>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Net Profit</p>
+                    <p className="text-sm font-black text-emerald-600 tabular-nums">${financials.net_profit.toLocaleString()}</p>
                   </div>
                </div>
                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2 border-l-2 border-l-orange-500">
@@ -170,9 +210,58 @@ const PharmacyDashboard = () => {
                </div>
             </div>
 
+            {/* Revenue Trend Chart (CSS Only) */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Revenue Trend</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Growth</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase">Pharmacy</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase">Supermarket</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-end justify-between h-32 gap-2 px-2">
+                {financials.chart_data && financials.chart_data.length > 0 ? (
+                  financials.chart_data.map((data, index) => {
+                    const maxVal = Math.max(...financials.chart_data.map(d => d.revenue), 100);
+                    const height = (data.revenue / maxVal) * 100;
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center gap-2 group relative">
+                        <div
+                          className="w-full bg-emerald-500/20 group-hover:bg-emerald-500/40 transition-all rounded-t-lg relative"
+                          style={{ height: `${height}%` }}
+                        >
+                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                            ${data.revenue.toLocaleString()}
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase">{data.month}</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-300 font-black uppercase text-[10px] tracking-widest">
+                    Insufficient Data for Trends
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Low Stock DRUGS TABLE */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-               <div className="px-5 py-3 border-b border-slate-50 flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+               <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                  <img src="https://images.unsplash.com/photo-1587854685352-c8462d18c962?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover" />
+               </div>
+               <div className="px-5 py-3 border-b border-slate-50 flex items-center justify-between relative z-10">
                   <div>
                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Stock Replenishment</h3>
                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Inventory Alert</p>
@@ -254,19 +343,37 @@ const PharmacyDashboard = () => {
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-               <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Analytics</h3>
+               <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Department Revenue</h3>
                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                     <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">Accuracy</span>
-                     <span className="text-[12px] font-black text-emerald-500">99.2%</span>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                       <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">Pharmacy</span>
+                       <span className="text-[12px] font-black text-emerald-500">${financials.pharmacy_revenue.toLocaleString()}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden">
+                       <div
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                        style={{ width: `${(financials.pharmacy_revenue / (financials.total_revenue || 1)) * 100}%` }}
+                       ></div>
+                    </div>
                   </div>
-                  <div className="w-full h-1 bg-slate-50 rounded-full overflow-hidden">
-                     <div className="h-full bg-emerald-500 w-[99%] rounded-full"></div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                       <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">Supermarket</span>
+                       <span className="text-[12px] font-black text-indigo-500">${financials.supermarket_revenue.toLocaleString()}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden">
+                       <div
+                        className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                        style={{ width: `${(financials.supermarket_revenue / (financials.total_revenue || 1)) * 100}%` }}
+                       ></div>
+                    </div>
                   </div>
                   
                   <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                     <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">Consults</span>
-                     <span className="text-[12px] font-black text-indigo-500">24 today</span>
+                     <span className="text-[12px] font-black text-slate-400 uppercase tracking-tight">Total Sales</span>
+                     <span className="text-[12px] font-black text-slate-900">{financials.sales_count} Transactions</span>
                   </div>
                </div>
             </div>

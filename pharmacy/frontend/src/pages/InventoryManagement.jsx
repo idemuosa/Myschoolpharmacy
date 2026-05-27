@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import drugService from '../services/drugService';
 import categoryService from '../services/categoryService';
 import { AuthContext } from '../context/AuthContext';
+import { socket } from '../services/socket';
+import axios from 'axios';
 import {
   FaSearch, FaBell, FaPlus, FaThLarge, FaCashRegister, FaBox,
   FaUsers, FaClipboardList, FaCog, FaPills, FaExclamationTriangle,
@@ -22,26 +24,47 @@ const InventoryManagement = () => {
   const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Low Stock', '30 Days Expiry', '100 Days Expiry'
 
   useEffect(() => {
-    fetchDrugs();
-    fetchCategories();
+    const controller = new AbortController();
+    fetchDrugs(controller.signal);
+    fetchCategories(controller.signal);
+
+    const handleStockUpdate = (data) => {
+      console.log('Inventory received stock update:', data);
+      if (data.type === 'drug') {
+        fetchDrugs();
+      }
+    };
+
+    socket.on('stock_updated', handleStockUpdate);
+
+    return () => {
+      controller.abort();
+      socket.off('stock_updated', handleStockUpdate);
+    };
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (signal) => {
     try {
-      const response = await categoryService.getCategories();
-      setCategories(response.data.results || response.data);
+      const response = await categoryService.getCategories({ signal });
+      const data = response.data?.results || response.data || [];
+      setCategories(Array.isArray(data) ? data : []);
     } catch (error) {
+      if (axios.isCancel(error)) return;
       console.error("Error fetching categories:", error);
+      setCategories([]);
     }
   };
 
-  const fetchDrugs = async () => {
+  const fetchDrugs = async (signal) => {
     try {
-      const response = await drugService.getDrugs();
-      const drugs = response.data.results || response.data;
+      setLoading(true);
+      const response = await drugService.getDrugs({ signal });
+      const drugs = response.data?.results || response.data || [];
       setInventoryData(Array.isArray(drugs) ? drugs : []);
     } catch (error) {
+      if (axios.isCancel(error)) return;
       console.error("Error fetching inventory data:", error);
+      setInventoryData([]);
     } finally {
       setLoading(false);
     }
@@ -154,9 +177,13 @@ const InventoryManagement = () => {
     return `${days}d`;
   };
 
-  const filteredData = inventoryData.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.generic_name && item.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredData = (Array.isArray(inventoryData) ? inventoryData : []).filter(item => {
+    if (!item) return false;
+    const name = item.name || '';
+    const genericName = item.generic_name || '';
+
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      genericName.toLowerCase().includes(searchTerm.toLowerCase());
 
     const drugCategory = (item.category_name || "").toLowerCase();
     const targetCategory = selectedCategory.toLowerCase();
@@ -325,8 +352,11 @@ const InventoryManagement = () => {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm relative">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
+          <img src="https://images.unsplash.com/photo-1587854685352-c8462d18c962?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover" />
+        </div>
+        <div className="overflow-x-auto relative z-10">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">

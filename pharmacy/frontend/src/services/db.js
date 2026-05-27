@@ -2,13 +2,18 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('PharmacyDB');
 
-db.version(2).stores({
-  drugs: '++id, name, category, sku',
-  sales: '++id, customer_id, total_amount, date, status',
-  returns: '++id, sale_id, reason, date',
-  customers: '++id, name, phone',
+db.version(7).stores({
+  drugs: '++id, name, category, barcode',
+  products: '++id, name, category, barcode',
+  categories: '++id, name, type',
+  staff: '++id, full_name, role, username',
+  sales: '++id, customer, transaction_id, created_at',
+  supermarketSales: '++id, staff, transaction_id, created_at',
+  returns: '++id, sale, drug, created_at',
+  customers: '++id, first_name, last_name, phone_number',
   prescriptions: '++id, prescription_id, customer, status, created_at',
-  prescriptionItems: '++id, prescription_id, drug, quantity',
+  prescriptionItems: '++id, prescription, drug',
+  expenses: '++id, category, amount, description, date',
   syncQueue: '++id, action, table, data, timestamp'
 });
 

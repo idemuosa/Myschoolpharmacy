@@ -4,53 +4,54 @@ import { db, addToSyncQueue } from './db';
 const prescriptionService = {
   getPrescriptions: async (config = {}) => {
     try {
-      if (navigator.onLine) {
-        const response = await api.get('prescriptions/', config);
-        // Update local cache: Use bulkPut to merge instead of clear() + bulkAdd()
-        const prescriptions = response.data.results || response.data;
-        if (Array.isArray(prescriptions)) {
-          await db.prescriptions.bulkPut(prescriptions);
-        }
-        return response;
+      const response = await api.get('prescriptions/', config);
+      const prescriptions = response.data.results || response.data;
+      if (Array.isArray(prescriptions)) {
+        await db.prescriptions.bulkPut(prescriptions);
       }
+      return { data: prescriptions };
     } catch (error) {
       console.error("Network failed, fetching prescriptions from local DB", error);
+      try {
+        const localPrescriptions = await db.prescriptions.toArray();
+        return { data: localPrescriptions };
+      } catch (dbError) {
+        throw dbError;
+      }
     }
-    const localPrescriptions = await db.prescriptions.toArray();
-    return { data: localPrescriptions };
   },
 
   getPrescription: async (id) => {
     try {
-      if (navigator.onLine) {
-        return await api.get(`prescriptions/${id}/`);
-      }
+      return await api.get(`prescriptions/${id}/`);
     } catch (error) {
       console.error("Network failed", error);
+      const prescription = await db.prescriptions.get(id);
+      return { data: prescription };
     }
-    const prescription = await db.prescriptions.get(id);
-    return { data: prescription };
   },
 
   createPrescription: async (prescriptionData) => {
-    if (navigator.onLine) {
+    try {
       const response = await api.post('prescriptions/', prescriptionData);
       await db.prescriptions.add(response.data);
       return response;
-    } else {
+    } catch (error) {
+      console.error("Online prescription creation failed, fallback to offline", error);
       const id = await db.prescriptions.add(prescriptionData);
-      const offlinePrescription = { ...prescriptionData, id };
+      const offlinePrescription = { ...prescriptionData, id, created_at: new Date().toISOString() };
       await addToSyncQueue('CREATE', 'prescriptions', offlinePrescription);
       return { data: offlinePrescription, status: 201 };
     }
   },
 
   updatePrescription: async (id, prescriptionData) => {
-    if (navigator.onLine) {
+    try {
       const response = await api.patch(`prescriptions/${id}/`, prescriptionData);
       await db.prescriptions.put({ ...prescriptionData, id });
       return response;
-    } else {
+    } catch (error) {
+      console.error("Online prescription update failed", error);
       await db.prescriptions.put({ ...prescriptionData, id });
       await addToSyncQueue('UPDATE', 'prescriptions', { ...prescriptionData, id });
       return { data: { ...prescriptionData, id }, status: 200 };
@@ -58,15 +59,16 @@ const prescriptionService = {
   },
 
   deletePrescription: async (id) => {
-    if (navigator.onLine) {
+    try {
       await api.delete(`prescriptions/${id}/`);
-    } else {
+      await db.prescriptions.delete(id);
+    } catch (error) {
+      console.error("Offline delete", error);
       await addToSyncQueue('DELETE', 'prescriptions', { id });
+      await db.prescriptions.delete(id);
     }
-    await db.prescriptions.delete(id);
     return { status: 204 };
   },
 };
 
 export default prescriptionService;
-

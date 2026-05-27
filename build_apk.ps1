@@ -1,114 +1,42 @@
-# build_apk.ps1 - Mobile APK Release Build Script
-param(
-    [switch]$CreateKeystore,
-    [string]$KeystorePassword,
-    [string]$KeyPassword
-)
-
+# build_apk.ps1 - Standardized Android APK Build
 $ProjectRoot = $PSScriptRoot
-$MobileDir = Join-Path $ProjectRoot "pharmacy\mobile"
-$AndroidDir = Join-Path $MobileDir "android"
-$AppDir = Join-Path $AndroidDir "app"
-$KeystorePath = Join-Path $AppDir "pharmacy-release.keystore"
-$FlutterSDK = Join-Path $ProjectRoot "pharmacy\flutter\bin\flutter.bat"
-$AndroidSDK = "$env:USERPROFILE\AppData\Local\Android\Sdk"
+$FrontendDir = Join-Path $ProjectRoot "pharmacy"
+$AndroidDir = Join-Path $FrontendDir "android"
+$JavaHome = "C:\Program Files\Android\Android Studio\jbr"
+$AndroidHome = "$env:USERPROFILE\AppData\Local\Android\Sdk"
 
-Write-Host "===== Josiah Pharmacy Mobile APK Release Build =====" -ForegroundColor Cyan
+Write-Host "--- Josiah Pharmacy Android Build ---" -ForegroundColor Cyan
 
-# Validation
-if (-not (Test-Path $MobileDir)) {
-    Write-Error "Mobile directory not found at $MobileDir" -ErrorAction Stop
-}
+# 1. Build React Frontend
+Write-Host "[1/3] Building Web Assets..." -ForegroundColor Green
+Set-Location $FrontendDir
+npm run build
+if ($LASTEXITCODE -ne 0) { Write-Error "Web build failed."; exit 1 }
 
-if (-not (Test-Path $FlutterSDK)) {
-    Write-Error "Flutter SDK not found at $FlutterSDK" -ErrorAction Stop
-}
+# 2. Sync to Android
+Write-Host "[2/3] Syncing Capacitor Android..." -ForegroundColor Green
+npx cap sync android
+if ($LASTEXITCODE -ne 0) { Write-Error "Capacitor sync failed."; exit 1 }
 
-# Setup environment
-Write-Host "[1/6] Setting up build environment..." -ForegroundColor Green
-$env:ANDROID_HOME = $AndroidSDK
-$env:ANDROID_SDK_ROOT = $AndroidSDK
+# 3. Build APK
+Write-Host "[3/3] Running Gradle Build..." -ForegroundColor Green
+Set-Location $AndroidDir
+# Set environment variables for the current session
+$env:JAVA_HOME = $JavaHome
+$env:ANDROID_HOME = $AndroidHome
 
-# Check for Android SDK with spaces warning
-if ($env:ANDROID_HOME -like "* *") {
-    Write-Host "WARNING: Android SDK path contains spaces" -ForegroundColor Yellow
-}
+# Create local.properties
+"sdk.dir=$AndroidHome" | Out-File -FilePath "local.properties" -Encoding utf8
 
-# Keystore setup
-Write-Host "[2/6] Checking release signing configuration..." -ForegroundColor Green
+# Set compile SDK to 34/35 in variables.gradle if needed
+# We already did this via replace_file_content earlier
 
-if (-not (Test-Path $KeystorePath)) {
-    Write-Host "Release keystore not found" -ForegroundColor Yellow
-    
-    $GenerateKeystore = if ($CreateKeystore) { $true } else { (Read-Host "Generate keystore? (y/n)") -eq "y" }
-    
-    if ($GenerateKeystore) {
-        Write-Host "Generating release keystore..." -ForegroundColor Cyan
-        $StorePass = if ($KeystorePassword) { $KeystorePassword } else { Read-Host "Enter keystore password" }
-        $KeyPass = if ($KeyPassword) { $KeyPassword } else { $StorePass }
-        
-        $DNString = "CN=Josiah,OU=Dev,O=Pharmacy,L=Nbi,ST=Kenya,C=KE"
-        keytool -genkey -v -keystore $KeystorePath -keyalg RSA -keysize 2048 -validity 10000 -alias pharmacy-key -storepass $StorePass -keypass $KeyPass -dname $DNString
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Keystore created!" -ForegroundColor Green
-        } else {
-            Write-Error "Failed to create keystore" -ErrorAction Stop
-        }
-    } else {
-        Write-Error "Keystore required for release build" -ErrorAction Stop
-    }
-}
+./gradlew assembleDebug --no-daemon
+if ($LASTEXITCODE -ne 0) { Write-Error "Android build failed."; exit 1 }
 
-# Set environment variables for signing
-$env:KEYSTORE_FILE = $KeystorePath
-$env:KEY_ALIAS = "pharmacy-key"
+# Move APK to root
+$ApkPath = Join-Path $AndroidDir "app\build\outputs\apk\debug\app-debug.apk"
+Copy-Item $ApkPath "$ProjectRoot\josiah-pharmacy-v3.apk" -Force
 
-if (-not $env:KEYSTORE_PASSWORD) {
-    if ($KeystorePassword) {
-        $env:KEYSTORE_PASSWORD = $KeystorePassword
-    } else {
-        $env:KEYSTORE_PASSWORD = Read-Host "Enter keystore password"
-    }
-}
-
-if (-not $env:KEY_PASSWORD) {
-    $env:KEY_PASSWORD = $env:KEYSTORE_PASSWORD
-}
-
-Write-Host "Signing configured" -ForegroundColor Green
-
-# Clean
-Write-Host "[3/6] Cleaning..." -ForegroundColor Green
-Set-Location $MobileDir
-& "$FlutterSDK" clean 2>&1 | Out-Null
-
-# Get dependencies
-Write-Host "[4/6] Getting dependencies..." -ForegroundColor Green
-& "$FlutterSDK" pub get
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to get Flutter dependencies" -ErrorAction Stop
-}
-
-# Build
-Write-Host "[5/6] Building APK..." -ForegroundColor Green
-Write-Host "This may take 5-10 minutes..." -ForegroundColor Cyan
-& "$FlutterSDK" build apk --release
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "APK build failed" -ErrorAction Stop
-}
-
-# Copy to root
-Write-Host "[6/6] Finalizing..." -ForegroundColor Green
-$APKSource = Join-Path $MobileDir "build\app\outputs\flutter-apk\app-release.apk"
-$APKDest = Join-Path $ProjectRoot "app-release.apk"
-
-if (Test-Path $APKSource) {
-    Copy-Item $APKSource $APKDest -Force
-    $FileSize = (Get-Item $APKDest).Length / 1MB
-    Write-Host "SUCCESS! APK ready" -ForegroundColor Green
-    Write-Host "Output: $APKDest" -ForegroundColor Cyan
-    Write-Host "Size: $([math]::Round($FileSize, 2)) MB" -ForegroundColor Cyan
-} else {
-    Write-Error "APK not found after build" -ErrorAction Stop
-}
+Write-Host "--- Build Complete! ---" -ForegroundColor Cyan
+Write-Host "Final APK: $ProjectRoot\josiah-pharmacy-v3.apk"

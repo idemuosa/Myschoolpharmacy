@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fa';
 import drugService from '../services/drugService';
 import prescriptionService from '../services/prescriptionService';
+import posService from '../services/posService';
 import toast from 'react-hot-toast';
 
 const PatientPage = () => {
@@ -33,8 +34,8 @@ const PatientPage = () => {
 
     const fetchSales = async () => {
         try {
-            const response = await api.get('sales/');
-            const allSales = response.data.results || response.data;
+            const response = await posService.getSales();
+            const allSales = response.data?.results || response.data || [];
             // Filter sales for this specific patient
             const patientSales = Array.isArray(allSales) 
                 ? allSales.filter(s => s.customer === parseInt(id))

@@ -34,8 +34,9 @@ const DetailPrescriptionReview = () => {
        console.error("Error fetching prescriptions:", error);
        toast.error("Failed to load prescription queue.");
     } finally {
-       if (signal && signal.aborted) return;
-       setLoading(false);
+       if (!(signal && signal.aborted)) {
+         setLoading(false);
+       }
     }
   };
 

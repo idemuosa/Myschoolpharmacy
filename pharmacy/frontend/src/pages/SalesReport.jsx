@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import { 
+import posService from '../services/posService';
+import axios from 'axios';
+import {
   FaSearch, FaBell, FaPlus, FaMoneyBill, FaWallet, FaReceipt, FaShoppingCart,
   FaChevronDown, FaEllipsisV
 } from 'react-icons/fa';
@@ -29,14 +30,14 @@ const SalesReport = () => {
   const fetchSales = async (signal) => {
     try {
       setLoading(true);
-      const response = await api.get('sales/', { signal });
+      const response = await posService.getSales({ signal });
       const sales = response.data?.results || response.data || [];
-      setSalesData(sales);
+      setSalesData(Array.isArray(sales) ? sales : []);
       
-      const total = sales.reduce((acc, s) => acc + parseFloat(s.total_amount || 0), 0);
-      const count = sales.length;
+      const total = (Array.isArray(sales) ? sales : []).reduce((acc, s) => acc + parseFloat(s.total_amount || 0), 0);
+      const count = (Array.isArray(sales) ? sales : []).length;
       const today = new Date().toISOString().split('T')[0];
-      const daily = sales
+      const daily = (Array.isArray(sales) ? sales : [])
         .filter(s => s.created_at?.startsWith(today))
         .reduce((acc, s) => acc + parseFloat(s.total_amount || 0), 0);
       
@@ -47,6 +48,7 @@ const SalesReport = () => {
         avgValue: count > 0 ? (total / count) : 0
       });
     } catch (error) {
+       if (axios.isCancel(error)) return;
        console.error("Error fetching sales:", error);
        toast.error("Failed to sync sales audit trail. Check connection.");
     } finally {

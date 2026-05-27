@@ -1,17 +1,24 @@
 from django.contrib.auth.models import User
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Sum, Count, F
-from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense, ActivityLog
+from .tasks import send_notification_task, broadcast_stock_update
 from .serializers import (
     CategorySerializer, DrugSerializer, StaffSerializer, CustomerSerializer,
     PrescriptionSerializer, SaleSerializer, SaleReturnSerializer,
-    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer, UserProfileSerializer, UserSerializer, ExpenseSerializer
+    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer,
+    UserProfileSerializer, UserSerializer, ExpenseSerializer,
+    MyTokenObtainPairSerializer, ActivityLogSerializer
 )
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -20,6 +27,24 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class DrugViewSet(viewsets.ModelViewSet):
     queryset = Drug.objects.all()
     serializer_class = DrugSerializer
+
+    def perform_create(self, serializer):
+        drug = serializer.save()
+        ActivityLog.objects.create(
+            user=self.request.user if self.request.user.is_authenticated else None,
+            action='Create Drug',
+            module='Inventory',
+            description=f"Added new drug: {drug.name}"
+        )
+
+    def perform_update(self, serializer):
+        drug = serializer.save()
+        ActivityLog.objects.create(
+            user=self.request.user if self.request.user.is_authenticated else None,
+            action='Update Drug',
+            module='Inventory',
+            description=f"Updated drug details for: {drug.name}"
+        )
 
 class StaffViewSet(viewsets.ModelViewSet):
     queryset = Staff.objects.all()
@@ -50,7 +75,6 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             prescription = serializer.save()
 
             for item in items_data:
-                # Validate drug exists
                 if not Drug.objects.filter(id=item['drug']).exists():
                     raise serializers.ValidationError(f"Drug with ID {item['drug']} does not exist.")
 
@@ -61,7 +85,6 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
                     directions=item['directions']
                 )
 
-            # Re-serialize to include items in the response
             full_serializer = self.get_serializer(prescription)
             return Response(full_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -70,7 +93,6 @@ class SaleViewSet(viewsets.ModelViewSet):
     serializer_class = SaleSerializer
 
     def create(self, request, *args, **kwargs):
-        # Implement atomic transaction for sale and stock update
         with transaction.atomic():
             data = request.data
             items_data = data.pop('items', [])
@@ -101,11 +123,12 @@ class SaleViewSet(viewsets.ModelViewSet):
                     subtotal=item['subtotal']
                 )
                 
-                # Update stock
                 drug.stock -= item['quantity']
                 drug.save()
 
-            # Re-serialize to include items in the response
+            drug_ids = [item['drug'] for item in items_data]
+            broadcast_stock_update.delay(drug_ids, item_type='drug')
+
             full_serializer = self.get_serializer(sale)
             return Response(full_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -123,7 +146,6 @@ class SaleViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='sales-stats')
     def sales_stats(self, request, pk=None):
-        """Get sales statistics for a specific staff member"""
         staff = get_object_or_404(Staff, pk=pk)
         sales = Sale.objects.filter(staff=staff)
         
@@ -148,15 +170,20 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
             drug_id = data.get('drug')
             quantity = int(data.get('quantity', 0))
             
-            # Create the return record
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-            # Update stock: put items back into inventory
             drug = get_object_or_404(Drug, id=drug_id)
             drug.stock += quantity
             drug.save()
+
+            ActivityLog.objects.create(
+                user=self.request.user if self.request.user.is_authenticated else None,
+                action='Process Return',
+                module='Sales',
+                description=f"Returned {quantity} units of {drug.name}"
+            )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -188,7 +215,6 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
     def get_queryset(self):
-        # Only show staff/admin users
         return User.objects.filter(is_staff=True)
 
 @api_view(['POST'])
@@ -234,11 +260,12 @@ class SupermarketSaleViewSet(viewsets.ModelViewSet):
                     subtotal=item['subtotal']
                 )
                 
-                # Update stock
                 product.stock -= item['quantity']
                 product.save()
 
-            # Re-serialize to include items in the response
+            product_ids = [item['product'] for item in items_data]
+            broadcast_stock_update.delay(product_ids, item_type='product')
+
             full_serializer = self.get_serializer(sale)
             return Response(full_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -299,10 +326,11 @@ def reset_password(request):
             return Response({'error': 'Unauthorized: Only staff accounts can be reset.'}, status=status.HTTP_403_FORBIDDEN)
     except User.DoesNotExist:
         return Response({'error': f'User {username} not found'}, status=status.HTTP_404_NOT_FOUND)
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
-    return Response({"status": "healthy", "version": "1.0.2", "message": "Pharmacy API is running"})
+    return Response({"status": "healthy", "version": "1.1.0", "message": "Pharmacy API is running"})
 
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.all().order_by('-date')
@@ -310,24 +338,35 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='financial-summary')
     def financial_summary(self, request):
-        # Revenue from Pharmacy
         pharmacy_revenue = Sale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
-        # Revenue from Supermarket
         supermarket_revenue = SupermarketSale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
 
         total_revenue = pharmacy_revenue + supermarket_revenue
         total_expenses = Expense.objects.aggregate(total=Sum('amount'))['total'] or 0
 
-        # Sales Count
-        pharmacy_sales_count = Sale.objects.count()
-        supermarket_sales_count = SupermarketSale.objects.count()
-        total_sales_count = pharmacy_sales_count + supermarket_sales_count
-
+        total_sales_count = Sale.objects.count() + SupermarketSale.objects.count()
         profit = total_revenue - total_expenses
-        
+
+        from django.db.models.functions import TruncMonth
+        monthly_revenue = Sale.objects.annotate(month=TruncMonth('created_at')).values('month').annotate(total=Sum('total_amount')).order_by('month')
+
+        chart_data = [
+            {"month": item['month'].strftime('%b'), "revenue": float(item['total'])}
+            for item in monthly_revenue
+        ]
+
         return Response({
-            'revenue': float(total_revenue),
-            'expenses': float(total_expenses),
-            'profit': float(profit),
-            'sales_count': total_sales_count
+            'total_revenue': float(total_revenue),
+            'total_expenses': float(total_expenses),
+            'net_profit': float(profit),
+            'balance': float(profit),
+            'sales_count': total_sales_count,
+            'pharmacy_revenue': float(pharmacy_revenue),
+            'supermarket_revenue': float(supermarket_revenue),
+            'chart_data': chart_data
         })
+
+class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ActivityLog.objects.all().order_by('-timestamp')
+    serializer_class = ActivityLogSerializer
+    permission_classes = [IsAuthenticated]

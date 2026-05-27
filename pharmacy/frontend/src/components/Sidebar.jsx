@@ -12,7 +12,7 @@ import {
 
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { logout } = useContext(AuthContext);
+  const { logout, user } = useContext(AuthContext);
   const [shopName, setShopName] = useState('pharmacylogo');
 
   useEffect(() => {
@@ -22,34 +22,44 @@ const Sidebar = ({ isOpen, onClose }) => {
         if (res.data && res.data.length > 0) {
           setShopName(res.data[0].shop_name);
         }
-      } catch (err) {
-        console.error("Branding load failed");
+      } catch {
+        // Branding load failed
       }
     };
     fetchBranding();
   }, []);
+
   const navItems = [
-    { name: 'Dashboard', icon: <FaThLarge />, path: '/' },
+    { name: 'Dashboard', icon: <FaThLarge />, path: '/', adminOnly: true },
     { name: 'POS Terminal', icon: <FaCashRegister />, path: '/pos' },
     { name: 'Retail POS', icon: <FaShoppingCart />, path: '/supermarket/pos' },
-    { name: 'Supermarket', icon: <FaShoppingCart />, path: '/supermarket' },
-    { name: 'Inventory', icon: <FaBox />, path: '/inventory' },
-    { name: 'Customers', icon: <FaUsers />, path: '/customers' },
-    { name: 'Reports', icon: <FaChartLine />, path: '/reports/sales' },
-    { name: 'Staff List', icon: <FaUsers />, path: '/staff' },
-    { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new' },
-    { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards' },
-    { name: 'Expenses', icon: <FaMoneyBill />, path: '/expenses' },
-    { name: 'Financials', icon: <FaChartLine />, path: '/financials' },
-    { name: 'Settings', icon: <FaCog />, path: '/settings' },
-  ];
+    { name: 'Supermarket', icon: <FaShoppingCart />, path: '/supermarket', adminOnly: true },
+    { name: 'Inventory', icon: <FaBox />, path: '/inventory', adminOnly: true },
+    { name: 'Customers', icon: <FaUsers />, path: '/customers', adminOnly: true },
+    { name: 'Reports', icon: <FaChartLine />, path: '/reports/sales', adminOnly: true },
+    { name: 'Staff List', icon: <FaUsers />, path: '/staff', adminOnly: true },
+    { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new', adminOnly: true },
+    { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards', adminOnly: true },
+    { name: 'Expenses', icon: <FaMoneyBill />, path: '/expenses', adminOnly: true },
+    { name: 'Financials', icon: <FaChartLine />, path: '/financials', adminOnly: true },
+    { name: 'Settings', icon: <FaCog />, path: '/settings', adminOnly: true },
+  ].filter(item => !item.adminOnly || user?.isAdmin);
 
   return (
     <aside className={`
-      fixed lg:static inset-y-0 left-0 w-64 bg-emerald-600 text-white flex flex-col h-full shrink-0 shadow-xl z-40 overflow-y-auto scrollbar-hide transition-transform duration-300 ease-in-out
+      fixed lg:static inset-y-0 left-0 w-64 bg-emerald-600 text-white flex flex-col h-full shrink-0 shadow-xl z-40 overflow-y-auto transition-transform duration-300 ease-in-out relative
       ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
     `}>
-      <div className="p-6 flex items-center justify-between">
+      {/* Subtle Sidebar Background */}
+      <div className="absolute inset-0 opacity-[0.07] pointer-events-none overflow-hidden z-0">
+        <img
+          src="https://images.unsplash.com/photo-1585435557343-3b092031a831?q=80&w=2070&auto=format&fit=crop"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <div className="p-6 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -58,8 +68,8 @@ const Sidebar = ({ isOpen, onClose }) => {
           >
             <FaArrowLeft />
           </button>
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">
-            <FaBriefcaseMedical />
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl font-black font-outfit">
+            J
           </div>
           <span className="text-xl font-bold font-outfit tracking-tight">
             <span className="opacity-80">{shopName.split(' ')[0]} </span>{shopName.split(' ').slice(1).join(' ')}
@@ -75,7 +85,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </button>
       </div>
 
-      <nav className="flex-1 px-4 py-4 space-y-1">
+      <nav className="flex-1 px-4 py-4 space-y-1 relative z-10">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -93,7 +103,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         ))}
       </nav>
 
-      <div className="p-6 mt-auto space-y-4">
+      <div className="p-6 mt-auto space-y-4 relative z-10">
         <button
           onClick={logout}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[13px] font-bold text-white/90 hover:bg-white/10 hover:text-white transition-all bg-emerald-700/50"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import staffService from '../services/staffService';
 import { 
   FaSearch, FaBell, FaDownload, FaUsers, 
   FaCalendarAlt, 
@@ -10,18 +10,19 @@ import {
 const StaffAttendanceReport = () => {
   const [staff, setStaff] = useState([]);
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
   const fetchStaff = async () => {
     try {
-      const response = await api.get('staff/');
-      setStaff(response.data);
+      const response = await staffService.getStaff();
+      setStaff(response.data?.results || response.data || []);
     } catch (error) {
        console.error("Error fetching staff for attendance:", error);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStaff();
+  }, []);
 
   const attendanceData = staff.map(s => ({
     initials: s.name.split(' ').map(n => n[0]).join(''),

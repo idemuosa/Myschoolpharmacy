@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import drugService from '../services/drugService';
 import posService from '../services/posService';
 import staffService from '../services/staffService';
 import barcodeService from '../services/barcodeService';
 import toast from 'react-hot-toast';
+import { AuthContext } from '../context/AuthContext';
 import {
   FaPlus, FaMinus, FaSearch, FaTimes,
   FaShoppingCart, FaUserMd, FaUndo, FaReceipt, FaPrint, FaBarcode, FaCamera
@@ -12,9 +13,15 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const PointOfSales = () => {
+  const { user } = useContext(AuthContext);
   const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('pharmacy_cart');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('pharmacy_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to parse cart", e);
+      return [];
+    }
   });
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,9 +30,18 @@ const PointOfSales = () => {
   const [staffId, setStaffId] = useState('');
   const [lastSale, setLastSale] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [lastScanned, setLastScanned] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [discount, setDiscount] = useState(0);
   const scanInputRef = useRef(null);
+
+  useEffect(() => {
+    if (user?.staff_id) {
+      setStaffId(user.staff_id.toString());
+    }
+  }, [user]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -36,7 +52,31 @@ const PointOfSales = () => {
       scanInputRef.current.focus();
     }
 
+    // Listen for real-time stock updates
+    const handleStockUpdate = (data) => {
+      console.log('POS received stock update:', data);
+      if (data.type === 'drug' || !data.type) {
+        fetchProducts(); // Re-fetch to get accurate levels
+      }
+    };
+
+    socket.on('stock_updated', handleStockUpdate);
+
     const handleGlobalScan = (e) => {
+      // Shortcut: Ctrl + Enter to checkout
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        handleCheckout();
+        return;
+      }
+
+      // Shortcut: Escape to clear/close
+      if (e.key === 'Escape') {
+        setSearchTerm('');
+        setLastSale(null);
+        return;
+      }
+
       if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA') {
         return;
       }
@@ -50,6 +90,7 @@ const PointOfSales = () => {
     return () => {
       controller.abort();
       window.removeEventListener('keydown', handleGlobalScan);
+      socket.off('stock_updated', handleStockUpdate);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -57,6 +98,13 @@ const PointOfSales = () => {
   useEffect(() => {
     localStorage.setItem('pharmacy_cart', JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchStaff = async (signal) => {
     try {
@@ -83,9 +131,14 @@ const PointOfSales = () => {
   };
 
   const updateQuantity = (id, change) => {
+    const product = products.find(p => p.id === id);
     setCart(cart.map(item => {
       if (item.id === id) {
         const newQty = item.quantity + change;
+        if (change > 0 && product && newQty > product.stock) {
+          toast.error(`Only ${product.stock} units of ${product.name} available.`);
+          return item;
+        }
         return newQty > 0 ? { ...item, quantity: newQty } : item;
       }
       return item;
@@ -127,7 +180,7 @@ const PointOfSales = () => {
         return [...prevCart, {
           id: product.id,
           name: product.name,
-          unitPrice: parseFloat(product.unit_price),
+          unitPrice: parseFloat(product.unit_price) || 0,
           quantity: 1
         }];
       }
@@ -158,8 +211,8 @@ const PointOfSales = () => {
   };
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.generic_name && product.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      (product.generic_name && product.generic_name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
 
     const drugCategory = (product.category || "").toLowerCase();
     const targetCategory = selectedCategory.toLowerCase();
@@ -177,7 +230,8 @@ const PointOfSales = () => {
     return new Date(a.expiry_date) - new Date(b.expiry_date);
   });
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0) * 1.05; // Including 5% VAT
+  const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const totalAmount = Math.max(0, (subtotal - parseFloat(discount || 0))) * 1.05; // Including 5% VAT
 
   const handleCheckout = async () => {
     if (cart.length === 0) return toast.error("Cart is empty");
@@ -193,31 +247,36 @@ const PointOfSales = () => {
         subtotal: (item.unitPrice * item.quantity).toFixed(2)
       }));
 
-      await posService.createSale({
+      const response = await posService.createSale({
         transaction_id: txId,
         staff: staffId,
         total_amount: totalAmount.toFixed(2),
-        payment_method: 'Cash',
+        payment_method: paymentMethod,
         items: items
       });
 
+      const finalTxId = response.data?.transaction_id || txId;
+      const seller = staffList.find(s => s.id == staffId);
       setLastSale({
-        id: txId,
-        pharmacist: staffList.find(s => s.id == staffId),
-        sellerName: staffList.find(s => s.id == staffId)?.full_name || 'N/A',
+        id: finalTxId,
+        pharmacist: seller,
+        sellerName: seller?.full_name || user?.fullName || user?.username || 'N/A',
         items: cart,
+        subtotal: subtotal,
+        discount: discount,
         total: totalAmount,
+        paymentMethod: paymentMethod,
         date: new Date().toLocaleString()
       });
 
-      toast.success(`Transaction Completed: ${txId}`);
+      toast.success(`Transaction Completed: ${finalTxId}`);
       clearCart();
       fetchProducts();
     } catch (error) {
       console.error(error);
-      const serverError = error.response?.data?.detail ||
-                          (error.response?.data && Object.values(error.response.data)[0]) ||
-                          "Checkout failed. Please try again.";
+      const serverError = error.response?.data ?
+        Object.entries(error.response.data).map(([key, val]) => `${key}: ${val}`).join(', ') :
+        "Checkout failed. Please try again.";
       toast.error(serverError.toString());
     } finally {
       setIsCheckingOut(false);
@@ -225,7 +284,22 @@ const PointOfSales = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-4 animate-in fade-in duration-500 text-sm">
+    <div className="flex flex-col lg:flex-row h-full gap-4 animate-in fade-in duration-500 text-sm no-print">
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
+          body { background: white !important; padding: 0; margin: 0; }
+          @page { size: 80mm auto; margin: 0; }
+          .receipt-print {
+            width: 80mm;
+            padding: 10mm;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            color: black !important;
+          }
+        }
+      `}</style>
       <div className="flex-1 flex flex-col min-w-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-xs">
         <header className="p-4 border-b border-slate-100 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -248,7 +322,10 @@ const PointOfSales = () => {
                         time: Date.now()
                       });
                       setSearchTerm('');
-                    } else {
+                    } else if (filteredProducts.length === 1) {
+                      addToCart(filteredProducts[0]);
+                      setSearchTerm('');
+                    } else if (code.length > 5) {
                       toast.error(`Barcode "${code}" not found`);
                     }
                   }
@@ -269,6 +346,21 @@ const PointOfSales = () => {
                <Link to="/sales/return" className="btn-pharmacy text-[12px] py-1.5 px-3 uppercase tracking-widest text-red-500 border-red-200">
                 <FaUndo /> Returns
               </Link>
+              {user && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-xl shadow-sm">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black">
+                    {user.fullName?.charAt(0) || user.username?.charAt(0) || 'U'}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-slate-900 leading-tight uppercase truncate max-w-[100px]">
+                      {user.fullName || user.username}
+                    </span>
+                    <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-widest leading-none">
+                      {user.role || 'Staff'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -320,10 +412,36 @@ const PointOfSales = () => {
                       <p className="text-[10px] font-bold text-slate-400">Barcode: {product.barcode || 'N/A'}</p>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`text-[12px] font-black tabular-nums ${product.stock <= 5 ? 'text-red-500' : 'text-slate-900'}`}>{product.stock}</span>
+                      <div className="flex flex-col items-center">
+                        <span className={`text-[12px] font-black tabular-nums ${
+                          product.stock <= 0 ? 'text-slate-400' :
+                          product.stock <= (product.reorder_level || 10) ? 'text-red-500 animate-pulse' :
+                          product.stock <= (product.reorder_level || 10) * 2 ? 'text-orange-500' :
+                          'text-emerald-600'
+                        }`}>
+                          {product.stock}
+                        </span>
+                        {product.stock <= (product.reorder_level || 10) && product.stock > 0 && (
+                          <span className="text-[8px] font-black text-red-400 uppercase tracking-tighter">Low</span>
+                        )}
+                        {product.stock <= 0 && (
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Out</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-[12px] font-black text-slate-900 tabular-nums">${parseFloat(product.unit_price).toFixed(2)}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[12px] font-black text-slate-900 tabular-nums">${parseFloat(product.unit_price).toFixed(2)}</span>
+                        {product.expiry_date && (
+                          <span className={`text-[8px] font-bold uppercase tracking-tighter ${
+                            new Date(product.expiry_date) < new Date() ? 'text-red-600 font-black' :
+                            new Date(product.expiry_date) < new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) ? 'text-orange-500' :
+                            'text-slate-400'
+                          }`}>
+                            Exp: {new Date(product.expiry_date).toLocaleDateString(undefined, {month: 'short', year: '2-digit'})}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={() => addToCart(product)} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-all shadow-sm">
@@ -351,7 +469,8 @@ const PointOfSales = () => {
             <select
               value={staffId}
               onChange={(e) => setStaffId(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-bold outline-none appearance-none"
+              disabled={!user?.isAdmin}
+              className={`w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-bold outline-none appearance-none ${!user?.isAdmin ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               <option value="">Choose Staff...</option>
               {staffList.map(s => (
@@ -387,11 +506,49 @@ const PointOfSales = () => {
           )}
         </div>
 
-        <div className="p-4 bg-white border-t border-slate-100 space-y-2">
-          <div className="flex justify-between text-[12px] font-bold text-slate-400 uppercase tracking-widest">
-            <span>Total (+VAT)</span>
-            <span className="text-emerald-600 font-black text-sm tabular-nums">${totalAmount.toFixed(2)}</span>
+        <div className="p-4 bg-white border-t border-slate-100 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Method</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[11px] font-bold outline-none"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="Transfer">Transfer</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Discount ($)</label>
+              <input
+                type="number"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                placeholder="0.00"
+                className="w-full px-2 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[11px] font-bold outline-none"
+              />
+            </div>
           </div>
+
+          <div className="space-y-1 pt-2 border-t border-slate-50">
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
+              <span>Subtotal</span>
+              <span className="tabular-nums">${subtotal.toFixed(2)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-[10px] font-bold text-red-400 uppercase">
+                <span>Discount</span>
+                <span className="tabular-nums">-${parseFloat(discount).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-[12px] font-bold text-slate-900 uppercase tracking-widest pt-1">
+              <span>Total (+VAT)</span>
+              <span className="text-emerald-600 font-black text-sm tabular-nums">${totalAmount.toFixed(2)}</span>
+            </div>
+          </div>
+
           <button
             onClick={handleCheckout}
             disabled={isCheckingOut || cart.length === 0}
@@ -403,20 +560,21 @@ const PointOfSales = () => {
       </div>
 
       {lastSale && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 font-mono no-print">
-          <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 font-mono">
+          <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 receipt-print">
             <div className="text-center mb-6">
-              <FaReceipt className="text-3xl text-emerald-500 mx-auto mb-2" />
-              <h2 className="text-lg font-black text-slate-900 uppercase">Success</h2>
+              <FaReceipt className="text-3xl text-emerald-500 mx-auto mb-2 no-print" />
+              <h2 className="text-lg font-black text-slate-900 uppercase">Receipt</h2>
+              <p className="text-[10px] text-slate-400">{lastSale.date}</p>
             </div>
             <div className="space-y-2 text-[12px] mb-4 pb-4 border-b border-dashed">
               <div className="flex justify-between"><span>TX ID:</span><span className="font-black">{lastSale.id}</span></div>
               <div className="flex justify-between"><span>Seller:</span><span className="font-black">{lastSale.sellerName}</span></div>
-              <div className="flex justify-between"><span>Total:</span><span className="font-black">${lastSale.total.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Method:</span><span className="font-black">{lastSale.paymentMethod}</span></div>
             </div>
-            <div className="mb-4 text-[12px] max-h-32 overflow-y-auto pr-1">
+            <div className="mb-4 text-[12px]">
               <div className="font-bold border-b border-slate-100 pb-1 mb-2 text-center">Items</div>
-              <div className="space-y-1">
+              <div className="space-y-1 max-h-40 overflow-y-auto pr-1 scrollbar-hide">
                 {lastSale.items && lastSale.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between text-slate-600">
                     <span className="truncate pr-2">{item.name} x{item.quantity}</span>
@@ -425,7 +583,17 @@ const PointOfSales = () => {
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1 text-[12px] pt-4 border-t border-dashed">
+              <div className="flex justify-between"><span>Subtotal:</span><span>${lastSale.subtotal.toFixed(2)}</span></div>
+              {lastSale.discount > 0 && (
+                <div className="flex justify-between text-red-500"><span>Discount:</span><span>-${parseFloat(lastSale.discount).toFixed(2)}</span></div>
+              )}
+              <div className="flex justify-between font-black text-sm pt-2 border-t mt-2">
+                <span>TOTAL:</span>
+                <span>${lastSale.total.toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-6 no-print">
               <button 
                 className="w-full py-3 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 text-[12px] font-black uppercase flex items-center justify-center gap-2" 
                 onClick={() => window.print()}
@@ -433,6 +601,9 @@ const PointOfSales = () => {
                 <FaPrint /> Print
               </button>
               <button className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[12px] font-black uppercase" onClick={() => setLastSale(null)}>Done</button>
+            </div>
+            <div className="hidden print-only text-center mt-8 text-[10px] text-slate-400 uppercase tracking-widest">
+              Thank you for your business!
             </div>
           </div>
         </div>

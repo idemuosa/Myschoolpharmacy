@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import staffService from '../services/staffService';
+import axios from 'axios';
 import {
-  FaPlus, FaSearch, FaEye, FaPen, FaCalendarAlt, FaCheckCircle, FaUserShield
+  FaPlus, FaSearch, FaEye, FaPen, FaCalendarAlt, FaCheckCircle, FaUserShield, FaKey, FaTrash
 } from 'react-icons/fa';
+import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 const StaffManagement = () => {
   const navigate = useNavigate();
@@ -19,10 +23,13 @@ const StaffManagement = () => {
 
   const fetchStaff = async (signal) => {
     try {
-      const response = await api.get('staff/', { signal });
-      setStaffData(response.data.results || response.data || []);
+      const response = await staffService.getStaff({ signal });
+      const data = response.data?.results || response.data || [];
+      setStaffData(Array.isArray(data) ? data : []);
     } catch (error) {
+       if (axios.isCancel(error)) return;
        console.error("Error fetching staff:", error);
+       setStaffData([]);
     } finally {
        setLoading(false);
     }
@@ -37,6 +44,34 @@ const StaffManagement = () => {
     }
   };
 
+  const handleResetPassword = async (username) => {
+    if (!window.confirm(`Are you sure you want to reset the password for ${username} to 'admin123'?`)) return;
+    try {
+      await api.post('reset-password/', { username: username });
+      toast.success(`Password for ${username} has been reset to admin123`);
+    } catch (error) {
+      toast.error('Failed to reset password');
+    }
+  };
+
+  const handleDeleteStaff = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return;
+    try {
+      await staffService.deleteStaff(id);
+      toast.success("Staff member deleted successfully");
+      fetchStaff();
+    } catch (error) {
+      console.error("Delete failed", error);
+      toast.error("Failed to delete staff member");
+    }
+  };
+
+  const filteredStaff = (Array.isArray(staffData) ? staffData : []).filter(s =>
+    (s.full_name || s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.department || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-4 animate-in fade-in duration-500 text-sm">
         <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -50,7 +85,7 @@ const StaffManagement = () => {
               <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
               <input 
                 type="text" 
-                placeholder="Search staff members..." 
+                placeholder="Search staff members, roles or depts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all outline-none"
@@ -61,7 +96,7 @@ const StaffManagement = () => {
               onClick={() => navigate('/staff/new')}
               className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap border shadow-none"
             >
-              <FaPlus /> New Registry
+              <FaPlus />Register
             </button>
           </div>
         </header>
@@ -78,22 +113,26 @@ const StaffManagement = () => {
           </div>
 
           <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center text-sm">
-               <FaCalendarAlt />
+            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
+               <FaUserShield />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Attendance</p>
-              <p className="text-sm font-black text-slate-900">8</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Pharmacists</p>
+              <p className="text-sm font-black text-slate-900">
+                {staffData.filter(s => s.role?.toUpperCase() === 'PHARMACIST').length}
+              </p>
             </div>
           </div>
 
           <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm">
-               <FaUserShield />
+               <FaCalendarAlt />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Clinicians</p>
-              <p className="text-sm font-black text-slate-900">12</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Admins</p>
+              <p className="text-sm font-black text-slate-900">
+                {staffData.filter(s => s.role?.toUpperCase() === 'ADMIN').length}
+              </p>
             </div>
           </div>
         </section>
@@ -114,7 +153,7 @@ const StaffManagement = () => {
                 {loading ? (
                    <tr><td colSpan="5" className="px-5 py-10 text-center text-slate-400 font-bold text-[12px]">Scanning credentials...</td></tr>
                 ) : (
-                  staffData.filter(s => (s.name || s.full_name || '').toLowerCase().includes(searchTerm.toLowerCase())).map((staff) => (
+                  filteredStaff.map((staff) => (
                     <tr key={staff.id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
@@ -141,8 +180,24 @@ const StaffManagement = () => {
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1.5 text-slate-300">
+                          <button
+                            onClick={() => handleResetPassword(staff.username)}
+                            className="p-1.5 hover:bg-orange-50 hover:text-orange-500 rounded-lg transition-all"
+                            title="Reset Password"
+                          >
+                            <FaKey className="text-xs" />
+                          </button>
                           <button className="p-1.5 hover:bg-emerald-50 hover:text-emerald-500 rounded-lg transition-all"><FaEye className="text-sm" /></button>
-                          <button className="p-1.5 hover:bg-emerald-50 hover:text-emerald-500 rounded-lg transition-all"><FaPen className="text-xs" /></button>
+                          <Link to={`/staff/edit/${staff.id}`} className="p-1.5 hover:bg-emerald-50 hover:text-emerald-500 rounded-lg transition-all" title="Edit Staff">
+                            <FaPen className="text-xs" />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteStaff(staff.id, staff.full_name || staff.name)}
+                            className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded-lg transition-all"
+                            title="Delete Staff"
+                          >
+                            <FaTrash className="text-xs" />
+                          </button>
                         </div>
                       </td>
                     </tr>

@@ -3,6 +3,12 @@ djangorestframework
 djangorestframework-simplejwt
 django-cors-headers
 gunicorn
+uvicorn
+daphne
+channels
+channels-redis
+celery
+redis
 dj-database-url
 psycopg2-binary
 whitenoise

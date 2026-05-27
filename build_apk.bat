@@ -82,14 +82,28 @@ echo.
 REM Navigate to mobile directory
 cd /d "%MOBILE_DIR%"
 
-echo [3/5] Cleaning previous build artifacts...
+echo [3/6] Building React Frontend (for Windows/Web)...
+cd /d "%CD%\..\.."
+cd pharmacy
+call npm install
+call npm run build
+if errorlevel 1 (
+    echo WARNING: React build failed. Static pages may be outdated.
+)
+
+echo [4/6] Cleaning previous build artifacts...
+cd /d "%MOBILE_DIR%"
 call ..\flutter\bin\flutter.bat clean
 if errorlevel 1 (
     echo ERROR: Flutter clean failed
     exit /b 1
 )
 
-echo [4/5] Building release APK...
+echo [5/6] Building Release Artifacts...
+echo Building Windows App...
+call ..\flutter\bin\flutter.bat build windows --release
+
+echo Building Android APK...
 echo This may take several minutes...
 call ..\flutter\bin\flutter.bat build apk --release
 
@@ -101,21 +115,20 @@ if errorlevel 1 (
 )
 
 echo.
-echo [5/5] Copying APK to root directory...
+echo [6/6] Finalizing...
 if exist "build\app\outputs\flutter-apk\app-release.apk" (
     copy "build\app\outputs\flutter-apk\app-release.apk" "%CD%\..\..\app-release.apk"
-    echo.
-    echo SUCCESS! APK built and copied to: %CD%\..\..\app-release.apk
-    echo.
-    echo Next steps:
-    echo - Test APK on physical device or emulator
-    echo - For Play Store: sign the APK and upload
-    echo.
-) else (
-    echo ERROR: APK file not found after build
-    echo Check build output directory: build\app\outputs\flutter-apk\
-    exit /b 1
+    echo SUCCESS! APK copied to: app-release.apk
 )
+
+if exist "build\windows\runner\Release" (
+    echo SUCCESS! Windows App built in pharmacy\mobile\build\windows\runner\Release
+)
+
+echo.
+echo NOTE: To build the Desktop POS (Electron), run:
+echo cd pharmacy ^&^& npm run windows:build
+echo.
 
 echo Done!
 pause

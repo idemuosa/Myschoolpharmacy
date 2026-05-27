@@ -1,19 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   FaBell, FaCog, FaCamera, FaUser, FaTimes
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
+import staffService from '../services/staffService';
 
 const StaffRegistration = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = !!id;
+
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
     phone_number: '',
     role: '',
     department: '',
+    password: '',
     employee_id: 'EP-' + Math.floor(Math.random() * 100000)
   });
   const [autoGenerate, setAutoGenerate] = useState(true);
@@ -22,6 +27,32 @@ const StaffRegistration = () => {
   const [capturedImage, setCapturedImage] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (isEdit) {
+      const fetchStaffDetails = async () => {
+        try {
+          const res = await staffService.getStaffById(id);
+          const data = res.data;
+          setFormData({
+            full_name: data.full_name || '',
+            email: data.email || '',
+            phone_number: data.phone_number || '',
+            role: data.role?.toLowerCase() || '',
+            department: data.department?.toLowerCase() || '',
+            password: '', // Don't pre-fill password for security
+            employee_id: data.employee_id || data.username || ''
+          });
+          if (data.photo) setCapturedImage(data.photo);
+          setAutoGenerate(false);
+        } catch (err) {
+          console.error("Failed to load staff details", err);
+          toast.error("Could not load staff data.");
+        }
+      };
+      fetchStaffDetails();
+    }
+  }, [id, isEdit]);
 
   const startCamera = async () => {
     try {
@@ -69,12 +100,26 @@ const StaffRegistration = () => {
     try {
       setIsSaving(true);
       const payload = { ...formData, photo: capturedImage };
-      await api.post('staff/', payload);
-      toast.success("Staff profile created.");
+
+      // If editing and password is empty, remove it from payload to avoid overwriting with empty string
+      if (isEdit && !payload.password) {
+        delete payload.password;
+      }
+
+      if (isEdit) {
+        await staffService.updateStaff(id, payload);
+        toast.success("Staff profile updated.");
+      } else {
+        await api.post('staff/', payload);
+        toast.success("Staff profile created.");
+      }
       navigate('/staff');
     } catch (err) {
       console.error(err);
-      toast.error("Registration failed.");
+      const errorMsg = err.response?.data ?
+        Object.entries(err.response.data).map(([key, val]) => `${key}: ${val}`).join(', ') :
+        "Save failed.";
+      toast.error(errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -185,6 +230,18 @@ const StaffRegistration = () => {
                         <option value="clinical">Clinical</option>
                         <option value="ops">Inventory</option>
                       </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">System Password</label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Set login password for this staff"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none"
+                      />
                     </div>
 
                     <div className="md:col-span-2 bg-slate-50/50 rounded-xl p-4 border border-slate-100">

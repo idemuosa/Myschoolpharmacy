@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import customerService from '../services/customerService';
 import toast from 'react-hot-toast';
 import { FaUserPlus, FaTimes, FaUser, FaHistory, FaPlus, FaCamera } from 'react-icons/fa';
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 
 const AddCustomer = () => {
   const navigate = useNavigate();

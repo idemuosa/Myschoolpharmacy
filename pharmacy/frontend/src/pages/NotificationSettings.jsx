@@ -38,7 +38,7 @@ const NotificationSettings = () => {
       setLoading(true);
       await settingsService.updateSettings(settings.id, settings);
       toast.success("Notification preferences saved!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to save changes.");
     } finally {
       setLoading(false);

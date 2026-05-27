@@ -23,7 +23,8 @@ const UploadPrescription = () => {
   const fetchCustomers = async () => {
     try {
       const response = await customerService.getCustomers();
-      setCustomers(response.data);
+      const data = response.data?.results || response.data || [];
+      setCustomers(data);
     } catch (err) {
       console.error("Failed to fetch customers", err);
     }

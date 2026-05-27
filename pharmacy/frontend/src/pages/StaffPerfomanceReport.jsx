@@ -1,41 +1,41 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCalendarAlt, FaDownload, FaAward, FaStopwatch, FaMoneyBill, FaStar, FaArrowUp, FaArrowDown, FaChartBar, FaBox, FaFileInvoiceDollar, FaUserMd, FaCog } from 'react-icons/fa';
 import staffService from '../services/staffService';
 import reportService from '../services/reportService';
-import api from '../services/api';
+import posService from '../services/posService';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const StaffPerformanceReport = () => {
+  const navigate = useNavigate();
   const [staffMetrics, setStaffMetrics] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = async (signal) => {
     try {
       const [staffRes, statsRes] = await Promise.all([
-        staffService.getStaff(),
-        reportService.getDashboardStats()
+        staffService.getStaff({ signal }),
+        reportService.getDashboardStats({ signal })
       ]);
       
-      const staffList = staffRes.data.results || staffRes.data;
+      const staffList = staffRes.data.results || staffRes.data || [];
       setDashboardStats(statsRes.data);
 
       // Fetch sales stats for each staff member
       const metrics = await Promise.all(staffList.map(async (staff) => {
         try {
-          const salesRes = await api.get(`sales/${staff.id}/sales-stats/`); // Using direct api call since it's an action
+          const salesRes = await posService.getStaffSalesStats(staff.id, { signal });
           return {
             ...staff,
             name: staff.full_name,
             scripts: salesRes.data.transaction_count,
-            sales: `$${(salesRes.data.total_revenue / 1000).toFixed(1)}k`,
+            sales: `$${((salesRes.data.total_revenue || 0) / 1000).toFixed(1)}k`,
             rating: 4.5 + Math.random() * 0.5, // Fake rating as it's not in DB yet
             avatar: staff.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(staff.full_name)}&background=random`
           };
         } catch (e) {
+          if (axios.isCancel(e)) throw e;
           return {
             ...staff,
             name: staff.full_name,
@@ -49,10 +49,18 @@ const StaffPerformanceReport = () => {
 
       setStaffMetrics(metrics.sort((a, b) => b.scripts - a.scripts));
     } catch (error) {
+      if (axios.isCancel(error)) return;
       console.error("Error fetching performance data:", error);
       toast.error("Failed to load performance metrics");
     }
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   const topPerformer = staffMetrics[0];
 
@@ -63,7 +71,7 @@ const StaffPerformanceReport = () => {
       {/* Header */}
       <header className="bg-white px-5 pt-8 pb-4 flex justify-between items-center z-10 shrink-0">
         <div className="flex items-center gap-4">
-          <FaArrowLeft className="text-[#10b981] w-5 h-5 cursor-pointer" />
+          <FaArrowLeft className="text-[#10b981] w-5 h-5 cursor-pointer" onClick={() => navigate(-1)} />
           <h1 className="text-xl font-bold text-gray-900">Staff Performance</h1>
         </div>
         <div className="flex items-center gap-4 text-gray-700">
@@ -123,7 +131,7 @@ const StaffPerformanceReport = () => {
           <div className="flex-1 bg-white border border-emerald-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
             <FaMoneyBill className="text-emerald-500 w-5 h-5 mb-2" />
             <p className="text-[10px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Sales Vol.</p>
-            <p className="text-xl font-bold text-gray-900 leading-none mb-2">${(dashboardStats?.total_revenue / 1000).toFixed(1) || '0'}k</p>
+            <p className="text-xl font-bold text-gray-900 leading-none mb-2">${((dashboardStats?.total_revenue || 0) / 1000).toFixed(1)}k</p>
             <div className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-500">
               <span>+8%</span> <FaArrowUp className="w-2 h-2" />
             </div>

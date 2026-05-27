@@ -2,26 +2,91 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
+app.use(express.json());
+
+const prisma = new PrismaClient();
+const server = http.createServer(app);
+
+// Authentication Middleware Placeholder
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
 
 // Health Check Endpoints
 app.get('/', (req, res) => {
-  res.send('Pharmacy WebSocket Server is running');
+  res.send('Pharmacy Management System - Node Backend Active');
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'Node.js WebSocket Server is up and running!' });
+  res.json({
+    status: 'Operational',
+    database: 'PostgreSQL (Synced with Django)',
+    auth: 'JWT + Bcrypt'
+  });
 });
 
-const server = http.createServer(app);
+// Auth Routes
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password, role, email } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { username, password: hashedPassword, role, email }
+    });
+    res.status(201).json({ message: 'User registered successfully', userId: user.id });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ error: 'Registration failed', details: error.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { username } });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    const accessToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET || 'fallback_secret',
+      { expiresIn: '24h' }
+    );
+    res.json({ accessToken, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Protected Example Route
+app.get('/api/inventory', authenticateToken, async (req, res) => {
+  try {
+    const drugs = await prisma.drug.findMany();
+    res.json(drugs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch inventory' });
+  }
+});
 
 // Setup Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: "*", // Adjust in production to match your React app's domain
+    origin: process.env.CORS_ALLOWED_ORIGINS ? process.env.CORS_ALLOWED_ORIGINS.split(',') : "*",
     methods: ["GET", "POST"]
   }
 });

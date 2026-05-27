@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import api from '../services/api';
+import expenseService from '../services/expenseService';
 import { AuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { FaPlus, FaTrash, FaMoneyBillAlt, FaArrowLeft } from 'react-icons/fa';
@@ -22,8 +22,9 @@ const ExpenseManagement = () => {
 
     const fetchExpenses = async () => {
         try {
-            const response = await api.get('expenses/');
-            setExpenses(response.data.results || response.data);
+            setLoading(true);
+            const response = await expenseService.getExpenses();
+            setExpenses(response.data || []);
         } catch (error) {
             console.error("Error fetching expenses:", error);
             toast.error("Failed to load expenses");
@@ -37,9 +38,9 @@ const ExpenseManagement = () => {
         if (!formData.amount || !formData.category) return toast.error("Please fill all fields");
         
         try {
-            await api.post('expenses/', {
+            await expenseService.addExpense({
                 ...formData,
-                staff: user?.id
+                staff: user?.staff_id || user?.id
             });
             toast.success("Expense recorded");
             setFormData({ category: 'Rent', amount: '', description: '' });
@@ -53,7 +54,7 @@ const ExpenseManagement = () => {
     const handleDeleteExpense = async (id) => {
         if (!window.confirm("Delete this expense?")) return;
         try {
-            await api.delete(`expenses/${id}/`);
+            await expenseService.deleteExpense(id);
             toast.success("Expense deleted");
             fetchExpenses();
         } catch (error) {

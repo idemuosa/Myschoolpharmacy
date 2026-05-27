@@ -27,7 +27,7 @@ class Drug(models.Model):
 class Staff(models.Model):
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20)
+    phone_number = models.CharField(max_length=20, unique=True)
     role = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     employee_id = models.CharField(max_length=50, unique=True)
@@ -172,3 +172,13 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.category}: {self.amount}"
+
+class ActivityLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=255) # e.g., 'Update Price', 'Delete Drug'
+    module = models.CharField(max_length=100) # e.g., 'Inventory', 'Sales'
+    description = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.action} by {self.user} at {self.timestamp}"

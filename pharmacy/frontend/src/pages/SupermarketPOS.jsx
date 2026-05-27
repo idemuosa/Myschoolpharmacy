@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import productService from '../services/productService';
 import supermarketSaleService from '../services/supermarketSaleService';
 import staffService from '../services/staffService';
 import toast from 'react-hot-toast';
+import { AuthContext } from '../context/AuthContext';
 import {
   FaPlus, FaMinus, FaSearch, FaShoppingCart, FaUserTie, FaUndo, FaTimes, FaBarcode, FaPrint
 } from 'react-icons/fa';
@@ -10,6 +11,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const SupermarketPOS = () => {
+  const { user } = useContext(AuthContext);
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('supermarket_cart');
     return saved ? JSON.parse(saved) : [];
@@ -27,10 +29,26 @@ const SupermarketPOS = () => {
    const scanInputRef = useRef(null);
 
   useEffect(() => {
+    if (user?.staff_id) {
+      setStaffId(user.staff_id.toString());
+    }
+  }, [user]);
+
+  useEffect(() => {
     const controller = new AbortController();
     fetchProducts(controller.signal);
     fetchStaff(controller.signal);
     
+    // Listen for real-time stock updates
+    const handleStockUpdate = (data) => {
+      console.log('Supermarket POS received stock update:', data);
+      if (data.type === 'product') {
+        fetchProducts();
+      }
+    };
+
+    socket.on('stock_updated', handleStockUpdate);
+
     // Auto-focus the scan input on mount
     if (scanInputRef.current) {
       scanInputRef.current.focus();
@@ -56,6 +74,7 @@ const SupermarketPOS = () => {
     return () => {
       controller.abort();
       window.removeEventListener('keydown', handleGlobalScan);
+      socket.off('stock_updated', handleStockUpdate);
     };
   }, []);
 
@@ -66,7 +85,7 @@ const SupermarketPOS = () => {
   const fetchStaff = async (signal) => {
     try {
       const response = await staffService.getStaff({ signal });
-      setStaffList(response.data);
+      setStaffList(response.data?.results || response.data || []);
     } catch (err) {
       if (axios.isCancel(err)) return;
       console.error("Failed to fetch staff", err);
@@ -76,22 +95,27 @@ const SupermarketPOS = () => {
   const fetchProducts = async (signal) => {
     try {
       const response = await productService.getProducts({ signal });
-      setProducts(response.data);
+      setProducts(response.data?.results || response.data || []);
     } catch (error) {
        if (axios.isCancel(error)) return;
        console.error("Error fetching products:", error);
        toast.error("Failed to load supermarket inventory.");
     } finally {
-       if (!(signal && signal.aborted)) {
+       if (!signal?.aborted) {
          setLoading(false);
        }
     }
   };
 
   const updateQuantity = (id, change) => {
+    const product = products.find(p => p.id === id);
     setCart(cart.map(item => {
       if (item.id === id) {
         const newQty = item.quantity + change;
+        if (change > 0 && product && newQty > product.stock) {
+          toast.error(`Only ${product.stock} units of ${product.name} available.`);
+          return item;
+        }
         return newQty > 0 ? { ...item, quantity: newQty } : item;
       }
       return item;
@@ -163,7 +187,7 @@ const SupermarketPOS = () => {
            subtotal: (item.unitPrice * item.quantity).toFixed(2)
         }));
 
-        await supermarketSaleService.processSale({
+        const response = await supermarketSaleService.processSale({
            transaction_id: txId,
            staff: staffId,
            total_amount: totalAmount.toFixed(2),
@@ -171,15 +195,16 @@ const SupermarketPOS = () => {
            items: items
         });
        
+        const finalTxId = response.data?.transaction_id || txId;
         setLastSale({
-           id: txId,
+           id: finalTxId,
            cashier: staffList.find(s => s.id == staffId),
            items: cart,
            total: totalAmount,
            date: new Date().toLocaleString()
         });
 
-       toast.success(`Retail Transaction Completed: ${txId}`);
+       toast.success(`Retail Transaction Completed: ${finalTxId}`);
        clearCart();
        fetchProducts();
         if (autoPrint) {
@@ -187,7 +212,10 @@ const SupermarketPOS = () => {
         }
      } catch (error) {
        console.error(error);
-       toast.error("Checkout failed.");
+       const serverError = error.response?.data?.detail ||
+                          (error.response?.data && Object.values(error.response.data)[0]) ||
+                          "Checkout failed. Please try again.";
+       toast.error(serverError.toString());
      } finally {
        setIsCheckingOut(false);
      }
@@ -211,7 +239,9 @@ const SupermarketPOS = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    const found = products.find(p => p.barcode === searchTerm);
+                    const code = searchTerm.trim();
+                    if (!code) return;
+                    const found = products.find(p => p.barcode === code || p.sku === code);
                     if (found) {
                       addToCart(found);
                       setLastScanned({
@@ -220,9 +250,10 @@ const SupermarketPOS = () => {
                         time: Date.now()
                       });
                       setSearchTerm('');
-                      // Keep focus for next scan
-                      e.target.focus();
-                    } else {
+                    } else if (filteredProducts.length === 1) {
+                      addToCart(filteredProducts[0]);
+                      setSearchTerm('');
+                    } else if (code.length > 5) {
                       toast.error("Product barcode not recognized");
                     }
                   }
@@ -349,7 +380,8 @@ const SupermarketPOS = () => {
               <select 
                 value={staffId}
                 onChange={(e) => setStaffId(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-bold outline-none appearance-none"
+                disabled={!user?.isAdmin}
+                className={`w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-bold outline-none appearance-none ${!user?.isAdmin ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 <option value="">Select Cashier...</option>
                 {staffList.map(s => (

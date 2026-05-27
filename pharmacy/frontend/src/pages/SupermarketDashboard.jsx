@@ -30,17 +30,17 @@ const SupermarketDashboard = () => {
             productService.getProducts()
          ]);
 
-         const data = statsRes.data;
-         const allProducts = Array.isArray(productRes.data) ? productRes.data : (productRes.data.results || []);
+         const data = statsRes.data || {};
+         const allProducts = Array.isArray(productRes.data) ? productRes.data : (productRes.data?.results || []);
          setInventoryData(allProducts);
 
-         const lowStock = allProducts.filter(p => p.stock <= p.reorder_level);
+         const lowStock = allProducts.filter(p => p.stock <= (p.reorder_level || 0));
          setLowStockProducts(lowStock.slice(0, 5));
 
          setStats({
-            revenue: data.total_revenue,
-            transactions: data.total_transactions,
-            lowStock: data.low_stock_count,
+            revenue: data.total_revenue || 0,
+            transactions: data.total_transactions || 0,
+            lowStock: data.low_stock_count || 0,
             products: allProducts.length
          });
       } catch (error) {

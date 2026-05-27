@@ -25,7 +25,7 @@ const SaleReturn = () => {
         const fetchSales = async () => {
             try {
                 const response = await posService.getSales();
-                setSales(response.data);
+                setSales(response.data?.results || response.data || []);
             } catch (err) {
                 console.error("Error fetching sales", err);
             }
@@ -34,12 +34,14 @@ const SaleReturn = () => {
     }, []);
 
     const handleSelectItem = (item) => {
+        const initialQty = 1;
         setReturnData({
             ...returnData, 
             drug: item.drug, 
             item_id: item.id,
             unit_price: item.unit_price,
-            refund_amount: (item.unit_price * returnData.quantity).toFixed(2)
+            quantity: initialQty,
+            refund_amount: (item.unit_price * initialQty).toFixed(2)
         });
     };
 
@@ -107,7 +109,7 @@ const SaleReturn = () => {
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-slate-50">
-                          {sales.filter(s => s.transaction_id.toLowerCase().includes(searchTerm.toLowerCase())).map(sale => (
+                          {(Array.isArray(sales) ? sales : []).filter(s => (s.transaction_id || '').toLowerCase().includes(searchTerm.toLowerCase())).map(sale => (
                              <tr 
                                 key={sale.id}
                                 onClick={() => setSelectedSale(sale)}

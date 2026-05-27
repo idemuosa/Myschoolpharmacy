@@ -1,10 +1,19 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/drug.dart';
 
 class ApiService {
+  static String get _baseUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000/api/';
+    } else {
+      return 'http://localhost:8000/api/';
+    }
+  }
+
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://10.0.2.2:8000/api/', // For Android Emulator
+    baseUrl: _baseUrl,
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
   ));

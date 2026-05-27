@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../services/api';
+import staffService from '../services/staffService';
+import posService from '../services/posService';
 import axios from 'axios';
 import { 
   FaMoneyBill, FaUsers, FaShoppingCart, 
@@ -30,8 +31,8 @@ const StaffSalesDashboard = () => {
 
     const fetchStaffList = async (signal) => {
         try {
-            const response = await api.get('staff/', { signal });
-            const data = response.data.results || response.data;
+            const response = await staffService.getStaff({ signal });
+            const data = response.data?.results || response.data || [];
             setStaffList(data);
             if (!selectedStaff && data.length > 0) {
                 setSelectedStaff(data[0].id);
@@ -45,7 +46,7 @@ const StaffSalesDashboard = () => {
     const fetchStats = async (staffId, signal) => {
         try {
             setLoading(true);
-            const response = await api.get(`sales/${staffId}/sales-stats/`, { signal });
+            const response = await posService.getStaffSalesStats(staffId, { signal });
             setStats(response.data);
         } catch (err) {
             if (axios.isCancel(err)) return;
@@ -102,7 +103,7 @@ const StaffSalesDashboard = () => {
                                     <FaMoneyBill className="text-emerald-500 w-4 h-4" />
                                 </div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Total Revenue</p>
-                                <p className="text-xl font-black text-slate-900 tracking-tight tabular-nums">${parseFloat(stats.total_revenue).toLocaleString()}</p>
+                                <p className="text-xl font-black text-slate-900 tracking-tight tabular-nums">${parseFloat(stats?.total_revenue || 0).toLocaleString()}</p>
                             </div>
 
                             {/* Customers */}
@@ -111,7 +112,7 @@ const StaffSalesDashboard = () => {
                                     <FaUsers className="text-blue-500 w-4 h-4" />
                                 </div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Recipients Served</p>
-                                <p className="text-xl font-black text-slate-900 tracking-tight tabular-nums">{stats.customer_count}</p>
+                                <p className="text-xl font-black text-slate-900 tracking-tight tabular-nums">{stats?.customer_count || 0}</p>
                             </div>
 
                             {/* Transactions */}
@@ -120,7 +121,7 @@ const StaffSalesDashboard = () => {
                                     <FaShoppingCart className="text-purple-500 w-4 h-4" />
                                 </div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Total Sale Logs</p>
-                                <p className="text-xl font-black text-slate-900 tracking-tight tabular-nums">{stats.transaction_count}</p>
+                                <p className="text-xl font-black text-slate-900 tracking-tight tabular-nums">{stats?.transaction_count || 0}</p>
                             </div>
                         </div>
 

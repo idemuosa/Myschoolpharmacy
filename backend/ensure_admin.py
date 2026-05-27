@@ -6,18 +6,19 @@ django.setup()
 
 from django.contrib.auth.models import User
 
-password = 'admin123'
+password = 'admin'
 staff_users = User.objects.filter(is_staff=True)
 
-print(f"--- Standardizing Staff Passwords to '{password}' ---")
-for user in staff_users:
-    user.set_password(password)
-    user.save()
-    print(f"Reset: {user.username}")
-
-# Also ensure 'admin' exists just in case
+print(f"--- Ensuring Admin user exists and setting password to '{password}' ---")
 if not User.objects.filter(username='admin').exists():
     User.objects.create_superuser('admin', 'admin@example.com', password)
-    print("Created missing 'admin' user.")
+    print("Created 'admin' user.")
+else:
+    admin = User.objects.get(username='admin')
+    admin.set_password(password)
+    admin.is_staff = True
+    admin.is_superuser = True
+    admin.save()
+    print("Updated 'admin' user password.")
 
 print("--- Done ---")

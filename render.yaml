@@ -30,6 +30,12 @@ services:
     envVars:
       - key: PORT
         value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pharmacy-db
+          property: connectionString
+      - key: ACCESS_TOKEN_SECRET
+        generateValue: true
 
   # React Frontend
   - type: static

@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String   @default("Staff")
+  email     String?
+  createdAt DateTime @default(now())
+
+  @@map("node_user")
+}
+
+model Staff {
+  id           Int      @id @default(autoincrement())
+  full_name    String
+  email        String   @unique
+  phone_number String   @unique
+  role         String
+  department   String
+  employee_id  String   @unique
+  photo        String?
+  status       String   @default("Active")
+
+  @@map("api_staff")
+}
+
+model Drug {
+  id            Int      @id @default(autoincrement())
+  name          String
+  generic_name  String?
+  category      String?
+  dosage        String
+  form          String
+  expiry_date   String?
+  unit_price    Float    @default(0)
+  stock         Int      @default(0)
+  reorder_level Int      @default(10)
+  barcode       String?  @unique
+
+  @@map("api_drug")
+}
+
+model Sale {
+  id             Int      @id @default(autoincrement())
+  transaction_id String   @unique
+  total_amount   Float
+  payment_method String
+  created_at     DateTime @default(now())
+  staff_id       Int?
+
+  @@map("api_sale")
+}
