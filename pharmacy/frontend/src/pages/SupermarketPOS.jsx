@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import productService from '../services/productService';
 import supermarketSaleService from '../services/supermarketSaleService';
 import staffService from '../services/staffService';
+import barcodeService from '../services/barcodeService';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
 import {
-  FaPlus, FaMinus, FaSearch, FaShoppingCart, FaUserTie, FaUndo, FaTimes, FaBarcode, FaPrint
+  FaPlus, FaMinus, FaSearch, FaShoppingCart, FaUserTie, FaUndo, FaTimes, FaBarcode, FaPrint, FaCamera
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -152,6 +153,29 @@ const SupermarketPOS = () => {
     }
   };
 
+  const handleMobileScan = async () => {
+    try {
+      const code = await barcodeService.scan();
+      if (code) {
+        const found = products.find(p => p.barcode === code || p.sku === code);
+        if (found) {
+          addToCart(found);
+          setLastScanned({
+            name: found.name,
+            price: found.unit_price,
+            time: Date.now()
+          });
+          toast.success(`Scanned: ${found.name}`);
+        } else {
+          toast.error(`Barcode ${code} not found in retail inventory`);
+        }
+      }
+    } catch (error) {
+      console.error("Scan error:", error);
+      toast.error(error.message || "Failed to scan barcode");
+    }
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -262,8 +286,12 @@ const SupermarketPOS = () => {
                 autoFocus
                 className="flex-1 pl-4 pr-3 py-2 text-xs font-bold outline-none border-none bg-transparent"
               />
-              <button className="w-5 h-10 flex items-center justify-center bg-white text-slate-400 hover:text-blue-600 border-l border-slate-50 transition-colors shrink-0">
-                <FaSearch className="text-sm" />
+              <button
+                onClick={handleMobileScan}
+                className="p-3 bg-white text-blue-600 hover:text-blue-700 border-l border-slate-100 transition-colors shrink-0"
+                title="Scan with Camera"
+              >
+                <FaCamera className="text-sm" />
               </button>
             </div>
             

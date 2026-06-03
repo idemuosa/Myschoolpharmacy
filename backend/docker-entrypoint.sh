@@ -7,14 +7,24 @@ while ! nc -z db 5432; do
 done
 echo "PostgreSQL started"
 
-# Apply database migrations
-echo "Applying database migrations..."
-python manage.py migrate
+# Apply migrations only if requested or if we are the main backend
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+    echo "Applying database migrations..."
+    python manage.py migrate
+fi
 
-# Collect static files
-echo "Collecting static files..."
-python manage.py collectstatic --noinput
+# Collect static only if requested
+if [ "$COLLECT_STATIC" = "true" ]; then
+    echo "Collecting static files..."
+    python manage.py collectstatic --noinput
+fi
 
-# Start Gunicorn
-echo "Starting gunicorn..."
+# Remove Celery Beat pid file if it exists
+if [ -f "celerybeat.pid" ]; then
+    echo "Removing old celerybeat.pid"
+    rm celerybeat.pid
+fi
+
+# Start the command
+echo "Executing: $@"
 exec "$@"

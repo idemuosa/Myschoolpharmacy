@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import productService from '../services/productService';
 import categoryService from '../services/categoryService';
+import supplierService from '../services/supplierService';
 import { AuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
@@ -21,9 +22,11 @@ const AddNewProduct = () => {
         reorder_level: 10,
         barcode: '',
         stock_date: '',
-        expiry_date: ''
+        expiry_date: '',
+        supplier: ''
     });
     const [categories, setCategories] = useState([]);
+    const [suppliers, setSuppliers] = useState([]);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [editingCategory, setEditingCategory] = useState(null);
@@ -37,6 +40,7 @@ const AddNewProduct = () => {
 
     useEffect(() => {
         fetchCategories();
+        fetchSuppliers();
         const today = new Date();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
@@ -50,6 +54,15 @@ const AddNewProduct = () => {
             setCategories(response.data.results || response.data);
         } catch (error) {
             console.error("Error fetching categories:", error);
+        }
+    };
+
+    const fetchSuppliers = async () => {
+        try {
+            const response = await supplierService.getSuppliers();
+            setSuppliers(response.data.results || response.data);
+        } catch (error) {
+            console.error("Error fetching suppliers:", error);
         }
     };
 
@@ -227,6 +240,21 @@ const AddNewProduct = () => {
                                     <option value="">Select Category</option>
                                     {categories.filter(c => c.type === 'Supermarket').map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Supplier</label>
+                                <select
+                                    name="supplier"
+                                    value={formData.supplier}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-black focus:ring-2 focus:ring-emerald-50 transition-all outline-none appearance-none"
+                                >
+                                    <option value="">Select Vendor</option>
+                                    {suppliers.map(s => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                 </select>
                             </div>

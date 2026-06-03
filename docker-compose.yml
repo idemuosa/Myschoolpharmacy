@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -9,10 +7,20 @@ services:
       - POSTGRES_DB=${DB_NAME:-pharmacy_db}
       - POSTGRES_USER=${DB_USER:-pharmacy_user}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-pharmacy_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pharmacy_user} -d ${DB_NAME:-pharmacy_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
 
   redis:
     image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
 
   backend:
@@ -22,15 +30,25 @@ services:
     volumes:
       - ./backend:/app
       - static_volume:/app/staticfiles
+      - backup_volume:/backups
     environment:
       - DEBUG=${DEBUG:-True}
       - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
-      - DATABASE_URL=postgres://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
+      - DATABASE_URL=postgresql://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
       - REDIS_URL=redis://redis:6379/0
+      - RUN_MIGRATIONS=true
+      - COLLECT_STATIC=true
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   celery_worker:
@@ -39,16 +57,37 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./backend:/app
+      - backup_volume:/backups
     environment:
       - DEBUG=${DEBUG:-True}
       - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key}
-      - DATABASE_URL=postgres://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
+      - DATABASE_URL=postgresql://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
       - REDIS_URL=redis://redis:6379/0
+      - RUN_MIGRATIONS=false
+      - COLLECT_STATIC=false
     depends_on:
-      - db
-      - redis
-    entrypoint: [] # Disable the default entrypoint to avoid running migrations/collectstatic in every worker
+      backend:
+        condition: service_healthy
     command: celery -A core worker -l info
+    restart: always
+
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key}
+      - DATABASE_URL=postgresql://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
+      - REDIS_URL=redis://redis:6379/0
+      - RUN_MIGRATIONS=false
+      - COLLECT_STATIC=false
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     restart: always
 
   frontend:
@@ -56,19 +95,8 @@ services:
       context: ./pharmacy
       dockerfile: Dockerfile
     depends_on:
-      - backend
-    restart: always
-
-  node_backend:
-    build:
-      context: ./node_backend
-      dockerfile: Dockerfile
-    environment:
-      - DATABASE_URL=postgresql://${DB_USER:-pharmacy_user}:${DB_PASSWORD:-pharmacy_password}@db:5432/${DB_NAME:-pharmacy_db}
-      - ACCESS_TOKEN_SECRET=${SECRET_KEY:-django-insecure-docker-dev-key}
-      - PORT=4000
-    depends_on:
-      - db
+      backend:
+        condition: service_healthy
     restart: always
 
   nginx:
@@ -87,3 +115,4 @@ services:
 volumes:
   postgres_data:
   static_volume:
+  backup_volume:

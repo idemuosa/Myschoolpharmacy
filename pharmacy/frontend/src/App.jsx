@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 import { useEffect, useState } from 'react';
@@ -41,6 +42,17 @@ import NotificationSettings from './pages/NotificationSettings';
 import StaffPerformanceReport from './pages/StaffPerfomanceReport';
 import ExpenseManagement from './pages/ExpenseManagement';
 import Financials from './pages/Financials';
+import AuditLogs from './pages/AuditLogs';
+import SupplierManagement from './pages/SupplierManagement';
+import StaffAttendance from './pages/StaffAttendance';
+import PurchaseOrderManagement from './pages/PurchaseOrderManagement';
+import InventoryAudit from './pages/InventoryAudit';
+import PatientOutreach from './pages/PatientOutreach';
+import DebtManagement from './pages/DebtManagement';
+import ProcurementAdvice from './pages/ProcurementAdvice';
+import StockAdjustment from './pages/StockAdjustment';
+import SystemHealth from './pages/SystemHealth';
+import HelpSupport from './pages/HelpSupport';
 import './App.css';
 
 function App() {
@@ -116,9 +128,10 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <Toaster position="top-right" />
-        <Routes>
+      <NotificationProvider>
+        <Router>
+          <Toaster position="top-right" />
+          <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<AdminLogin />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -201,6 +214,62 @@ function App() {
               </Layout>
             </PrivateRoute>
           } />
+          <Route path="/audit-logs" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <AuditLogs />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/suppliers" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <SupplierManagement />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/procurement" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <PurchaseOrderManagement />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/procurement/advice" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <ProcurementAdvice />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/audit" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <InventoryAudit />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/outreach" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <PatientOutreach />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/debts" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <DebtManagement />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/attendance" element={
+            <PrivateRoute>
+              <Layout>
+                <StaffAttendance />
+              </Layout>
+            </PrivateRoute>
+          } />
           <Route path="/pos" element={
             <PrivateRoute>
               <Layout>
@@ -261,6 +330,13 @@ function App() {
             <PrivateRoute adminOnly={true}>
               <Layout>
                 <AddNewDrugs />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/inventory/adjust" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <StockAdjustment />
               </Layout>
             </PrivateRoute>
           } />
@@ -336,11 +412,26 @@ function App() {
                 </Layout>
               </PrivateRoute>
             } />
+            <Route path="/help" element={
+              <PrivateRoute>
+                <Layout>
+                  <HelpSupport />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/system/health" element={
+              <PrivateRoute adminOnly={true}>
+                <Layout>
+                  <SystemHealth />
+                </Layout>
+              </PrivateRoute>
+            } />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

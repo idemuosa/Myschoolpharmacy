@@ -1,18 +1,5 @@
-// Updated to use standard WebSockets for Django Channels
-const getWSURL = () => {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host;
-  // If in development and accessed via localhost:3000, we might need to point to localhost:8000
-  // But with Nginx proxy, it should just be /ws/
-  const url = import.meta.env.VITE_WS_URL || '/ws/notifications/';
-
-  if (url.startsWith('ws')) {
-    return url;
-  }
-
-  const baseUrl = `${protocol}//${host}`;
-  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
-};
+import { io } from 'socket.io-client';
+import { getWSURL } from '../config';
 
 class WebSocketService {
   constructor() {
@@ -22,45 +9,47 @@ class WebSocketService {
   }
 
   connect() {
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+    if (this.socket && this.socket.connected) {
         return;
     }
 
     const url = getWSURL();
-    console.log('Connecting to WebSocket:', url);
+    console.log('Connecting to Socket.io:', url);
 
-    this.socket = new WebSocket(url);
+    // Socket.io handles reconnection and protocol upgrades automatically
+    this.socket = io(url, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+    });
 
-    this.socket.onopen = () => {
-      console.log('WebSocket Connected');
-    };
+    this.socket.on('connect', () => {
+      console.log('Socket.io Connected. ID:', this.socket.id);
+    });
 
-    this.socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const type = data.type || 'message';
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket.io Connection Error:', error);
+    });
 
-        // Notify specific type listeners
-        if (this.listeners[type]) {
-          this.listeners[type].forEach(callback => callback(data.data || data.message || data));
-        }
+    this.socket.on('disconnect', (reason) => {
+      console.log('Socket.io Disconnected:', reason);
+    });
 
-        // Notify global listeners
-        this.allListeners.forEach(callback => callback(data));
-      } catch (e) {
-        console.error('Error parsing WebSocket message', e);
+    // Handle generic messages or specific events if needed
+    // In Socket.io, we usually listen for specific named events
+    // But to keep compatibility with the existing subscription model:
+    this.socket.onAny((eventName, ...args) => {
+      const data = args[0];
+
+      // Notify specific type listeners
+      if (this.listeners[eventName]) {
+        this.listeners[eventName].forEach(callback => callback(data));
       }
-    };
 
-    this.socket.onclose = (e) => {
-      console.log('WebSocket Disconnected, retrying in 3s...', e.reason);
-      this.socket = null;
-      setTimeout(() => this.connect(), 3000);
-    };
-
-    this.socket.onerror = (error) => {
-      console.error('WebSocket Error:', error);
-    };
+      // Notify global listeners
+      this.allListeners.forEach(callback => callback({ type: eventName, data }));
+    });
   }
 
   subscribe(event, callback) {
@@ -84,10 +73,21 @@ class WebSocketService {
   }
 
   send(data) {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
+    // compatibility with old send({type, data}) format
+    if (this.socket && this.socket.connected) {
+      if (data.type && data.data) {
+        this.socket.emit(data.type, data.data);
+      } else {
+        this.socket.emit('message', data);
+      }
     } else {
-        console.warn('WebSocket not open. Message not sent:', data);
+        console.warn('Socket not connected. Message not sent:', data);
+    }
+  }
+
+  emit(event, data) {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit(event, data);
     }
   }
 }
@@ -98,6 +98,7 @@ export const socketService = new WebSocketService();
 export const socket = {
   on: (event, callback) => socketService.subscribe(event, callback),
   off: (event, callback) => socketService.unsubscribe(event, callback),
-  emit: (event, data) => socketService.send({ type: event, data }),
+  emit: (event, data) => socketService.emit(event, data),
   connect: () => socketService.connect()
 };
+

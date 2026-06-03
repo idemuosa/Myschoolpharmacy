@@ -25,7 +25,7 @@ services:
     env: node
     plan: free
     rootDir: node_backend
-    buildCommand: "npm install"
+    buildCommand: "npm install && npx prisma generate"
     startCommand: "node server.js"
     envVars:
       - key: PORT
@@ -48,6 +48,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://pharmacy-api.onrender.com
+      - key: VITE_SOCKET_URL
+        value: https://pharmacy-socket.onrender.com
 
 databases:
   - name: pharmacy-db

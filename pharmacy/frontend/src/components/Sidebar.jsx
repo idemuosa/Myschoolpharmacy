@@ -7,7 +7,7 @@ import {
   FaBriefcaseMedical,
   FaChartLine, FaUsers, FaCog,
   FaShoppingCart, FaSignOutAlt, FaTimes,
-  FaUserPlus, FaArrowLeft, FaMoneyBill
+  FaUserPlus, FaArrowLeft, FaMoneyBill, FaHistory, FaTruck, FaUserClock, FaFileInvoice, FaClipboardCheck, FaBullhorn, FaUserTag, FaHeartbeat, FaQuestionCircle
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -35,13 +35,21 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Retail POS', icon: <FaShoppingCart />, path: '/supermarket/pos' },
     { name: 'Supermarket', icon: <FaShoppingCart />, path: '/supermarket', adminOnly: true },
     { name: 'Inventory', icon: <FaBox />, path: '/inventory', adminOnly: true },
+    { name: 'Suppliers', icon: <FaTruck />, path: '/suppliers', adminOnly: true },
+    { name: 'Procurement', icon: <FaFileInvoice />, path: '/procurement', adminOnly: true },
+    { name: 'Audit', icon: <FaClipboardCheck />, path: '/audit', adminOnly: true },
+    { name: 'Outreach', icon: <FaBullhorn />, path: '/outreach', adminOnly: true },
     { name: 'Customers', icon: <FaUsers />, path: '/customers', adminOnly: true },
     { name: 'Reports', icon: <FaChartLine />, path: '/reports/sales', adminOnly: true },
+    { name: 'Attendance', icon: <FaUserClock />, path: '/attendance' },
     { name: 'Staff List', icon: <FaUsers />, path: '/staff', adminOnly: true },
     { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new', adminOnly: true },
     { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards', adminOnly: true },
     { name: 'Expenses', icon: <FaMoneyBill />, path: '/expenses', adminOnly: true },
     { name: 'Financials', icon: <FaChartLine />, path: '/financials', adminOnly: true },
+    { name: 'Debtors', icon: <FaUserTag />, path: '/debts', adminOnly: true },
+    { name: 'Audit Logs', icon: <FaHistory />, path: '/audit-logs', adminOnly: true },
+    { name: 'Help & Support', icon: <FaQuestionCircle />, path: '/help' },
     { name: 'Settings', icon: <FaCog />, path: '/settings', adminOnly: true },
   ].filter(item => !item.adminOnly || user?.isAdmin);
 
@@ -112,8 +120,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           <span>Logout</span>
         </button>
 
-        <div className="bg-white/10 rounded-xl p-4 border border-white/5">
-          <span className="block text-[12px] font-black uppercase tracking-widest text-white/60 mb-1">System Status</span>
+        <div
+          onClick={() => navigate('/system/health')}
+          className="bg-white/10 rounded-xl p-4 border border-white/5 cursor-pointer hover:bg-white/20 transition-all group"
+        >
+          <div className="flex justify-between items-center mb-1">
+            <span className="block text-[12px] font-black uppercase tracking-widest text-white/60">System Status</span>
+            <FaHeartbeat className="text-white/30 group-hover:text-emerald-400 transition-colors" />
+          </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
             <span className="text-xs font-bold font-outfit">Operating Normal</span>

@@ -1,9 +1,5 @@
 import axios from 'axios';
-
-const getBaseURL = () => {
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
-  return url.endsWith('/') ? url : `${url}/`;
-};
+import { getBaseURL } from '../config';
 
 const api = axios.create({
   baseURL: getBaseURL(),

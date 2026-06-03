@@ -32,6 +32,11 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Proxy configuration
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
 # Production Security
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
@@ -43,6 +48,8 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    # Important for CSRF in production with proxies
+    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com').split(',')
 
 
 # Application definition
@@ -59,6 +66,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'channels',
+    'django_celery_beat',
     'api',
 ]
 
@@ -150,7 +158,7 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
-    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    # Handled above in production security block
     CORS_ALLOW_CREDENTIALS = True
 
 # Redis and Channels
@@ -172,6 +180,21 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    'check-stock-every-morning': {
+        'task': 'api.tasks.check_stock_levels',
+        'schedule': 3600.0, # Every hour
+    },
+    'check-expiry-every-morning': {
+        'task': 'api.tasks.check_expired_drugs',
+        'schedule': 86400.0, # Every 24 hours
+    },
+    'automated-backup-nightly': {
+        'task': 'api.tasks.automate_database_backup',
+        'schedule': 86400.0, # Every 24 hours
+    },
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

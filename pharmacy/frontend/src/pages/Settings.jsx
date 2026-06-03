@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import settingsService from '../services/settingsService';
 import toast from 'react-hot-toast';
-import { FaSave, FaUserShield, FaStore, FaPlus, FaTrash, FaEdit, FaTimes, FaBell } from 'react-icons/fa';
+import api from '../services/api';
+import backupService from '../services/backupService';
+import { FaSave, FaUserShield, FaStore, FaPlus, FaTrash, FaEdit, FaTimes, FaBell, FaDatabase, FaDownload, FaUpload } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
@@ -12,6 +14,7 @@ const Settings = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const fileInputRef = React.useRef(null);
 
     useEffect(() => {
         fetchSettings();
@@ -107,6 +110,47 @@ const Settings = () => {
         } catch (error) {
             console.error(error);
             toast.error("Failed to remove user.");
+        }
+    };
+
+    const handleBackup = async () => {
+        const toastId = toast.loading("Generating system backup...");
+        try {
+            const response = await api.get('backup-db/', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            link.setAttribute('download', `pharmacy_backup_${timestamp}.sql`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success("Cloud Backup downloaded!", { id: toastId });
+        } catch (error) {
+            console.error("Backup failed", error);
+            toast.error("Cloud Backup failed.", { id: toastId });
+        }
+    };
+
+    const handleLocalBackup = async () => {
+        const toastId = toast.loading("Exporting local database...");
+        const success = await backupService.exportLocalData();
+        if (success) toast.success("Local backup saved!", { id: toastId });
+        else toast.error("Local backup failed.", { id: toastId });
+    };
+
+    const handleLocalRestore = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!window.confirm("WARNING: This will overwrite ALL local data. Proceed?")) return;
+
+        const toastId = toast.loading("Restoring local database...");
+        try {
+            await backupService.importLocalData(file);
+            toast.success("Local data restored! Reloading...", { id: toastId });
+            setTimeout(() => window.location.reload(), 2000);
+        } catch (err) {
+            toast.error("Restore failed: Invalid file format.", { id: toastId });
         }
     };
 
@@ -307,6 +351,56 @@ const Settings = () => {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* System Maintenance Section */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-fit lg:col-span-12 xl:col-span-3">
+                    <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+                        <FaDatabase className="text-emerald-500" />
+                        <h2 className="text-[12px] font-black uppercase tracking-widest">System Maintenance</h2>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <div className="space-y-3">
+                            <div>
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Cloud Infrastructure</h3>
+                                <button
+                                    onClick={handleBackup}
+                                    disabled={loading}
+                                    className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white rounded-xl py-2.5 text-[11px] font-black uppercase tracking-widest hover:bg-black transition-all"
+                                >
+                                    <FaDownload /> Server SQL Backup
+                                </button>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-50">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Local Offline Cache</h3>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <button
+                                        onClick={handleLocalBackup}
+                                        className="w-full flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl py-2 text-[11px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                                    >
+                                        <FaDownload /> Export Local JSON
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleLocalRestore}
+                                        className="hidden"
+                                        accept=".json"
+                                    />
+                                    <button
+                                        onClick={() => fileInputRef.current.click()}
+                                        className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-400 rounded-xl py-2 text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                                    >
+                                        <FaUpload /> Restore from JSON
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="pt-2 border-t border-slate-50">
+                            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Hybrid Sync Architecture v2.0</span>
                         </div>
                     </div>
                 </div>

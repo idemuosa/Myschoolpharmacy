@@ -4,21 +4,39 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/drug.dart';
 
 class ApiService {
-  static String get _baseUrl {
+  static const String _productionUrl = 'https://pharmacy-api-exn3.onrender.com/api/';
+  
+  static Future<String> get _baseUrl async {
+    final prefs = await SharedPreferences.getInstance();
+    final customUrl = prefs.getString('api_base_url');
+    
+    if (customUrl != null && customUrl.isNotEmpty) {
+      return customUrl.endsWith('/') ? customUrl : '$customUrl/';
+    }
+
+    // Default fallbacks for development
     if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/api/';
+      // Check if we are in a debug environment or use production by default
+      // For now, let's prioritize production since we are focusing on production config
+      return _productionUrl; 
     } else {
       return 'http://localhost:8000/api/';
     }
   }
 
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: _baseUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  late Dio _dio;
+  bool _initialized = false;
 
-  ApiService() {
+  Future<void> _init() async {
+    if (_initialized) return;
+    
+    final baseUrl = await _baseUrl;
+    _dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    ));
+
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final prefs = await SharedPreferences.getInstance();
@@ -31,14 +49,16 @@ class ApiService {
       onError: (DioException e, handler) {
         if (e.response?.statusCode == 401) {
           // Token expired or invalid
-          // You might want to trigger a logout here via a callback
         }
         return handler.next(e);
       },
     ));
+    
+    _initialized = true;
   }
 
   Future<List<Drug>> getDrugs() async {
+    await _init();
     try {
       final response = await _dio.get('drugs/');
       if (response.statusCode == 200) {
@@ -60,6 +80,7 @@ class ApiService {
   }
 
   Future<List<Map<String, dynamic>>> getExpenses() async {
+    await _init();
     try {
       final response = await _dio.get('expenses/');
       final List<dynamic> data;
@@ -77,6 +98,7 @@ class ApiService {
   }
 
   Future<void> addExpense(Map<String, dynamic> data) async {
+    await _init();
     try {
       await _dio.post('expenses/', data: data);
     } catch (e) {
@@ -85,6 +107,7 @@ class ApiService {
   }
 
   Future<void> deleteExpense(int id) async {
+    await _init();
     try {
       await _dio.delete('expenses/$id/');
     } catch (e) {
@@ -93,6 +116,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getFinancialSummary() async {
+    await _init();
     try {
       final response = await _dio.get('expenses/financial-summary/');
       return response.data as Map<String, dynamic>;

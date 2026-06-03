@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import posService from '../services/posService';
+import exportService from '../services/exportService';
 import axios from 'axios';
 import {
   FaSearch, FaBell, FaPlus, FaMoneyBill, FaWallet, FaReceipt, FaShoppingCart,
-  FaChevronDown, FaEllipsisV
+  FaChevronDown, FaEllipsisV, FaFileExport
 } from 'react-icons/fa';
+import NotificationCenter from '../components/NotificationCenter';
 import toast from 'react-hot-toast';
 
 const SalesReport = () => {
@@ -65,33 +67,18 @@ const SalesReport = () => {
     return customer.includes(search) || saleId.includes(search) || staff.includes(search);
   });
 
-  const exportCSV = () => {
-    if (filteredSales.length === 0) return;
-    
-    const headers = ["ID", "Customer", "Staff", "Date", "Value", "Status"];
-    const rows = filteredSales.map(sale => [
-        sale.id,
-        sale.customer_name || 'Guest',
-        sale.staff_name || 'Sys',
-        new Date(sale.created_at).toLocaleString(),
-        sale.total_amount,
-        'Paid'
-    ]);
-    
-    const csvContent = [
-        headers.join(','),
-        ...rows.map(e => e.map(f => `"${String(f).replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'sales_report.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExport = () => {
+    const exportData = filteredSales.map(sale => ({
+        ID: sale.id,
+        Transaction_ID: sale.transaction_id,
+        Customer: sale.customer_name || 'Guest',
+        Staff: sale.staff_name || 'System',
+        Date: new Date(sale.created_at).toLocaleString(),
+        Amount: sale.total_amount,
+        Method: sale.payment_method,
+        Status: sale.status
+    }));
+    exportService.exportToCSV(exportData, 'sales_report');
   };
 
   return (
@@ -113,7 +100,7 @@ const SalesReport = () => {
               />
             </div>
             
-            <FaBell className="text-slate-400 hover:text-emerald-500 cursor-pointer w-4 h-4 transition-colors shrink-0" />
+            <NotificationCenter />
             
             <button onClick={() => navigate('/pos')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-1.5 px-4 rounded-lg flex items-center gap-2 transition-all shadow-none text-[12px] uppercase tracking-widest shrink-0 h-9 border border-emerald-500">
                <FaPlus className="w-3 h-3" /> New Sale
@@ -230,8 +217,8 @@ const SalesReport = () => {
                     <button className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-100 rounded-lg text-[11px] font-black text-slate-500 uppercase tracking-widest cursor-default">
                         Filtered ({filteredSales.length})
                     </button>
-                    <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-none hover:bg-emerald-600 transition-colors">
-                        CSV
+                    <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-none hover:bg-emerald-600 transition-colors">
+                        <FaFileExport /> Export CSV
                     </button>
                  </div>
               </div>

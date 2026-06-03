@@ -8,6 +8,7 @@ daphne
 channels
 channels-redis
 celery
+django-celery-beat
 redis
 dj-database-url
 psycopg2-binary

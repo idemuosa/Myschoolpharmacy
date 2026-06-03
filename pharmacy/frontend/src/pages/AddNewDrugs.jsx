@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import drugService from '../services/drugService';
 import categoryService from '../services/categoryService';
+import supplierService from '../services/supplierService';
 import { AuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
@@ -34,11 +35,16 @@ const AddNewDrugs = () => {
       reorder_level: '',
       barcode: '',
       category_obj: '',
+      supplier: '',
+      batch_number: 'B-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      cost_price: ''
    });
    const [categories, setCategories] = useState([]);
+   const [suppliers, setSuppliers] = useState([]);
 
    useEffect(() => {
       fetchCategories();
+      fetchSuppliers();
       if (!isEdit) {
          const today = new Date();
          const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -54,6 +60,15 @@ const AddNewDrugs = () => {
          setCategories(response.data.results || response.data);
       } catch (error) {
          console.error("Error fetching categories:", error);
+      }
+   };
+
+   const fetchSuppliers = async () => {
+      try {
+         const response = await supplierService.getSuppliers();
+         setSuppliers(response.data.results || response.data);
+      } catch (error) {
+         console.error("Error fetching suppliers:", error);
       }
    };
 
@@ -118,19 +133,29 @@ const AddNewDrugs = () => {
          const payload = {
             ...formData,
             barcode: formData.barcode?.trim() || null,
-            expiry_date: parseDate(formData.expiry_date),
-            stock_date: parseDate(formData.stock_date),
             unit_price: parseFloat(formData.unit_price) || 0,
-            stock: parseInt(formData.stock) || 0,
             reorder_level: parseInt(formData.reorder_level) || 10
          };
 
+         let response;
          if (isEdit) {
-            await drugService.updateDrug(id, payload);
+            response = await drugService.updateDrug(id, payload);
             toast.success('Clinical record updated!');
          } else {
-            await drugService.addDrug(payload);
-            toast.success('Medication added to inventory!');
+            response = await drugService.addDrug(payload);
+
+            // Create initial batch for new drugs
+            if (formData.stock && response.data?.id) {
+                await drugService.addBatch({
+                    drug: response.data.id,
+                    batch_number: formData.batch_number || ('B-' + Date.now().toString().slice(-6)),
+                    quantity: parseInt(formData.stock),
+                    expiry_date: parseDate(formData.expiry_date),
+                    cost_price: parseFloat(formData.cost_price) || 0,
+                    manufacturing_date: parseDate(formData.stock_date)
+                });
+            }
+            toast.success('Medication & Initial Batch registered!');
          }
          navigate('/inventory');
       } catch (error) {
@@ -302,7 +327,33 @@ const AddNewDrugs = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">
-                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Stock</label>
+                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Initial Batch #</label>
+                        <input
+                           type="text"
+                           name="batch_number"
+                           value={formData.batch_number}
+                           onChange={handleChange}
+                           placeholder="B-001"
+                           className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-black focus:ring-2 focus:ring-emerald-50 outline-none transition-all"
+                        />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Cost Price ($)</label>
+                        <input
+                           type="number"
+                           step="0.01"
+                           name="cost_price"
+                           value={formData.cost_price}
+                           onChange={handleChange}
+                           placeholder="0.00"
+                           className="w-full px-4 py-2.5 bg-orange-50/50 border border-orange-100 rounded-lg text-xs font-black text-orange-700 tabular-nums focus:ring-2 focus:ring-orange-100 outline-none transition-all"
+                        />
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Initial Stock</label>
                         <input
                            type="number"
                            name="stock"
@@ -321,6 +372,21 @@ const AddNewDrugs = () => {
                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-black text-orange-600 focus:ring-2 focus:ring-orange-50 outline-none transition-all"
                         />
                      </div>
+                  </div>
+
+                  <div className="space-y-2">
+                     <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Preferred Supplier</label>
+                     <select
+                        name="supplier"
+                        value={formData.supplier || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-black focus:ring-2 focus:ring-emerald-50 outline-none appearance-none cursor-pointer"
+                     >
+                        <option value="">Select Vendor</option>
+                        {suppliers.map(s => (
+                           <option key={s.id} value={s.id.toString()}>{s.name}</option>
+                        ))}
+                     </select>
                   </div>
 
                   <div className="space-y-2">

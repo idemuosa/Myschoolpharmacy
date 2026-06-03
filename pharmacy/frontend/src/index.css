@@ -1,5 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-@import "tailwindcss";
 
 :root {
   /* Strictly Sans-Serif Stack */
@@ -52,11 +55,6 @@ aside::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.4);
 }
 
-/* Redefine font-outfit to use global sans-serif to satisfy existing classes */
-.font-outfit {
-  font-family: inherit !important;
-}
-
 /* Button Base - White background, Green text/border */
 .btn-pharmacy {
   @apply bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-50 transition-all font-bold rounded-lg px-4 py-2 flex items-center justify-center gap-2;
@@ -77,4 +75,54 @@ aside::-webkit-scrollbar-thumb:hover {
 
 .table-responsive {
   @apply overflow-x-auto w-full;
+}
+
+/* Mobile Touch Optimizations */
+@media (max-width: 768px) {
+  .btn-pharmacy, .btn-pharmacy-primary {
+    @apply py-3 px-6 text-sm active:scale-95;
+  }
+
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  .card-mobile {
+    @apply rounded-xl p-4;
+  }
+}
+
+/* Print Optimization */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-only, .print-only * {
+    visibility: visible !important;
+  }
+
+  .print-only {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 5mm;
+    color: black !important;
+    background: white !important;
+  }
+
+  .print-only * {
+    font-family: 'Inter', Arial, sans-serif !important;
+    font-size: 10pt;
+  }
+
+  .no-print {
+    display: none !important;
+  }
 }

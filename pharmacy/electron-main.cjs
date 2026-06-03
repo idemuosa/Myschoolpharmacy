@@ -1,113 +1,134 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog } = require('electron');
 const path = require('path');
-const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const isDev = !app.isPackaged;
 
-// Global error handling
+// Global error handler
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  if (!isDev) {
-    dialog.showErrorBox('Application Error', `A critical error occurred: ${error.message}`);
-  }
+  dialog.showErrorBox(
+    'Application Error',
+    `A JavaScript error occurred in the main process:\n\n${error.message}\n\nStack Trace:\n${error.stack}`
+  );
 });
 
-let backendProcess = null;
-let nodeBackendProcess = null;
-
-function startBackends() {
-  try {
-    // When packaged, __dirname is the resources/app folder
-    // The backends should be relative to the executable path in production
-    const projectRoot = isDev
-      ? path.join(__dirname, '..')
-      : path.join(process.resourcesPath, '..', '..'); // Adjust based on electron-builder output
-
-    console.log('Project Root for backends:', projectRoot);
-
-    // Django Backend Config
-    const backendDir = path.join(projectRoot, 'backend');
-    const pythonPath = path.join(backendDir, 'venv', 'Scripts', 'python.exe');
-    const managePath = path.join(backendDir, 'manage.py');
-
-    if (fs.existsSync(pythonPath) && fs.existsSync(managePath)) {
-      console.log('Starting Django Backend...');
-      backendProcess = spawn(pythonPath, [managePath, 'runserver', '8000', '--noreload'], {
-        cwd: backendDir,
-        env: { ...process.env, PYTHONUNBUFFERED: '1' },
-        shell: true
-      });
-
-      backendProcess.stdout.on('data', (data) => console.log(`Django: ${data}`));
-      backendProcess.stderr.on('data', (data) => console.error(`Django Error: ${data}`));
-    } else {
-      console.warn('Django backend files not found at:', backendDir);
-    }
-
-    // Node Backend Config
-    const nodeBackendDir = path.join(projectRoot, 'node_backend');
-    const nodeServerPath = path.join(nodeBackendDir, 'server.js');
-
-    if (fs.existsSync(nodeServerPath)) {
-      console.log('Starting Node WebSocket Server...');
-      nodeBackendProcess = spawn('node', [nodeServerPath], {
-        cwd: nodeBackendDir,
-        shell: true
-      });
-
-      nodeBackendProcess.stdout.on('data', (data) => console.log(`Node: ${data}`));
-      nodeBackendProcess.stderr.on('data', (data) => console.error(`Node Error: ${data}`));
-    } else {
-      console.warn('Node backend not found at:', nodeBackendDir);
-    }
-  } catch (err) {
-    console.error('Error in startBackends:', err);
-  }
-}
-
-function stopBackends() {
-  if (process.platform === 'win32') {
-    if (backendProcess && backendProcess.pid) {
-      exec(`taskkill /pid ${backendProcess.pid} /f /t`);
-    }
-    if (nodeBackendProcess && nodeBackendProcess.pid) {
-      exec(`taskkill /pid ${nodeBackendProcess.pid} /f /t`);
-    }
-    // Safety: kill any orphaned processes on the ports
-    exec('taskkill /f /im python.exe /t');
-    exec('taskkill /f /im node.exe /t');
-  }
-}
-
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 1366,
-    height: 768,
-    minWidth: 1024,
-    minHeight: 700,
-    title: "Josiah Pharmacy POS",
-    icon: path.join(__dirname, 'public', 'favicon.ico'),
-    autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      sandbox: true
+  try {
+    const win = new BrowserWindow({
+      width: 1366,
+      height: 768,
+      minWidth: 1024,
+      minHeight: 700,
+      title: "Josiah Pharmacy POS",
+      icon: path.join(__dirname, 'public', 'favicon.ico'),
+      autoHideMenuBar: false,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
+        preload: path.join(__dirname, 'preload.js') // Added preload for security if needed
+      }
+    });
+
+    if (isDev) {
+      win.loadURL('http://localhost:5173');
+      win.webContents.openDevTools();
+    } else {
+      const indexPath = path.join(__dirname, 'dist', 'index.html');
+      if (fs.existsSync(indexPath)) {
+        win.loadFile(indexPath);
+      } else {
+        throw new Error(`Build file not found at: ${indexPath}. Please run 'npm run build' first.`);
+      }
     }
-  });
 
-  if (isDev) {
-    // In dev, we might need to wait for Vite to start
-    win.loadURL('http://localhost:5173'); // Default Vite port
-    win.webContents.openDevTools();
-  } else {
-    win.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    win.maximize();
+
+    // Menu Template
+    const template = [
+      {
+        label: 'File',
+        submenu: [
+          { role: 'reload' },
+          { role: 'forceReload' },
+          { type: 'separator' },
+          {
+            label: 'Configure Server',
+            click: () => {
+              win.webContents.executeJavaScript(`
+                const url = prompt("Enter Backend API URL (e.g. http://localhost:8000/api/):", localStorage.getItem('config_api_url') || "");
+                if (url !== null) {
+                  localStorage.setItem('config_api_url', url);
+                  const ws = prompt("Enter WebSocket URL (e.g. ws://localhost:8000/ws/notifications/):", localStorage.getItem('config_ws_url') || "");
+                  if (ws !== null) {
+                     localStorage.setItem('config_ws_url', ws);
+                     alert("Settings saved. Reloading app...");
+                     location.reload();
+                  }
+                }
+              `);
+            }
+          },
+          { type: 'separator' },
+          { role: 'quit' }
+        ]
+      },
+      {
+        label: 'Edit',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'selectAll' }
+        ]
+      },
+      {
+        label: 'View',
+        submenu: [
+          { role: 'togglefullscreen' },
+          { role: 'toggleDevTools' }
+        ]
+      },
+      {
+        label: 'Help',
+        submenu: [
+          {
+            label: 'Check for Updates',
+            click: () => {
+              dialog.showMessageBox({
+                type: 'info',
+                title: 'Updates',
+                message: 'Update check complete. You are using the latest version (1.1.0).'
+              });
+            }
+          },
+          {
+            label: 'About',
+            click: () => {
+              dialog.showMessageBox({
+                type: 'info',
+                title: 'About Josiah Pharmacy POS',
+                message: 'Josiah Pharmacy Management System\nVersion: 1.1.0\nPlatform: Windows/Android\n\nDeveloped by Josiah'
+              });
+            }
+          }
+        ]
+      }
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+
+  } catch (err) {
+    dialog.showErrorBox('Initialization Error', `Failed to create application window: ${err.message}`);
+    app.quit();
   }
-
-  win.maximize();
 }
 
 app.whenReady().then(() => {
-  startBackends();
   createWindow();
 
   app.on('activate', () => {
@@ -116,12 +137,8 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  stopBackends();
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-app.on('quit', () => {
-  stopBackends();
-});

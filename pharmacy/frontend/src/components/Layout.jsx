@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
-import { FaBars, FaArrowLeft } from 'react-icons/fa';
+import NotificationCenter from './NotificationCenter';
+import CommandPalette from './CommandPalette';
+import { FaBars, FaArrowLeft, FaCloudSlash, FaCloud } from 'react-icons/fa';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -15,12 +30,17 @@ const Layout = ({ children }) => {
     setIsSidebarOpen(false);
   }, [location]);
 
-  // Global Back arrow key listener
+  // Global listeners
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // If user presses ArrowLeft and isn't in an input/textarea
+      // Back navigation
       if (e.key === 'ArrowLeft' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
         navigate(-1);
+      }
+      // Command Palette
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -40,6 +60,9 @@ const Layout = ({ children }) => {
 
       {/* Sidebar with mobile state */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      {/* Command Palette */}
+      <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
 
       {/* Mobile Overlay */}
       {isSidebarOpen && (
@@ -68,7 +91,16 @@ const Layout = ({ children }) => {
             >
               <FaBars className="text-xl" />
             </button>
-            <span className="font-outfit font-bold tracking-tight">pharmacylogo</span>
+            <span className="font-outfit font-bold tracking-tight uppercase">Josiah POS</span>
+          </div>
+          <div className="flex items-center gap-2">
+              <div
+                onClick={() => navigate('/system/health')}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer hover:opacity-80 transition-all ${isOnline ? 'text-emerald-500 bg-emerald-50' : 'text-red-500 bg-red-50'}`}
+              >
+                {isOnline ? <><FaCloud className="animate-pulse" /> Online</> : <><FaCloudSlash /> Offline</>}
+              </div>
+              <NotificationCenter />
           </div>
         </header>
 

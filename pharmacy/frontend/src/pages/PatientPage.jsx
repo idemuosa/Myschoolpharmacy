@@ -6,7 +6,7 @@ import {
   FaArrowLeft, FaUserCircle, FaBriefcaseMedical, 
   FaHistory, FaNotesMedical, FaCalendarPlus, FaPlus, FaTrash, FaCapsules,
   FaFilePrescription, FaClipboardList, FaStethoscope, FaMicroscope,
-  FaHeartbeat, FaExchangeAlt, FaDoorOpen
+  FaHeartbeat, FaExchangeAlt, FaDoorOpen, FaShoppingCart, FaPrescriptionBottleAlt
 } from 'react-icons/fa';
 import drugService from '../services/drugService';
 import prescriptionService from '../services/prescriptionService';
@@ -20,43 +20,43 @@ const PatientPage = () => {
     const [loading, setLoading] = useState(true);
     const [drugs, setDrugs] = useState([]);
     const [prescriptionItems, setPrescriptionItems] = useState([]);
-    const [prescriptions, setPrescriptions] = useState([]);
-    const [sales, setSales] = useState([]);
+    const [timeline, setTimeline] = useState([]);
     const [isPrescribing, setIsPrescribing] = useState(false);
 
     useEffect(() => {
         fetchPatientData();
         fetchDrugs();
-        fetchPrescriptions();
-        fetchSales();
+        fetchCombinedHistory();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
-    const fetchSales = async () => {
+    const fetchCombinedHistory = async () => {
         try {
-            const response = await posService.getSales();
-            const allSales = response.data?.results || response.data || [];
-            // Filter sales for this specific patient
+            const [salesRes, rxRes] = await Promise.all([
+                posService.getSales(),
+                prescriptionService.getPrescriptions()
+            ]);
+
+            const allSales = salesRes.data?.results || salesRes.data || [];
+            const allRx = rxRes.data?.results || rxRes.data || [];
+
             const patientSales = Array.isArray(allSales) 
                 ? allSales.filter(s => s.customer === parseInt(id))
                 : [];
-            setSales(patientSales);
-        } catch (error) {
-            console.error("Failed to fetch sales history", error);
-        }
-    };
 
-    const fetchPrescriptions = async () => {
-        try {
-            const response = await prescriptionService.getPrescriptions();
-            // Filter prescriptions for this specific patient
-            const allPrescriptions = response.data.results || response.data;
-            const patientPrescriptions = Array.isArray(allPrescriptions) 
-                ? allPrescriptions.filter(p => p.customer === parseInt(id))
+            const patientRx = Array.isArray(allRx)
+                ? allRx.filter(p => p.customer === parseInt(id))
                 : [];
-            setPrescriptions(patientPrescriptions);
+
+            // Combine and sort by date
+            const combined = [
+                ...patientSales.map(s => ({ ...s, timelineType: 'SALE' })),
+                ...patientRx.map(r => ({ ...r, timelineType: 'RX' }))
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            setTimeline(combined);
         } catch (error) {
-            console.error("Failed to fetch prescriptions", error);
+            console.error("Failed to fetch history", error);
         }
     };
 
@@ -124,6 +124,7 @@ const PatientPage = () => {
              toast.success("Prescription issued successfully!");
              setPrescriptionItems([]);
              setIsPrescribing(false);
+             fetchCombinedHistory();
          } catch (error) {
              console.error("Prescription failed", error);
              toast.error("Failed to issue prescription");
@@ -306,152 +307,71 @@ const PatientPage = () => {
                          </div>
                      )}
 
-                     {/* Clinical Quick Actions */}
-                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
-                         <div className="flex items-center gap-2 mb-6 pb-2 border-b border-slate-50">
-                             <FaStethoscope className="text-emerald-500" />
-                             <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Clinical Quick Actions</h3>
-                         </div>
-                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                             {[
-                                 { label: 'Clinical Notes', icon: <FaNotesMedical />, color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-500' },
-                                 { label: 'Physician Orders', icon: <FaClipboardList />, color: 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-500' },
-                                 { label: 'Investigations', icon: <FaMicroscope />, color: 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-500' },
-                                 { label: 'Prescriptions', icon: <FaFilePrescription />, color: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-500', action: () => setIsPrescribing(true) },
-                                 { label: 'Patient Vitals', icon: <FaHeartbeat />, color: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-500' },
-                                 { label: 'Transfer Patient', icon: <FaExchangeAlt />, color: 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-500' },
-                                 { label: 'Discharge Patient', icon: <FaDoorOpen />, color: 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-500' },
-                             ].map((btn, idx) => (
-                                 <button 
-                                     key={idx}
-                                     onClick={btn.action || (() => toast.success(`${btn.label} module coming soon!`))}
-                                     className={`flex flex-col items-center justify-center p-4 rounded-2xl border ${btn.color.split(' hover:')[0]} hover:text-white ${btn.color.split(' ')[4]} transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg active:scale-95`}
-                                 >
-                                     <div className="text-xl mb-2 group-hover:scale-110 transition-transform">
-                                         {btn.icon}
-                                     </div>
-                                     <span className="text-[10px] font-black uppercase tracking-tight text-center leading-tight">
-                                         {btn.label.split(' ').map((word, i) => <React.Fragment key={i}>{word}<br/></React.Fragment>)}
-                                     </span>
-                                 </button>
-                             ))}
-                         </div>
-                     </div>
-
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <FaHistory className="text-blue-500" />
-                                <h3 className="text-[12px] font-black text-slate-900 uppercase tracking-widest">Clinical History</h3>
+                                <h3 className="text-[12px] font-black text-slate-900 uppercase tracking-widest">Integrated Timeline</h3>
                             </div>
-                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Last Modified: Just Now</span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chronological View</span>
                         </div>
                         
-                         <div className="p-6 space-y-6">
-                            <div className="space-y-4">
-                                 <div className="flex items-center gap-2">
-                                     <FaNotesMedical className="text-slate-400" />
-                                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Medication History</p>
-                                 </div>
-                                 
-                                 <div className="space-y-3">
-                                     {prescriptions.length === 0 ? (
-                                         <p className="text-[11px] font-bold text-slate-400 italic bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                             No past prescriptions recorded for this patient.
-                                         </p>
-                                     ) : (
-                                         prescriptions.map((rx) => (
-                                             <div key={rx.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
-                                                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                                                     <span className="text-[12px] font-black text-slate-900">{rx.prescription_id}</span>
-                                                     <span className="text-[10px] font-bold text-slate-400 uppercase">{new Date(rx.created_at).toLocaleDateString()}</span>
-                                                 </div>
-                                                 <div className="space-y-1.5">
-                                                     {rx.items && rx.items.map((item, idx) => (
-                                                         <div key={idx} className="flex justify-between items-center text-[12px]">
-                                                             <div className="flex flex-col">
-                                                                 <span className="font-black text-slate-700 uppercase">{item.drug_name}</span>
-                                                                 <span className="text-[10px] text-slate-400">{item.directions}</span>
-                                                             </div>
-                                                             <span className="font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">x{item.quantity}</span>
-                                                         </div>
-                                                     ))}
-                                                 </div>
-                                             </div>
-                                         ))
-                                     )}
-                                 </div>
-                            </div>
+                         <div className="p-6">
+                            {timeline.length === 0 ? (
+                                <div className="text-center py-20 opacity-20">
+                                    <FaHistory size={48} className="mx-auto mb-4" />
+                                    <p className="text-[14px] font-black uppercase tracking-widest">No history recorded</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-50">
+                                    {timeline.map((item, idx) => (
+                                        <div key={idx} className="relative pl-10">
+                                            <div className={`absolute left-0 top-1 w-6 h-6 rounded-lg flex items-center justify-center text-[10px] z-10 shadow-sm ${
+                                                item.timelineType === 'RX' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'
+                                            }`}>
+                                                {item.timelineType === 'RX' ? <FaPrescriptionBottleAlt /> : <FaShoppingCart />}
+                                            </div>
 
-                            <div className="space-y-4">
-                                 <div className="flex items-center gap-2">
-                                     <FaHistory className="text-slate-400" />
-                                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Dispensary & Purchase History</p>
-                                 </div>
-                                 
-                                 <div className="space-y-3">
-                                     {sales.length === 0 ? (
-                                         <p className="text-[11px] font-bold text-slate-400 italic bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                             No purchase records found for this patient.
-                                         </p>
-                                     ) : (
-                                         sales.map((sale) => (
-                                             <div key={sale.id} className="bg-white p-4 rounded-xl border border-slate-100 space-y-2 shadow-sm hover:border-emerald-200 transition-all">
-                                                 <div className="flex justify-between items-center pb-2 border-b border-slate-50">
-                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-[12px] font-black text-slate-900">#{sale.id}</span>
-                                                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-black uppercase">SALE</span>
-                                                     </div>
-                                                     <span className="text-[10px] font-bold text-slate-400 uppercase">{new Date(sale.created_at).toLocaleDateString()}</span>
-                                                 </div>
-                                                 <div className="flex justify-between items-end">
-                                                     <div className="space-y-1">
-                                                         <p className="text-[10px] font-extrabold text-slate-400 uppercase">Total Amount</p>
-                                                         <p className="text-[14px] font-black text-emerald-600 tabular-nums">${sale.total_amount}</p>
-                                                     </div>
-                                                     <div className="text-right">
-                                                         <p className="text-[10px] font-extrabold text-slate-400 uppercase">Staff</p>
-                                                         <p className="text-[11px] font-bold text-slate-600">{sale.staff_name || 'System'}</p>
-                                                     </div>
-                                                 </div>
-                                             </div>
-                                         ))
-                                     )}
-                                 </div>
-                            </div>
+                                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">{item.timelineType === 'RX' ? 'Prescription' : 'Purchase'}</span>
+                                                        <h4 className="text-[13px] font-black text-slate-900 uppercase">
+                                                            {item.timelineType === 'RX' ? item.prescription_id : `Transaction #${item.id}`}
+                                                        </h4>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{new Date(item.created_at).toLocaleDateString()}</span>
+                                                </div>
 
-                            <div className="space-y-2 pt-4 border-t border-slate-100">
-                                 <div className="flex items-center gap-2">
-                                     <FaNotesMedical className="text-slate-400" />
-                                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Clinical Observations</p>
-                                 </div>
-                                 <p className="text-[11px] font-bold leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 italic text-slate-500">
-                                     {patient.notes || "No clinical observations have been logged."}
-                                 </p>
-                            </div>
+                                                {item.timelineType === 'RX' ? (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        {item.items && item.items.map((med, i) => (
+                                                            <div key={i} className="bg-slate-50/50 p-2 rounded-xl border border-slate-50">
+                                                                <p className="text-[12px] font-black text-slate-700 uppercase leading-none">{med.drug_name}</p>
+                                                                <p className="text-[10px] text-slate-400 mt-1">{med.directions}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex justify-between items-end">
+                                                        <p className="text-[16px] font-black text-emerald-600 tabular-nums">${item.total_amount}</p>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Via {item.payment_method}</span>
+                                                    </div>
+                                                )}
 
-                           <div className="grid grid-cols-2 gap-4">
-                               <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Patient Activity</p>
-                                   <div className="flex justify-between items-center">
-                                       <div className="text-center">
-                                           <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{prescriptions.length}</p>
-                                           <p className="text-[8px] font-black text-slate-400 uppercase">Rx</p>
-                                       </div>
-                                       <div className="w-px h-6 bg-slate-200"></div>
-                                       <div className="text-center">
-                                           <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{sales.length}</p>
-                                           <p className="text-[8px] font-black text-slate-400 uppercase">Sales</p>
-                                       </div>
-                                   </div>
-                               </div>
-                               <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Address Information</p>
-                                   <p className="text-[12px] font-bold text-slate-500 leading-tight">
-                                       {patient.address || 'No residential data available'}
-                                   </p>
-                               </div>
-                           </div>
+                                                <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Staff: {item.staff_name || 'System'}</span>
+                                                    {item.timelineType === 'RX' && (
+                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                                                            item.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                                        }`}>{item.status}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -72,6 +72,10 @@ const drugService = {
     }
     return { status: 204 };
   },
+
+  addBatch: async (batchData) => {
+    return await api.post('drug-batches/', batchData);
+  }
 };
 
 export default drugService;

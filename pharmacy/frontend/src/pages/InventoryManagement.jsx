@@ -2,14 +2,16 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import drugService from '../services/drugService';
 import categoryService from '../services/categoryService';
+import exportService from '../services/exportService';
 import { AuthContext } from '../context/AuthContext';
 import { socket } from '../services/socket';
 import axios from 'axios';
 import {
   FaSearch, FaBell, FaPlus, FaThLarge, FaCashRegister, FaBox,
   FaUsers, FaClipboardList, FaCog, FaPills, FaExclamationTriangle,
-  FaClock, FaMoneyBill, FaFilter, FaFileExport, FaChevronLeft, FaChevronRight, FaEdit, FaTimes, FaTrash
+  FaClock, FaMoneyBill, FaFilter, FaFileExport, FaChevronLeft, FaChevronRight, FaEdit, FaTimes, FaTrash, FaChevronDown, FaChevronUp, FaBarcode
 } from 'react-icons/fa';
+import BarcodeLabel from '../components/BarcodeLabel';
 
 const InventoryManagement = () => {
   const { user } = useContext(AuthContext);
@@ -21,7 +23,9 @@ const InventoryManagement = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Low Stock', '30 Days Expiry', '100 Days Expiry'
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [labelItem, setLabelItem] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -29,14 +33,10 @@ const InventoryManagement = () => {
     fetchCategories(controller.signal);
 
     const handleStockUpdate = (data) => {
-      console.log('Inventory received stock update:', data);
-      if (data.type === 'drug') {
-        fetchDrugs();
-      }
+      if (data.type === 'drug') fetchDrugs();
     };
 
     socket.on('stock_updated', handleStockUpdate);
-
     return () => {
       controller.abort();
       socket.off('stock_updated', handleStockUpdate);
@@ -50,8 +50,6 @@ const InventoryManagement = () => {
       setCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       if (axios.isCancel(error)) return;
-      console.error("Error fetching categories:", error);
-      setCategories([]);
     }
   };
 
@@ -61,434 +59,148 @@ const InventoryManagement = () => {
       const response = await drugService.getDrugs({ signal });
       const drugs = response.data?.results || response.data || [];
       setInventoryData(Array.isArray(drugs) ? drugs : []);
-    } catch (error) {
-      if (axios.isCancel(error)) return;
-      console.error("Error fetching inventory data:", error);
-      setInventoryData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getCategoryColorClass = (category) => {
-    const categoryMap = {
-      'Analgesic': 'bg-purple-50 text-purple-600',
-      'Antibiotic': 'bg-blue-50 text-blue-600',
-      'Antihistamine': 'bg-orange-50 text-orange-600',
-      'Antihypertensive': 'bg-orange-50 text-orange-600',
-      'Antidiabetic': 'bg-orange-50 text-orange-600',
-      'Antimalarial': 'bg-orange-50 text-orange-600',
-      'Antipyretic': 'bg-orange-50 text-orange-600',
-      'Infusions': 'bg-orange-50 text-orange-600',
-      'Antiseptics': 'bg-orange-50 text-orange-600',
-      'Methylated Spirit': 'bg-orange-50 text-orange-600',
-      'Antidiarrheal': 'bg-orange-50 text-orange-600',
-      'Antifungal': 'bg-orange-50 text-orange-600',
-      'Haematinics': 'bg-orange-50 text-orange-600',
-      'Expectorants': 'bg-orange-50 text-orange-600',
-      'Antacids': 'bg-orange-50 text-orange-600',
-      // Add more categories as needed
-    };
-    return categoryMap[category] || 'bg-emerald-50 text-emerald-600';
+  const toggleRow = (id) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(id)) newExpandedRows.delete(id);
+    else newExpandedRows.add(id);
+    setExpandedRows(newExpandedRows);
   };
 
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    try {
-      await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Pharmacy' });
-      setNewCategoryName('');
-      fetchCategories();
-    } catch (error) {
-      console.error("Error adding category:", error);
-    }
+  const handleExport = () => {
+    const exportData = filteredData.map(item => ({
+      ID: item.id,
+      Name: item.name,
+      Generic: item.generic_name,
+      Category: item.category_name,
+      Stock: item.total_stock,
+      Price: item.unit_price,
+      Reorder_Level: item.reorder_level,
+      Barcode: item.barcode
+    }));
+    exportService.exportToCSV(exportData, 'pharmacy_inventory');
   };
-
-  const handleUpdateCategory = async () => {
-    if (!editingCategory || !newCategoryName.trim()) return;
-    try {
-      await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Pharmacy' });
-      setEditingCategory(null);
-      setNewCategoryName('');
-      fetchCategories();
-    } catch (error) {
-      console.error("Error updating category:", error);
-    }
-  };
-
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm("Are you sure? Items in this category will be unassigned.")) return;
-    try {
-      await categoryService.deleteCategory(id);
-      fetchCategories();
-    } catch (error) {
-      console.error("Error deleting category:", error);
-    }
-  };
-
-  const handleExportCSV = () => {
-    if (inventoryData.length === 0) return;
-    
-    const headers = ['Name', 'Generic Name', 'Category', 'Dosage', 'Form', 'Stock', 'Unit Price', 'Expiry Date', 'Status'];
-    const rows = filteredData.map(item => [
-      item.name,
-      item.generic_name || '',
-      item.category_name || 'Uncategorized',
-      item.dosage || '',
-      item.form || '',
-      item.stock || 0,
-      item.unit_price || 0,
-      item.expiry_date || 'N/A',
-      (item.stock || 0) <= (item.reorder_level || 10) ? 'Low Stock' : 'In Stock'
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(e => e.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `inventory_export_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const getDaysToExpiry = (expiryDate) => {
-    if (!expiryDate) return null;
-    const diff = new Date(expiryDate) - new Date();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  };
-
-  const formatExpiryTime = (expiryDate) => {
-    const days = getDaysToExpiry(expiryDate);
-    if (days === null) return 'N/A';
-    if (days < 0) return 'Expired';
-    
-    const months = Math.floor(days / 30);
-    const remainingDays = days % 30;
-    
-    if (months > 0) {
-      return `${months}m ${remainingDays}d`;
-    }
-    return `${days}d`;
-  };
-
-  const filteredData = (Array.isArray(inventoryData) ? inventoryData : []).filter(item => {
-    if (!item) return false;
-    const name = item.name || '';
-    const genericName = item.generic_name || '';
-
-    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      genericName.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const drugCategory = (item.category_name || "").toLowerCase();
-    const targetCategory = selectedCategory.toLowerCase();
-    const matchesCategory = selectedCategory === 'All' || drugCategory === targetCategory;
-
-    const daysToExpiry = getDaysToExpiry(item.expiry_date);
-    const isLow = (item.stock || 0) <= (item.reorder_level || 10);
-    
-    let matchesFilter = true;
-    if (activeFilter === 'Low Stock') matchesFilter = isLow;
-    else if (activeFilter === '30 Days Expiry') matchesFilter = daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 30;
-    else if (activeFilter === '100 Days Expiry') matchesFilter = daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 100;
-
-    return matchesSearch && matchesCategory && matchesFilter;
-  });
 
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-500 text-sm py-8 px-4 md:px-6 lg:px-8">
-
-      {/* Top Header */}
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase font-outfit">Inventory Control</h1>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Medication Stock</p>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">Master Inventory</h1>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Batches & Stock Integrity</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-0 w-full sm:w-[300px] bg-white border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-50 focus-within:border-emerald-500 transition-all shadow-sm">
-            <input
-              type="text"
-              placeholder="Search medications..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 pl-4 pr-3 py-2 text-xs font-bold outline-none border-none bg-transparent"
-            />
-            <button className="w-7 h-9 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-emerald-500 border-l border-slate-100 transition-colors shrink-0">
-              <FaSearch className="text-sm" />
+        <div className="flex gap-2">
+            <Link to="/inventory/adjust" className="bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-red-100 transition-all">
+                <FaBalanceScale /> Adjustment
+            </Link>
+            <Link to="/procurement/advice" className="bg-indigo-50 text-indigo-600 border border-indigo-100 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-indigo-100 transition-all">
+                <FaTruck /> Smart Reorder
+            </Link>
+            <button onClick={handleExport} className="bg-white text-slate-600 border border-slate-200 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-slate-50 transition-all">
+                <FaFileExport /> Export CSV
             </button>
-          </div>
-
-          {user?.isAdmin && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setEditingCategory(null); setNewCategoryName(''); setIsCategoryModalOpen(true); }}
-                className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border bg-white text-emerald-600 border-emerald-200"
-              >
-                <FaPlus /> Add Category
-              </button>
-              <button
-                onClick={() => setIsCategoryModalOpen(true)}
-                className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border bg-white text-slate-700"
-              >
-                <FaEdit /> Edit Categories
-              </button>
-              <Link to="/inventory/new" className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border">
-                <FaPlus /> New Entry
-              </Link>
+            <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                <input type="text" placeholder="Search med..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-50 outline-none font-bold text-xs w-64" />
             </div>
-          )}
+            <Link to="/inventory/new" className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">
+                <FaPlus /> New Entry
+            </Link>
         </div>
       </header>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Stock Items</span>
-            <FaBox className="text-slate-300 text-[12px]" />
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-lg font-black text-slate-900 tabular-nums">{loading ? "..." : inventoryData.length}</p>
-            <p className="text-[10px] font-bold text-emerald-500 uppercase">Items </p>
-          </div>
-        </div>
-
-        <div 
-          onClick={() => setActiveFilter(activeFilter === 'Low Stock' ? 'All' : 'Low Stock')}
-          className={`cursor-pointer bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-red-500 transition-all ${activeFilter === 'Low Stock' ? 'ring-2 ring-red-100 bg-red-50/10' : ''}`}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Low Stock</span>
-            <FaExclamationTriangle className="text-red-300 text-[12px]" />
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-lg font-black text-slate-900 tabular-nums">
-              {loading ? "..." : inventoryData.filter(item => (item.stock || 0) <= (item.reorder_level || 10)).length}
-            </p>
-            <p className="text-[10px] font-bold text-red-500 uppercase">Alerts</p>
-          </div>
-        </div>
-
-        <div 
-          onClick={() => setActiveFilter(activeFilter === '30 Days Expiry' ? 'All' : '30 Days Expiry')}
-          className={`cursor-pointer bg-white p-3 rounded-2xl border border-slate-200 shadow-sm border-l-2 border-l-orange-500 transition-all ${activeFilter === '30 Days Expiry' ? 'ring-2 ring-orange-100 bg-orange-50/10' : ''}`}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Expiry</span>
-            <FaClock className="text-orange-300 text-[12px]" />
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-lg font-black text-slate-900 tabular-nums">
-              {loading ? "..." : inventoryData.filter(item => {
-                const diff = getDaysToExpiry(item.expiry_date);
-                return diff !== null && diff > 0 && diff <= 30;
-              }).length}
-            </p>
-            <p className="text-[10px] font-bold text-orange-500 uppercase">30 Days</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Value</span>
-            <FaMoneyBill className="text-indigo-300 text-[12px]" />
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-lg font-black text-slate-900 tabular-nums">
-              ${loading ? "..." : inventoryData.reduce((acc, item) => acc + (parseFloat(item.unit_price) * (item.stock || 0)), 0).toLocaleString()}
-            </p>
-            <p className="text-[10px] font-bold text-indigo-500 uppercase">Total</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-2 rounded-xl border border-slate-200">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-          {['All', ...categories.filter(c => c.type === 'Pharmacy').map(c => c.name)].map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 whitespace-nowrap rounded-lg text-[11px] font-black uppercase tracking-tight transition-all border ${selectedCategory === cat
-                ? 'bg-emerald-500 text-white border-emerald-500'
-                : 'bg-white text-slate-400 border-slate-50 hover:border-slate-200'
-                }`}
-            >
-              {cat === 'All' ? 'Complete' : cat}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setActiveFilter(activeFilter === '100 Days Expiry' ? 'All' : '100 Days Expiry')}
-            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all ${activeFilter === '100 Days Expiry' ? 'bg-blue-500 text-white border-blue-500' : ''}`}
-          >
-            <FaClock /> 100 Days
-          </button>
-          <button 
-            onClick={() => {
-              if (activeFilter !== 'All') setActiveFilter('All');
-              else setActiveFilter('Low Stock');
-            }}
-            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : ''}`}
-          >
-            <FaFilter /> Low Stock
-          </button>
-          <button 
-            onClick={handleExportCSV}
-            className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none hover:bg-slate-50 transition-all"
-          >
-            <FaFileExport /> CSV
-          </button>
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm relative">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
-          <img src="https://images.unsplash.com/photo-1587854685352-c8462d18c962?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover" />
-        </div>
-        <div className="overflow-x-auto relative z-10">
-          <table className="w-full text-left border-collapse">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <BarcodeLabel item={labelItem} shopName="Josiah Pharmacy" />
+        <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Medication</th>
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Category</th>
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Dosage</th>
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Stock</th>
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Price</th>
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Expiry</th>
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center tracking-tighter">Actions</th>
-              </tr>
+                <tr className="bg-slate-50/50 border-b border-slate-100 uppercase text-[9px] font-black tracking-widest text-slate-400">
+                    <th className="px-6 py-4">Medication Details</th>
+                    <th className="px-6 py-4">Total Stock</th>
+                    <th className="px-6 py-4">Price</th>
+                    <th className="px-6 py-4 text-center">Batches</th>
+                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4"></th>
+                </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredData.map((item) => {
-                  const isLow = (item.stock || 0) <= (item.reorder_level || 10);
-
-                  // Expiry alert: within 2 months (60 days)
-                  const isExpiring = item.expiry_date &&
-                    (new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24) < 60;
-
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-5 py-3 min-w-[150px]">
-                        <p className="text-[13px] font-black text-slate-900 group-hover:text-emerald-600 uppercase transition-colors">{item.name}</p>
-                        <span className="text-[12px] font-bold text-slate-500 italic truncate block max-w-[100px]">{item.generic_name}</span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight ${getCategoryColorClass(item.category_name)}`}>
-                          {item.category_name || "Uncategorized"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-center font-bold text-slate-600 text-[12px]">{item.dosage}</td>
-                      <td className="px-5 py-3">
-                        <span className={`text-[13px] font-black tabular-nums ${isLow ? 'text-red-600' : 'text-slate-900'}`}>
-                          {item.stock}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-right font-black text-slate-900 text-[13px] tabular-nums">${item.unit_price}</td>
-                      <td className="px-5 py-3 text-center min-w-[120px]">
-                        <span className={`text-[12px] font-black tabular-nums ${isExpiring ? 'text-red-500 animate-pulse' : 'text-slate-500'}`}>
-                          <span className="block">{item.expiry_date || "N/A"}</span>
-                          <span className="block text-[9px] font-bold uppercase tracking-tight opacity-70">
-                            {formatExpiryTime(item.expiry_date)}
-                          </span>
-                          {isExpiring && <span className="block text-[7px] text-red-600 mt-0.5 font-black">!! EXPIRING !!</span>}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${isLow ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                          {isLow ? "Low Stock" : "In Stock"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        {user?.isAdmin && (
-                          <div className="flex justify-center">
-                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all">
-                              <FaEdit className="text-sm" />
-                            </Link>
-                          </div>
+                {loading ? (
+                    <tr><td colSpan="6" className="py-12 text-center animate-pulse">Scanning Vault...</td></tr>
+                ) : filteredData.map(item => (
+                    <React.Fragment key={item.id}>
+                        <tr className={`hover:bg-slate-50/50 transition-colors ${expandedRows.has(item.id) ? 'bg-slate-50/30' : ''}`}>
+                            <td className="px-6 py-4">
+                                <p className="text-[13px] font-black text-slate-900 uppercase tracking-tight">{item.name}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{item.category_name || 'General'}</p>
+                            </td>
+                            <td className="px-6 py-4 font-black text-slate-900 tabular-nums text-[13px]">{item.total_stock}</td>
+                            <td className="px-6 py-4 font-black text-slate-900 tabular-nums text-[13px]">${item.unit_price}</td>
+                            <td className="px-6 py-4 text-center">
+                                <button onClick={() => toggleRow(item.id)} className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-50">
+                                    {item.batches?.length || 0} Batches {expandedRows.has(item.id) ? <FaChevronUp className="inline ml-1" /> : <FaChevronDown className="inline ml-1" />}
+                                </button>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                                    item.total_stock <= (item.reorder_level || 10) ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'
+                                }`}>{item.total_stock <= (item.reorder_level || 10) ? 'Low Stock' : 'Secure'}</span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                    <button
+                                        onClick={() => { setLabelItem(item); setTimeout(() => window.print(), 200); }}
+                                        className="text-slate-300 hover:text-blue-500 p-2"
+                                        title="Print Label"
+                                    >
+                                        <FaBarcode />
+                                    </button>
+                                    <Link to={`/inventory/edit/${item.id}`} className="text-slate-300 hover:text-emerald-500 p-2"><FaEdit /></Link>
+                                </div>
+                            </td>
+                        </tr>
+                        {expandedRows.has(item.id) && (
+                            <tr className="bg-slate-50/30 border-b border-slate-100 animate-in slide-in-from-top-2 duration-200">
+                                <td colSpan="6" className="px-6 py-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {item.batches?.length > 0 ? item.batches.map((batch, idx) => (
+                                            <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div>
+                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Batch Number</span>
+                                                        <p className="text-[12px] font-black text-slate-900 uppercase">{batch.batch_number}</p>
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                                                        new Date(batch.expiry_date) < new Date() ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                        {new Date(batch.expiry_date) < new Date() ? 'EXPIRED' : `Exp: ${batch.expiry_date}`}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-end">
+                                                    <div className="space-y-1">
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase">Quantity</p>
+                                                        <p className="text-[16px] font-black text-emerald-600 tabular-nums">{batch.quantity}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase">Unit Cost</p>
+                                                        <p className="text-[12px] font-bold text-slate-900">${batch.cost_price}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <p className="col-span-full py-4 text-center text-slate-400 italic font-bold">No active batches for this medication.</p>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
                         )}
-                      </td>
-                    </tr>
-                  )
-                })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Category Management Modal */}
-      {isCategoryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-in zoom-in duration-300">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Manage Categories</h2>
-              <button onClick={() => setIsCategoryModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg">
-                <FaTimes className="text-slate-400" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Category name..."
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all outline-none"
-                />
-                <button
-                  onClick={editingCategory ? handleUpdateCategory : handleAddCategory}
-                  className="btn-pharmacy px-4 py-2 text-[12px]"
-                >
-                  {editingCategory ? 'Update' : 'Add'}
-                </button>
-              </div>
-
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                {categories.filter(c => c.type === 'Pharmacy').map(cat => (
-                  <div key={cat.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 group">
-                    <span className="text-[12px] font-bold text-slate-700 uppercase">{cat.name}</span>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
-                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
-                      >
-                        <FaEdit className="text-xs" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                      >
-                        <FaTrash className="text-xs" />
-                      </button>
-                    </div>
-                  </div>
+                    </React.Fragment>
                 ))}
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => setIsCategoryModalOpen(false)}
-                className="px-4 py-2 text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </tbody>
+        </table>
+      </div>
     </div>
   );
 };

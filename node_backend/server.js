@@ -87,9 +87,12 @@ app.get('/api/inventory', authenticateToken, async (req, res) => {
 const io = new Server(server, {
   cors: {
     origin: process.env.CORS_ALLOWED_ORIGINS ? process.env.CORS_ALLOWED_ORIGINS.split(',') : "*",
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  // Add path if behind proxy that doesn't strip it, but default is /socket.io/
 });
+
 
 io.on('connection', (socket) => {
   console.log(`[+] A client connected: ${socket.id}`);

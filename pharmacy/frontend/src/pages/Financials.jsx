@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import expenseService from '../services/expenseService';
-import { FaMoneyBill, FaChartLine, FaArrowDown, FaCalendarAlt, FaArrowLeft, FaShoppingCart, FaPills } from 'react-icons/fa';
+import exportService from '../services/exportService';
+import { FaMoneyBill, FaChartLine, FaArrowDown, FaCalendarAlt, FaArrowLeft, FaShoppingCart, FaPills, FaFileExport } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const Financials = () => {
@@ -32,6 +33,24 @@ const Financials = () => {
         }
     };
 
+    const handleExport = () => {
+        const exportData = [
+            { Metric: 'Gross Revenue', Value: stats.total_revenue },
+            { Metric: 'Total Expenses', Value: stats.total_expenses },
+            { Metric: 'Net Profit', Value: stats.net_profit },
+            { Metric: 'Operating Balance', Value: stats.balance },
+            { Metric: 'Pharmacy Revenue', Value: stats.pharmacy_revenue },
+            { Metric: 'Supermarket Revenue', Value: stats.supermarket_revenue },
+        ];
+
+        // Add monthly data if available
+        stats.chart_data.forEach(d => {
+            exportData.push({ Metric: `Revenue (${d.month})`, Value: d.revenue });
+        });
+
+        exportService.exportToCSV(exportData, 'financial_ledger');
+    };
+
     // Simple path generator for SVG Chart
     const generatePath = (data) => {
         if (!data || data.length < 2) return "";
@@ -59,13 +78,21 @@ const Financials = () => {
                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Revenue, Expenses & Growth</p>
                     </div>
                 </div>
-                <button
-                    onClick={fetchStats}
-                    className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
-                    title="Refresh Data"
-                >
-                    <FaCalendarAlt className="text-emerald-500" />
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleExport}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm"
+                    >
+                        <FaFileExport /> Export CSV
+                    </button>
+                    <button
+                        onClick={fetchStats}
+                        className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+                        title="Refresh Data"
+                    >
+                        <FaCalendarAlt className="text-emerald-500" />
+                    </button>
+                </div>
             </header>
 
             {/* KPI Cards */}
