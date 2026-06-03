@@ -53,6 +53,7 @@ import ProcurementAdvice from './pages/ProcurementAdvice';
 import StockAdjustment from './pages/StockAdjustment';
 import SystemHealth from './pages/SystemHealth';
 import HelpSupport from './pages/HelpSupport';
+import DigitalDisplay from './pages/DigitalDisplay';
 import './App.css';
 
 function App() {
@@ -419,6 +420,7 @@ function App() {
                 </Layout>
               </PrivateRoute>
             } />
+            <Route path="/display" element={<DigitalDisplay />} />
             <Route path="/system/health" element={
               <PrivateRoute adminOnly={true}>
                 <Layout>

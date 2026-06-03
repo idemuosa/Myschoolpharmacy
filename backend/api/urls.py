@@ -6,7 +6,8 @@ from .views import (
     SupermarketSaleViewSet, reset_password, SystemSettingsViewSet, 
     update_profile, ReportsView, UserViewSet, health_check, ExpenseViewSet,
     ActivityLogViewSet, backup_database, PurchaseOrderViewSet,
-    DrugBatchViewSet, ProductBatchViewSet, AttendanceViewSet, SupplierViewSet
+    DrugBatchViewSet, ProductBatchViewSet, AttendanceViewSet, SupplierViewSet,
+    InventoryAuditViewSet
 )
 
 router = DefaultRouter()

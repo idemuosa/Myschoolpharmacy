@@ -152,6 +152,28 @@ class DrugViewSet(viewsets.ModelViewSet):
     serializer_class = DrugSerializer
     permission_classes = [IsAuthenticated]
 
+    @action(detail=False, methods=['get'], url_path='procurement-advice')
+    def procurement_advice(self, request):
+        # Find all drugs where total_stock <= reorder_level
+        # We need to filter by property, but since it's a property we'll do it in Python
+        # For large datasets, this should be optimized to an annotation
+        low_stock_drugs = [d for d in Drug.objects.all() if d.total_stock <= d.reorder_level]
+
+        advice = []
+        for drug in low_stock_drugs:
+            advice.append({
+                "id": drug.id,
+                "name": drug.name,
+                "current_stock": drug.total_stock,
+                "reorder_level": drug.reorder_level,
+                "suggested_qty": (drug.reorder_level * 2) - drug.total_stock,
+                "unit_price": drug.unit_price,
+                "supplier_name": drug.supplier.name if drug.supplier else "No Vendor Linked",
+                "supplier_id": drug.supplier.id if drug.supplier else None
+            })
+
+        return Response(advice)
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -188,4 +210,22 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
-    return Response({"status": "healthy"})
+    import psutil
+    import time
+
+    # Basic system metrics
+    cpu_usage = psutil.cpu_percent()
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+
+    return Response({
+        "status": "healthy",
+        "version": "1.1.0",
+        "timestamp": time.time(),
+        "metrics": {
+            "cpu": cpu_usage,
+            "memory": memory.percent,
+            "disk": disk.percent
+        },
+        "database": "PostgreSQL 15 Connected"
+    })

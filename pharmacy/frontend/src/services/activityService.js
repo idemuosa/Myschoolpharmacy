@@ -1,7 +1,7 @@
 import api from './api';
 
 const activityService = {
-  getLogs: (params = {}) => api.get('activity-logs/', { params }),
+  getLogs: (config = {}) => api.get('logs/', config),
 };
 
 export default activityService;

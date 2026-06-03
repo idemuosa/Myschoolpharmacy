@@ -7,7 +7,7 @@ import {
   FaBriefcaseMedical,
   FaChartLine, FaUsers, FaCog,
   FaShoppingCart, FaSignOutAlt, FaTimes,
-  FaUserPlus, FaArrowLeft, FaMoneyBill, FaHistory, FaTruck, FaUserClock, FaFileInvoice, FaClipboardCheck, FaBullhorn, FaUserTag, FaHeartbeat, FaQuestionCircle
+  FaUserPlus, FaArrowLeft, FaMoneyBill, FaHistory, FaTruck, FaUserClock, FaFileInvoice, FaClipboardCheck, FaBullhorn, FaUserTag, FaHeartbeat, FaQuestionCircle, FaLightbulb
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -37,6 +37,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Inventory', icon: <FaBox />, path: '/inventory', adminOnly: true },
     { name: 'Suppliers', icon: <FaTruck />, path: '/suppliers', adminOnly: true },
     { name: 'Procurement', icon: <FaFileInvoice />, path: '/procurement', adminOnly: true },
+    { name: 'Smart Restock', icon: <FaLightbulb />, path: '/procurement/advice', adminOnly: true },
     { name: 'Audit', icon: <FaClipboardCheck />, path: '/audit', adminOnly: true },
     { name: 'Outreach', icon: <FaBullhorn />, path: '/outreach', adminOnly: true },
     { name: 'Customers', icon: <FaUsers />, path: '/customers', adminOnly: true },
