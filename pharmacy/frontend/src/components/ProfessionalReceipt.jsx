@@ -37,8 +37,9 @@ const ProfessionalReceipt = ({ sale, shopSettings }) => {
             <table className="w-full text-left mb-4">
                 <thead>
                     <tr className="border-b border-slate-200 text-[9px] font-black uppercase">
-                        <th className="py-2">Medication</th>
+                        <th className="py-2">Item</th>
                         <th className="py-2 text-center">Qty</th>
+                        <th className="py-2 text-right">Price</th>
                         <th className="py-2 text-right">Sub</th>
                     </tr>
                 </thead>
@@ -47,9 +48,9 @@ const ProfessionalReceipt = ({ sale, shopSettings }) => {
                         <tr key={i} className="border-b border-slate-50">
                             <td className="py-2 uppercase leading-tight pr-4">
                                 {item.name}
-                                <br/><span className="text-[8px] text-slate-400">Unit: ${item.unitPrice}</span>
                             </td>
                             <td className="py-2 text-center">{item.quantity}</td>
+                            <td className="py-2 text-right">${item.unitPrice.toFixed(2)}</td>
                             <td className="py-2 text-right">${(item.quantity * item.unitPrice).toFixed(2)}</td>
                         </tr>
                     ))}

@@ -1,110 +1,91 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  FaSearch, FaPills, FaUser, FaHistory, FaCog, FaCashRegister,
-  FaShoppingCart, FaBox, FaChartLine
-} from 'react-icons/fa';
+import { FaTerminal, FaBolt } from 'react-icons/fa';
 
 const CommandPalette = ({ isOpen, onClose }) => {
-  const [query, setQuery] = useState('');
-  const navigate = useNavigate();
-  const inputRef = useRef(null);
+    const [query, setQuery] = useState('');
+    const navigate = useNavigate();
+    const inputRef = useRef(null);
 
-  const actions = [
-    { id: 'pos', name: 'Open POS Terminal', icon: <FaCashRegister />, path: '/pos', category: 'General' },
-    { id: 'retail', name: 'Open Supermarket POS', icon: <FaShoppingCart />, path: '/supermarket/pos', category: 'General' },
-    { id: 'inventory', name: 'Manage Inventory', icon: <FaBox />, path: '/inventory', category: 'Management' },
-    { id: 'customers', name: 'Patient Directory', icon: <FaUser />, path: '/customers', category: 'Management' },
-    { id: 'reports', name: 'Financial Reports', icon: <FaChartLine />, path: '/reports/sales', category: 'Management' },
-    { id: 'settings', name: 'System Settings', icon: <FaCog />, path: '/settings', category: 'System' },
-    { id: 'logs', name: 'Audit Logs', icon: <FaHistory />, path: '/audit-logs', category: 'System' },
-  ];
+    const commands = [
+        { name: 'Go to Dashboard', path: '/', icon: '📊' },
+        { name: 'POS Terminal', path: '/pos', icon: '🛒' },
+        { name: 'Retail POS', path: '/supermarket/pos', icon: '🛍️' },
+        { name: 'Inventory Vault', path: '/inventory', icon: '📦' },
+        { name: 'Staff Management', path: '/staff', icon: '👥' },
+        { name: 'Financial Overview', path: '/financials', icon: '📈' },
+        { name: 'Attendance Logging', path: '/attendance', icon: '🕒' },
+        { name: 'Smart Procurement', path: '/procurement/advice', icon: '💡' },
+        { name: 'Audit Logs', path: '/audit-logs', icon: '📜' },
+        { name: 'Help & Support', path: '/help', icon: '❓' },
+    ];
 
-  const filteredActions = actions.filter(action =>
-    action.name.toLowerCase().includes(query.toLowerCase()) ||
-    action.category.toLowerCase().includes(query.toLowerCase())
-  );
+    useEffect(() => {
+        if (isOpen) {
+            setTimeout(() => inputRef.current?.focus(), 100);
+        }
+    }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setQuery('');
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
+    const filteredCommands = commands.filter(c =>
+        c.name.toLowerCase().includes(query.toLowerCase())
+    );
 
-  const handleAction = (path) => {
-    navigate(path);
-    onClose();
-  };
+    if (!isOpen) return null;
 
-  if (!isOpen) return null;
+    return (
+        <div
+            className="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh] p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="flex items-center gap-3 p-4 border-b border-slate-100">
+                    <FaTerminal className="text-emerald-500" />
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        placeholder="Search commands (e.g. 'pos', 'stock')..."
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        className="flex-1 bg-transparent border-none outline-none font-black text-sm uppercase tracking-tight"
+                    />
+                    <div className="flex gap-1">
+                        <span className="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-black text-slate-400">ESC</span>
+                    </div>
+                </div>
 
-  return (
-    <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 backdrop-blur-sm bg-slate-900/40"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="relative border-b border-slate-100">
-          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Type a command or search (e.g. 'POS', 'Patient')..."
-            className="w-full pl-14 pr-6 py-5 text-lg font-medium outline-none placeholder:text-slate-300"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => {
-                if (e.key === 'Escape') onClose();
-                if (e.key === 'Enter' && filteredActions.length > 0) handleAction(filteredActions[0].path);
-            }}
-          />
-        </div>
+                <div className="p-2 max-h-[400px] overflow-y-auto scrollbar-hide">
+                    {filteredCommands.length > 0 ? filteredCommands.map((cmd, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => {
+                                navigate(cmd.path);
+                                onClose();
+                                setQuery('');
+                            }}
+                            className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-emerald-50 text-left group transition-all"
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="text-lg">{cmd.icon}</span>
+                                <span className="text-[12px] font-black text-slate-700 uppercase group-hover:text-emerald-700">{cmd.name}</span>
+                            </div>
+                            <FaBolt className="text-slate-100 group-hover:text-emerald-200" />
+                        </button>
+                    )) : (
+                        <p className="p-8 text-center text-slate-400 font-black uppercase text-[10px]">No matching command found</p>
+                    )}
+                </div>
 
-        <div className="max-h-[60vh] overflow-y-auto p-2">
-          {filteredActions.length > 0 ? (
-            <div className="space-y-1">
-              {filteredActions.map((action) => (
-                <button
-                  key={action.id}
-                  className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all group text-left"
-                  onClick={() => handleAction(action.path)}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-lg group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                    {action.icon}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-900">{action.name}</p>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{action.category}</p>
-                  </div>
-                  <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest border border-slate-100 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100">
-                    Jump to
-                  </div>
-                </button>
-              ))}
+                <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        Press <span className="text-emerald-500 font-black">ENTER</span> to execute
+                    </p>
+                </div>
             </div>
-          ) : (
-            <div className="py-12 text-center text-slate-400">
-              <p className="text-sm font-bold">No results for "{query}"</p>
-              <p className="text-xs">Try searching for generic terms like "Reports" or "POS"</p>
-            </div>
-          )}
         </div>
-
-        <div className="bg-slate-50 px-6 py-3 flex items-center justify-between border-t border-slate-100">
-          <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-200 px-1 rounded shadow-sm text-slate-900">↑↓</kbd> Navigate</span>
-            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-200 px-1 rounded shadow-sm text-slate-900">Enter</kbd> Select</span>
-            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-200 px-1 rounded shadow-sm text-slate-900">Esc</kbd> Close</span>
-          </div>
-          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Quick Action</span>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default CommandPalette;

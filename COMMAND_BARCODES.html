@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Josiah POS - Command Barcode Sheet</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap');
+        body { font-family: 'Inter', sans-serif; padding: 40px; background: #f8fafc; color: #0f172a; }
+        .sheet { background: white; max-width: 800px; margin: 0 auto; padding: 40px; border-radius: 24px; shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        h1 { font-weight: 900; text-transform: uppercase; letter-spacing: -0.05em; color: #10b981; border-bottom: 4px solid #f1f5f9; padding-bottom: 10px; }
+        p { color: #64748b; font-weight: 500; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 40px; }
+        .command-card { border: 2px solid #f1f5f9; padding: 20px; border-radius: 16px; text-align: center; }
+        .command-card:hover { border-color: #10b981; }
+        .label { font-weight: 900; text-transform: uppercase; font-size: 14px; margin-bottom: 15px; display: block; color: #334155; }
+        svg { width: 100%; height: auto; }
+        .instructions { margin-top: 50px; background: #ecfdf5; padding: 20px; border-radius: 12px; border: 1px solid #d1fae5; }
+        .instructions b { color: #059669; }
+        @media print {
+            body { background: white; padding: 0; }
+            .sheet { shadow: none; border: none; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sheet">
+        <h1>Josiah POS Command Sheet</h1>
+        <p>Scan these codes to control the system without touching your mouse or keyboard.</p>
+
+        <div class="grid">
+            <div class="command-card">
+                <span class="label">1. Focus Search / Scan Mode</span>
+                <svg id="cmd-focus"></svg>
+                <p style="font-size: 10px; margin-top: 5px;">Clears search and prepares for next item</p>
+            </div>
+
+            <div class="command-card">
+                <span class="label">2. Cycle Payment Method</span>
+                <svg id="cmd-payment"></svg>
+                <p style="font-size: 10px; margin-top: 5px;">Switch Cash / POS / Transfer</p>
+            </div>
+
+            <div class="command-card">
+                <span class="label">3. Clear Entire Cart</span>
+                <svg id="cmd-clear"></svg>
+                <p style="font-size: 10px; margin-top: 5px;">Empty all items and start over</p>
+            </div>
+
+            <div class="command-card">
+                <span class="label">4. FINALIZE & PRINT RECEIPT</span>
+                <svg id="cmd-checkout"></svg>
+                <p style="font-size: 10px; margin-top: 5px; font-weight: 900; color: #10b981;">COMPLETE TRANSACTION</p>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <p><b>PRO TIP:</b> Print this sheet and tape it next to your laptop. When you're done scanning items, just scan the <b>"Finalize & Print"</b> code to trigger the thermal printer instantly!</p>
+        </div>
+
+        <button class="no-print" onclick="window.print()" style="margin-top: 30px; background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 900; cursor: pointer; width: 100%;">PRINT THIS SHEET</button>
+    </div>
+
+    <script>
+        // These strings match the keyboard listeners in PointOfSales.jsx
+        JsBarcode("#cmd-focus", "F1", { format: "CODE128", displayValue: false, lineColor: "#000" });
+        JsBarcode("#cmd-payment", "F2", { format: "CODE128", displayValue: false, lineColor: "#000" });
+        JsBarcode("#cmd-clear", "F4", { format: "CODE128", displayValue: false, lineColor: "#000" });
+        JsBarcode("#cmd-checkout", "FINALIZE", { format: "CODE128", displayValue: false, lineColor: "#10b981" });
+    </script>
+</body>
+</html>

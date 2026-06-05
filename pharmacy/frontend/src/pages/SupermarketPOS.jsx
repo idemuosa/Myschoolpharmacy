@@ -27,6 +27,7 @@ const SupermarketPOS = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
    const [lastScanned, setLastScanned] = useState(null);
    const [autoPrint, setAutoPrint] = useState(false);
+   const [paymentMethod, setPaymentMethod] = useState('Cash');
    const scanInputRef = useRef(null);
 
   useEffect(() => {
@@ -215,7 +216,7 @@ const SupermarketPOS = () => {
            transaction_id: txId,
            staff: staffId,
            total_amount: totalAmount.toFixed(2),
-           payment_method: 'Cash',
+           payment_method: paymentMethod,
            items: items
         });
        
@@ -260,11 +261,24 @@ const SupermarketPOS = () => {
                 type="text" 
                 placeholder="Search products or scan barcode..." 
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'FINALIZE') {
+                    setSearchTerm('');
+                    handleCheckout();
+                    return;
+                  }
+                  setSearchTerm(val);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const code = searchTerm.trim();
                     if (!code) return;
+                    if (code === 'FINALIZE') {
+                      setSearchTerm('');
+                      handleCheckout();
+                      return;
+                    }
                     const found = products.find(p => p.barcode === code || p.sku === code);
                     if (found) {
                       addToCart(found);
@@ -403,7 +417,7 @@ const SupermarketPOS = () => {
 
          <div className="p-4 border-b border-slate-50">
             <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Authorized Cashier</label>
-            <div className="relative">
+            <div className="relative mb-3">
               <FaUserTie className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 text-xs" />
               <select 
                 value={staffId}
@@ -417,6 +431,17 @@ const SupermarketPOS = () => {
                 ))}
               </select>
             </div>
+
+            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Payment Method</label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[13px] font-bold outline-none appearance-none"
+            >
+              <option value="Cash">Cash</option>
+              <option value="POS">POS (Card)</option>
+              <option value="Transfer">Bank Transfer</option>
+            </select>
          </div>
 
          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50/30 scrollbar-hide">

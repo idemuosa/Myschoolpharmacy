@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import api from './services/api';
 import { socketService } from './services/socket';
 import syncService from './services/syncService';
+import backupService from './services/backupService';
 import { APP_VERSION } from './config';
 
 // Import Pages
@@ -54,6 +55,8 @@ import StockAdjustment from './pages/StockAdjustment';
 import SystemHealth from './pages/SystemHealth';
 import HelpSupport from './pages/HelpSupport';
 import DigitalDisplay from './pages/DigitalDisplay';
+import TransactionArchive from './pages/TransactionArchive';
+import DeadStockReport from './pages/DeadStockReport';
 import './App.css';
 
 function App() {
@@ -83,6 +86,9 @@ function App() {
 
   useEffect(() => {
     socketService.connect();
+
+    // Start Automatic Daily Backup (at 5:00 PM)
+    backupService.scheduleDailyBackup("17:00");
 
     // Sync if user is already logged in
     if (localStorage.getItem('access_token')) {
@@ -177,6 +183,13 @@ function App() {
             <PrivateRoute adminOnly={true}>
               <Layout>
                 <SalesReport />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/reports/archive" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <TransactionArchive />
               </Layout>
             </PrivateRoute>
           } />

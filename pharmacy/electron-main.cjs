@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const isDev = !app.isPackaged;
@@ -8,8 +8,28 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   dialog.showErrorBox(
     'Application Error',
-    `A JavaScript error occurred in the main process:\n\n${error.message}\n\nStack Trace:\n${error.stack}`
+    `A JavaScript error occurred in the main process:\n\n${error.message}`
   );
+});
+
+// Handle Database Backups to Desktop
+ipcMain.handle('save-backup', async (event, { fileName, content }) => {
+  try {
+    const desktopPath = path.join(require('os').homedir(), 'Desktop');
+    const backupFolder = path.join(desktopPath, 'Josiah_POS_Backups');
+
+    if (!fs.existsSync(backupFolder)) {
+      fs.mkdirSync(backupFolder);
+    }
+
+    const filePath = path.join(backupFolder, fileName);
+    fs.writeFileSync(filePath, content);
+
+    return { success: true, path: filePath };
+  } catch (err) {
+    console.error('Backup failed:', err);
+    return { success: false, error: err.message };
+  }
 });
 
 function createWindow() {

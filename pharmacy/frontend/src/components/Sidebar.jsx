@@ -42,6 +42,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Outreach', icon: <FaBullhorn />, path: '/outreach', adminOnly: true },
     { name: 'Customers', icon: <FaUsers />, path: '/customers', adminOnly: true },
     { name: 'Reports', icon: <FaChartLine />, path: '/reports/sales', adminOnly: true },
+    { name: 'Receipt Archive', icon: <FaHistory />, path: '/reports/archive', adminOnly: true },
     { name: 'Attendance', icon: <FaUserClock />, path: '/attendance' },
     { name: 'Staff List', icon: <FaUsers />, path: '/staff', adminOnly: true },
     { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new', adminOnly: true },

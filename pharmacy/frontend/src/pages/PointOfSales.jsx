@@ -78,8 +78,8 @@ const PointOfSales = () => {
       }
       if (e.key === 'F2') {
         e.preventDefault();
-        setPaymentMethod(prev => prev === 'Cash' ? 'Card' : prev === 'Card' ? 'Transfer' : 'Cash');
-        toast(`Payment: ${paymentMethod === 'Cash' ? 'Card' : paymentMethod === 'Card' ? 'Transfer' : 'Cash'}`, { icon: '💳' });
+        setPaymentMethod(prev => prev === 'Cash' ? 'POS' : prev === 'POS' ? 'Transfer' : 'Cash');
+        toast(`Payment: ${paymentMethod === 'Cash' ? 'POS' : paymentMethod === 'POS' ? 'Transfer' : 'Cash'}`, { icon: '💳' });
         return;
       }
       if (e.key === 'F4') {
@@ -228,6 +228,13 @@ const PointOfSales = () => {
         }];
       }
     });
+
+    // Provide visual feedback for scanning/adding
+    setLastScanned({
+      name: product.name,
+      price: product.unit_price,
+      time: Date.now()
+    });
   };
 
   const handleMobileScan = async () => {
@@ -274,7 +281,7 @@ const PointOfSales = () => {
         staff: staffId,
         customer: selectedPatient?.id || null,
         total_amount: totalAmount.toFixed(2),
-        payment_method: splitPayment.isSplit ? `Split (Cash: ${splitPayment.cash}, Card: ${splitPayment.card})` : paymentMethod,
+        payment_method: splitPayment.isSplit ? `Split (Cash: ${splitPayment.cash}, POS: ${splitPayment.card})` : paymentMethod,
         items: items
       });
 
@@ -315,10 +322,23 @@ const PointOfSales = () => {
                 type="text"
                 placeholder="Search or scan barcode..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'FINALIZE') {
+                    setSearchTerm('');
+                    handleCheckout();
+                    return;
+                  }
+                  setSearchTerm(val);
+                }}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                         const code = searchTerm.trim();
+                        if (code === 'FINALIZE') {
+                           setSearchTerm('');
+                           handleCheckout();
+                           return;
+                        }
                         const found = products.find(p => p.barcode === code);
                         if (found) { addToCart(found); setSearchTerm(''); }
                     }
@@ -345,6 +365,24 @@ const PointOfSales = () => {
               <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-lg text-[11px] font-black uppercase border ${selectedCategory === cat ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-400 border-slate-100'}`}>{cat}</button>
             ))}
           </div>
+
+          {lastScanned && (Date.now() - lastScanned.time < 3000) && (
+             <div className="bg-emerald-600 text-white px-6 py-4 rounded-2xl flex items-center justify-between animate-in zoom-in duration-300 shadow-xl shadow-emerald-100 ring-4 ring-emerald-50">
+               <div className="flex items-center gap-4">
+                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <FaBarcode className="text-xl animate-pulse" />
+                 </div>
+                 <div>
+                    <span className="text-[14px] font-black uppercase tracking-tight block">{lastScanned.name}</span>
+                    <span className="text-[11px] font-bold text-emerald-100 uppercase tracking-widest">Added to Cart</span>
+                 </div>
+               </div>
+               <div className="text-right">
+                  <span className="text-[20px] font-black tabular-nums block">${parseFloat(lastScanned.price).toFixed(2)}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100 italic">Price Confirmed</span>
+               </div>
+             </div>
+           )}
         </header>
 
         <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -419,7 +457,7 @@ const PointOfSales = () => {
                   className="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-black outline-none appearance-none"
                 >
                     <option value="Cash">Cash Only</option>
-                    <option value="Card">Card Only</option>
+                    <option value="POS">POS (Card)</option>
                     <option value="Transfer">Bank Transfer</option>
                     {selectedPatient && <option value="Credit">On Account (Credit)</option>}
                     <option value="Split">Split Payment</option>
