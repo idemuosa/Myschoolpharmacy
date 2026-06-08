@@ -8,6 +8,8 @@ cd pharmacy
 
 echo Step 0: Cleaning environment...
 powershell -Command "if (Test-Path 'node_modules') { Remove-Item -Recurse -Force 'node_modules' -ErrorAction SilentlyContinue }"
+powershell -Command "if (Test-Path 'dist') { Remove-Item -Recurse -Force 'dist' -ErrorAction SilentlyContinue }"
+powershell -Command "if (Test-Path 'dist_electron') { Remove-Item -Recurse -Force 'dist_electron' -ErrorAction SilentlyContinue }"
 powershell -Command "if (Test-Path 'package-lock.json') { Remove-Item -Force 'package-lock.json' -ErrorAction SilentlyContinue }"
 
 echo.
