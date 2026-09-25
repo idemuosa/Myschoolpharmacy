@@ -13,12 +13,20 @@ export const AuthProvider = ({ children }) => {
     // Check if user is logged in on mount
     const token = localStorage.getItem('access_token');
     const username = localStorage.getItem('username');
+    const role = localStorage.getItem('user_role') || 'Admin';
+    const department = localStorage.getItem('user_department') || 'Management';
+    const fullName = localStorage.getItem('user_fullname') || username || 'User';
+    const isAdmin = localStorage.getItem('is_admin') === 'true';
+
     if (token) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser({ 
             token: token,
             username: username,
-            isAdmin: true // All users in this context are treated as admins
+            role: role,
+            department: department,
+            fullName: fullName,
+            isAdmin: isAdmin
         });
     }
     setLoading(false);
@@ -32,16 +40,25 @@ export const AuthProvider = ({ children }) => {
         password: password,
       });
 
-      localStorage.setItem('access_token', response.data.access);
-      localStorage.setItem('refresh_token', response.data.refresh);
+      const { access, refresh, role, department, full_name, is_admin } = response.data;
+
+      localStorage.setItem('access_token', access);
+      if (refresh) localStorage.setItem('refresh_token', refresh);
       localStorage.setItem('username', normalizedUsername);
+      localStorage.setItem('user_role', role || 'Admin');
+      localStorage.setItem('user_department', department || 'Management');
+      localStorage.setItem('user_fullname', full_name || normalizedUsername);
+      localStorage.setItem('is_admin', is_admin ? 'true' : 'false');
       
       setUser({ 
-        token: response.data.access,
-        username: username,
-        isAdmin: true // Successfully getting a token for an admin-only portal implies admin status
+        token: access,
+        username: normalizedUsername,
+        role: role || 'Admin',
+        department: department || 'Management',
+        fullName: full_name || normalizedUsername,
+        isAdmin: !!is_admin
       });
-      toast.success('Successfully logged in!');
+      toast.success(`Welcome back, ${full_name || username}! (${role || 'User'})`);
       return true;
     } catch (error) {
       console.error("Login failed", error);
@@ -58,6 +75,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('username');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('user_department');
+    localStorage.removeItem('user_fullname');
+    localStorage.removeItem('is_admin');
     setUser(null);
     toast.success('Logged out.');
   };
