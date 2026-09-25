@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from './services/api';
 import { APP_VERSION } from './config';
@@ -42,14 +42,11 @@ import Financials from './pages/Financials';
 import './App.css';
 
 function App() {
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-
   useEffect(() => {
     const checkUpdate = async () => {
       try {
         const res = await api.get('health-check/');
         if (res.data && res.data.version && res.data.version !== APP_VERSION) {
-          setUpdateAvailable(true);
           toast((t) => (
             <div className="flex flex-col gap-2">
               <span className="font-bold">New Update Available!</span>

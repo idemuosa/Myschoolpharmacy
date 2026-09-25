@@ -19,7 +19,7 @@ const AdminLogin = () => {
         if (res.data && res.data.length > 0) {
           setShopName(res.data[0].shop_name);
         }
-      } catch (err) {
+      } catch {
         console.error("Branding load failed");
       }
     };

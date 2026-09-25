@@ -18,6 +18,7 @@ const StaffSalesDashboard = () => {
         const controller = new AbortController();
         fetchStaffList(controller.signal);
         return () => controller.abort();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {

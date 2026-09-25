@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -13,6 +14,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('access_token');
     const username = localStorage.getItem('username');
     if (token) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser({ 
             token: token,
             username: username,

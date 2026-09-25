@@ -11,6 +11,7 @@ const Layout = ({ children }) => {
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSidebarOpen(false);
   }, [location]);
 

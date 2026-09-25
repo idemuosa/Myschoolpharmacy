@@ -51,7 +51,6 @@ const PointOfSales = () => {
       controller.abort();
       window.removeEventListener('keydown', handleGlobalScan);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -77,8 +76,9 @@ const PointOfSales = () => {
       console.error("Error fetching products:", error);
       toast.error("Failed to load inventory products.");
     } finally {
-      if (signal && signal.aborted) return;
-      setLoading(false);
+      if (!signal || !signal.aborted) {
+        setLoading(false);
+      }
     }
   };
 
