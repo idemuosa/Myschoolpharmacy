@@ -7,11 +7,16 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Sum, Count, F
 from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     CategorySerializer, DrugSerializer, StaffSerializer, CustomerSerializer,
     PrescriptionSerializer, SaleSerializer, SaleReturnSerializer,
-    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer, UserProfileSerializer, UserSerializer, ExpenseSerializer
+    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer, UserProfileSerializer, UserSerializer, ExpenseSerializer,
+    CustomTokenObtainPairSerializer
 )
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()

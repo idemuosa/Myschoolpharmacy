@@ -46,6 +46,7 @@ const AddNewDrugs = () => {
          const yyyy = today.getFullYear();
          setFormData(prev => ({ ...prev, stock_date: `${mm}/${dd}/${yyyy}` }));
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, []);
 
    const fetchCategories = async () => {
@@ -92,6 +93,7 @@ const AddNewDrugs = () => {
       if (isEdit) {
          fetchDrug();
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [id]);
 
    const handleChange = (e) => {

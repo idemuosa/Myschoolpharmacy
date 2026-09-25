@@ -1,6 +1,37 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
+
+        role = "Admin"
+        department = "Management"
+        full_name = user.get_full_name() or user.username
+
+        staff = Staff.objects.filter(employee_id__iexact=user.username).first()
+        if not staff and user.email:
+            staff = Staff.objects.filter(email__iexact=user.email).first()
+
+        if staff:
+            role = staff.role
+            department = staff.department
+            full_name = staff.full_name
+        elif user.is_superuser:
+            role = "Admin"
+
+        is_admin = user.is_superuser or role.lower() in ['admin', 'administrator', 'manager', 'director']
+
+        data['username'] = user.username
+        data['role'] = role
+        data['department'] = department
+        data['full_name'] = full_name
+        data['is_admin'] = is_admin
+        data['is_staff'] = user.is_staff
+        return data
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:

@@ -23,7 +23,6 @@ const SalesReport = () => {
     const controller = new AbortController();
     fetchSales(controller.signal);
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSales = async (signal) => {

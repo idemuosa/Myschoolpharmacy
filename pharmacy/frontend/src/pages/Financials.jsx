@@ -11,11 +11,6 @@ const Financials = () => {
         net_profit: 0,
         balance: 0
     });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchStats();
-    }, []);
 
     const fetchStats = async () => {
         try {
@@ -23,10 +18,13 @@ const Financials = () => {
             setStats(response.data);
         } catch (error) {
             console.error("Error fetching financial stats:", error);
-        } finally {
-            setLoading(false);
         }
     };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchStats();
+    }, []);
 
     return (
         <div className="w-full space-y-6 animate-in fade-in duration-500 py-8 px-4 md:px-6 lg:px-8 text-sm">

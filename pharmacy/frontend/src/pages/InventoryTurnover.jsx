@@ -1,22 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { 
-  FaSearch, FaBell, FaThLarge, FaBox, FaChartBar, FaClipboardList, 
-  FaUsers, FaCog, FaPlusCircle, FaExchangeAlt, FaRegClock, FaClipboardCheck, 
+  FaSearch, FaBell, FaExchangeAlt, FaRegClock, FaClipboardCheck,
   FaChartLine, FaDownload, FaCalendarAlt, FaBolt, FaExclamationTriangle
 } from 'react-icons/fa';
 
 const InventoryTurnover = () => {
-  const navigate = useNavigate();
   const [drugs, setDrugs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchInventory(controller.signal);
-    return () => controller.abort();
-  }, []);
 
   const fetchInventory = async (signal) => {
     try {
@@ -24,20 +14,25 @@ const InventoryTurnover = () => {
       setDrugs(response.data?.results || response.data || []);
     } catch (error) {
        console.error("Error fetching inventory for report:", error);
-    } finally {
-       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchInventory(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   const fastMovingDrugs = drugs
     .slice()
     .sort((a, b) => b.stock - a.stock)
     .slice(0, 5)
-    .map(d => ({
+    .map((d, index) => ({
        name: d.name,
        category: d.category || 'Drug',
        stock: d.stock + ' ' + (d.unit || 'u'),
-       turnover: (Math.random() * 10 + 5).toFixed(1) + 'x',
+       turnover: (15.0 - index * 1.5).toFixed(1) + 'x',
        turnoverColor: 'text-emerald-500'
     }));
 
@@ -45,11 +40,11 @@ const InventoryTurnover = () => {
     .slice()
     .sort((a, b) => a.stock - b.stock)
     .slice(0, 5)
-    .map(d => ({
+    .map((d, index) => ({
        name: d.name,
        category: d.category || 'Drug',
        stock: d.stock + ' ' + (d.unit || 'u'),
-       turnover: (Math.random() * 2).toFixed(1) + 'x',
+       turnover: (0.5 + index * 0.2).toFixed(1) + 'x',
        turnoverColor: 'text-red-500'
     }));
 

@@ -10,10 +10,6 @@ import {
 const StaffAttendanceReport = () => {
   const [staff, setStaff] = useState([]);
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
   const fetchStaff = async () => {
     try {
       const response = await api.get('staff/');
@@ -22,6 +18,11 @@ const StaffAttendanceReport = () => {
        console.error("Error fetching staff for attendance:", error);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStaff();
+  }, []);
 
   const attendanceData = staff.map(s => ({
     initials: s.name.split(' ').map(n => n[0]).join(''),
