@@ -1,12 +1,22 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-pharmacy}
+      - POSTGRES_USER=${POSTGRES_USER:-pharmacy}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pharmacy}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    volumes:
-      - ./backend/db.sqlite3:/app/db.sqlite3
     ports:
       - "8000:8000"
     env_file:
@@ -15,6 +25,9 @@ services:
       - DEBUG=${DEBUG:-True}
       - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - DATABASE_URL=${DATABASE_URL:-postgres://pharmacy:pharmacy@db:5432/pharmacy}
+    depends_on:
+      - db
     restart: always
 
   frontend:
@@ -26,3 +39,6 @@ services:
     depends_on:
       - backend
     restart: always
+
+volumes:
+  postgres_data:
