@@ -28,9 +28,10 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-vf^*kgg*3azp0xj+=gg*gi$kl$pxtg6pqm88)=5shh4d&&ab!0')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+_allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '*')
+ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts_env.split(',') if host.strip()]
 
 
 # Application definition
@@ -80,14 +81,24 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
-# Database
+# Database Configuration (Supports PostgreSQL & SQL databases via DATABASE_URL or individual env vars)
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+
+_db_url = os.environ.get('DATABASE_URL')
+if not _db_url and os.environ.get('DB_NAME'):
+    _db_user = os.environ.get('DB_USER', 'postgres')
+    _db_password = os.environ.get('DB_PASSWORD', '')
+    _db_host = os.environ.get('DB_HOST', 'localhost')
+    _db_port = os.environ.get('DB_PORT', '5432')
+    _db_name = os.environ.get('DB_NAME', 'pharmacy')
+    _db_url = f"postgres://{_db_user}:{_db_password}@{_db_host}:{_db_port}/{_db_name}"
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
+        default=_db_url or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=int(os.environ.get('DB_CONN_MAX_AGE', 600)),
         conn_health_checks=True,
+        ssl_require=os.environ.get('DB_SSL_REQUIRE', 'False').lower() in ('true', '1', 't'),
     )
 }
 
@@ -128,9 +139,41 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+os.makedirs(STATIC_ROOT, exist_ok=True)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Security Settings for Production
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 't')
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False' if DEBUG else 'True').lower() in ('true', '1', 't')
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False' if DEBUG else 'True').lower() in ('true', '1', 't')
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+_hsts_seconds = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
+if _hsts_seconds > 0:
+    SECURE_HSTS_SECONDS = _hsts_seconds
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# CORS and CSRF Settings
+_cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+if _cors_origins_env:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins_env.split(',') if origin.strip()]
+    CORS_ALLOW_ALL_ORIGINS = False
+else:
+    CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True' if DEBUG else 'False').lower() in ('true', '1', 't')
+    if not CORS_ALLOW_ALL_ORIGINS:
+        CORS_ALLOWED_ORIGINS = [
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:3000",
+        ]
+
+_csrf_trusted = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if _csrf_trusted:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_trusted.split(',') if origin.strip()]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -140,6 +183,33 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
+
+# Logging configuration for Production
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.environ.get('LOG_LEVEL', 'INFO'),
+            'propagate': True,
+        },
+    },
+}
