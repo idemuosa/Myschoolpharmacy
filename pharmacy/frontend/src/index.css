@@ -39,11 +39,33 @@ body {
 
 /* Button Base - White background, Green text/border */
 .btn-pharmacy {
-  @apply bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-50 transition-all font-bold rounded-lg px-4 py-2 flex items-center justify-center gap-2;
+  @apply bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-50 transition-all font-bold rounded-xl px-4 py-2 flex items-center justify-center gap-2 cursor-pointer;
 }
 
 .btn-pharmacy-primary {
-  @apply bg-emerald-500 text-white border-2 border-emerald-500 hover:bg-emerald-600 transition-all font-bold rounded-lg px-4 py-2 flex items-center justify-center gap-2 shadow-sm shadow-emerald-100;
+  @apply bg-emerald-600 text-white border-2 border-emerald-600 hover:bg-emerald-700 transition-all font-black rounded-xl px-4 py-2 flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 cursor-pointer;
+}
+
+/* Card utilities */
+.card-stat {
+  @apply bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200;
+}
+
+.card-panel {
+  @apply bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden;
+}
+
+/* Badge Utilities */
+.badge-emerald {
+  @apply bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase px-2 py-0.5 rounded-md;
+}
+
+.badge-amber {
+  @apply bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black uppercase px-2 py-0.5 rounded-md;
+}
+
+.badge-rose {
+  @apply bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black uppercase px-2 py-0.5 rounded-md;
 }
 
 /* Global Responsive Utilities */
