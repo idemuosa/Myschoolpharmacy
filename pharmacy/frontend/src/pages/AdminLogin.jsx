@@ -11,13 +11,15 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [shopName, setShopName] = useState('Pharmacy');
+  const [shopEmail, setShopEmail] = useState('info@pharmacy.com');
 
   useEffect(() => {
     const fetchBranding = async () => {
       try {
         const res = await api.get('settings/');
         if (res.data && res.data.length > 0) {
-          setShopName(res.data[0].shop_name);
+          if (res.data[0].shop_name) setShopName(res.data[0].shop_name);
+          if (res.data[0].email) setShopEmail(res.data[0].email);
         }
       } catch {
         console.error("Branding load failed");
@@ -41,13 +43,20 @@ const AdminLogin = () => {
 
   return (
     <div className="admin-login-container text-xs">
-      <div className="login-card">
-        <div className="login-header text-center">
-          <div className="login-logo text-sm font-black mx-auto mb-4">P</div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase font-outfit">{shopName}</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 px-4 italic underline decoration-emerald-500/30">Pharmacy and Clinical Consultation Portal</p>
+      <div className="login-card flex flex-col items-center justify-between">
+        <div className="image-div flex flex-col items-center justify-between mb-4 w-full">
+          <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-3">
+            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 10.5V6a2 2 0 00-2-2H7a2 2 0 00-2 2v4.5a3.5 3.5 0 00-1 2.45V18a2 2 0 002 2h12a2 2 0 002-2v-5.05a3.5 3.5 0 00-1-2.45zM10.5 6h3v3h-3V6zm-3.5 9a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm10 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase font-outfit text-center">{shopName}</h1>
+          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1 text-center">{shopEmail}</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 px-4 text-center">Pharmacy and Clinical Consultation Portal</p>
         </div>
-        <form className="login-form mt-8 space-y-4" onSubmit={handleSubmit}>
+
+        <div className="login-div w-full flex flex-col items-center justify-between">
+          <form className="login-form w-full space-y-4" onSubmit={handleSubmit}>
           <div className="form-group space-y-1.5">
             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Username</label>
             <input
@@ -88,12 +97,11 @@ const AdminLogin = () => {
             <Link to="/forgot-password" size="sm" className="forgot-password text-[9px] font-black text-emerald-500 uppercase tracking-widest hover:underline">Reset Password</Link>
           </div>
 
-          <button type="submit" className="w-full bg-emerald-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100 border border-emerald-500 hover:bg-emerald-600 transition-all mt-4" disabled={isLoading}>
-            {isLoading ? 'Authenticating...' : 'Authorize Session'}
-          </button>
-        </form>
-
-
+            <button type="submit" className="w-full bg-emerald-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100 border border-emerald-500 hover:bg-emerald-600 transition-all mt-4" disabled={isLoading}>
+              {isLoading ? 'Authenticating...' : 'Authorize Session'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
