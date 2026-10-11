@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "cd pharmacy && npm run build",
+  "outputDirectory": "pharmacy/dist",
+  "installCommand": "cd pharmacy && npm install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
