@@ -17,7 +17,7 @@ This guide explains how environment variables are separated between the **Django
 | `SECRET_KEY` | `<django_secret_key>` | Secret key for Django application security |
 | `DEBUG` | `False` | Turn off Django debug mode in production |
 | `DATABASE_URL` | `postgres://user:pass@host:5432/dbname` | Database connection string (from Render PostgreSQL database) |
-| `ALLOWED_HOSTS` | `pharmacy-api-exn3.onrender.com,localhost,127.0.0.1` | Allowed host headers |
+| `ALLOWED_HOSTS` | `pharmacy-api-exn3.onrender.com,localhost,127.0.0.1` | Allowed host headers (supports `*`, comma-separated values, or `.onrender.com` auto-addition on Render) |
 | `CORS_ALLOWED_ORIGINS` | `https://pharmacy-frontend.onrender.com` | Allowed CORS origins (your frontend URL) |
 | `CSRF_TRUSTED_ORIGINS` | `https://pharmacy-frontend.onrender.com` | Trusted CSRF origins for web forms/POST requests |
 | `CORS_ALLOW_ALL_ORIGINS` | `True` or `False` | Set `True` if allowing requests from all clients/mobile apps |
