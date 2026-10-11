@@ -33,8 +33,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-vf^*kgg*3azp0xj+=gg*g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-_allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '*')
-ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts_env.split(',') if host.strip()]
+ALLOWED_HOSTS = [
+    'pharmacy-api-exn3.onrender.com',
+]
 
 
 # Application definition
