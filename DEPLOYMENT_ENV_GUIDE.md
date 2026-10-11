@@ -1,64 +1,94 @@
 # Deployment & Environment Variable Guide
 
-This guide explains how environment variables are separated between the **Django API Backend**, **Node.js Socket Server**, and **React Frontend**, as well as how build errors on Render were resolved.
+This guide provides an exact mapping of the environment variables shown in your Render dashboard screenshots, indicating which service each variable belongs to and how to fix the current misconfigurations.
 
 ---
 
-## 1. Environment Variable Configuration
+## Direct Audit of Variables from Your Screenshots
 
-### A. Django API Service (`pharmacy-api` or `pharmacy and store`)
-**Service Type:** Python Web Service (or Docker using `backend/Dockerfile`)
-**Root Directory:** `backend`
+### 1. Variables Currently in Node WebSocket Server ("pharmacy" - Screenshot 3)
+In Screenshot 3, the following variables were placed on the Node.js socket server. Here is where each one **should** go:
 
-**Required Environment Variables:**
-| Key | Example / Value | Description |
+| Variable in Screenshot 3 | Target Service | Action Required |
 |---|---|---|
-| `PYTHON_VERSION` | `3.12.0` | Python runtime version |
-| `SECRET_KEY` | `<django_secret_key>` | Secret key for Django application security |
-| `DEBUG` | `False` | Turn off Django debug mode in production |
-| `DATABASE_URL` | `postgres://user:pass@host:5432/dbname` | Database connection string (from Render PostgreSQL database) |
-| `ALLOWED_HOSTS` | `pharmacy-api-exn3.onrender.com,localhost,127.0.0.1` | Allowed host headers |
-| `CORS_ALLOWED_ORIGINS` | `https://pharmacy-frontend.onrender.com` | Allowed CORS origins (your frontend URL) |
-| `CSRF_TRUSTED_ORIGINS` | `https://pharmacy-frontend.onrender.com` | Trusted CSRF origins for web forms/POST requests |
-| `CORS_ALLOW_ALL_ORIGINS` | `True` or `False` | Set `True` if allowing requests from all clients/mobile apps |
-| `SECURE_SSL_REDIRECT` | `False` | SSL termination is handled automatically by Render |
-| `SESSION_COOKIE_SECURE` | `True` | Transmit session cookies over HTTPS only |
-| `CSRF_COOKIE_SECURE` | `True` | Transmit CSRF cookies over HTTPS only |
+| `CORS_ALLOWED_ORIGINS` | **Django API (`pharmacy-api` / `pharmacy and store`)** | **MOVE to API.** Django uses this to allow requests from your frontend domain. |
+| `CSRF_TRUSTED_ORIGINS` | **Django API (`pharmacy-api` / `pharmacy and store`)** | **MOVE to API.** Django needs this to validate POST/PUT CSRF tokens from your frontend. |
+| `DATABASE_URL` | **Django API (`pharmacy-api` / `pharmacy and store`)** | **MOVE/KEEP on API.** Node socket server does not use PostgreSQL directly; Django API needs it. |
+| `DB_PASS` | **Django API (`pharmacy-api` / `pharmacy and store`)** | **MOVE to API** (Optional if `DATABASE_URL` is already provided). |
+| `DB_USER` | **Django API (`pharmacy-api` / `pharmacy and store`)** | **MOVE to API** (Optional if `DATABASE_URL` is already provided). |
+| `DEBUG` | **Django API (`pharmacy-api` / `pharmacy and store`)** | **MOVE to API.** Controls Django's debug mode (`False` in production). |
+| `NODE_ENV` | **Node WebSocket (`pharmacy-socket` / `pharmacy`)** | **KEEP on Socket.** Set to `production`. |
+| `PORT` | **Node WebSocket (`pharmacy-socket` / `pharmacy`)** | **KEEP on Socket.** Render default is `10000`. |
 
 ---
 
-### B. Node.js WebSocket Service (`pharmacy-socket` or `pharmacy`)
-**Service Type:** Node.js Web Service (or Docker using `node_backend/Dockerfile`)
-**Root Directory:** `node_backend`
+### 2. Variables Currently in Django API ("pharmacy and store" - Screenshot 2)
+In Screenshot 2, the Django API service has the following variables:
 
-**Required Environment Variables:**
-| Key | Example / Value | Description |
+| Variable in Screenshot 2 | Status | Target Service & Recommended Value |
 |---|---|---|
-| `PORT` | `10000` | Port for the WebSocket server (Render default: 10000) |
-| `NODE_ENV` | `production` | Node environment |
-
-*Note: Remove Django-specific variables (such as `CSRF_TRUSTED_ORIGINS`, `DATABASE_URL`, `DB_PASS`, `DB_USER`) from the Node service as they are only needed by the Django API.*
-
----
-
-### C. React Static Frontend (`pharmacy-frontend` or Vercel)
-**Service Type:** Static Site / React Frontend
-**Root Directory:** `pharmacy`
-
-**Required Environment Variables (Built into bundle during build time):**
-| Key | Example / Value | Description |
-|---|---|---|
-| `VITE_API_URL` | `https://pharmacy-api-exn3.onrender.com` | Full URL to the Django REST API backend |
-| `VITE_SOCKET_URL` | `https://pharmacy-socket-kkpo.onrender.com` | Full URL to the Node WebSocket server |
+| `DATABASE_URL` | **CORRECT** | Belongs to **Django API**. Should be set to `postgres://...` from Render DB. |
+| `DEBUG` | **CORRECT** | Belongs to **Django API**. Set to `False`. |
+| `PYTHON_VERSION` | **CORRECT** | Belongs to **Django API**. Set to `3.12.0` (or `3.11`). |
+| `SECRET_KEY` | **CORRECT** | Belongs to **Django API**. Django application secret key. |
+| `APP_URL` | **CORRECT** | Belongs to **Django API** or **Frontend**. (e.g. `https://pharmacy-api-exn3.onrender.com`). |
+| `CORS_ORIGIN` | **UPDATE** | Rename or complement with `CORS_ALLOWED_ORIGINS` (e.g. `https://pharmacy-frontend.onrender.com`). |
 
 ---
 
-## 2. Docker Build Error Fix Summary
+## Clean Environment Variable Lists for Render Dashboard
 
-### Issue:
+### A. Django API Service (`pharmacy-api` / `pharmacy and store`)
+* **Environment / Runtime:** Python (or Docker with `backend/Dockerfile`)
+* **Root Directory:** `backend`
+
+Add these variables to **pharmacy and store**:
+```env
+PYTHON_VERSION=3.12.0
+SECRET_KEY=<your-secret-key>
+DEBUG=False
+DATABASE_URL=postgres://...
+ALLOWED_HOSTS=pharmacy-api-exn3.onrender.com,localhost,127.0.0.1
+CORS_ALLOWED_ORIGINS=https://pharmacy-frontend.onrender.com
+CSRF_TRUSTED_ORIGINS=https://pharmacy-frontend.onrender.com
+CORS_ALLOW_ALL_ORIGINS=True
+```
+
+---
+
+### B. Node.js WebSocket Service (`pharmacy-socket` / `pharmacy`)
+* **Environment / Runtime:** Node (or Docker with `node_backend/Dockerfile`)
+* **Root Directory:** `node_backend`
+
+Add these variables to **pharmacy (socket)**:
+```env
+NODE_ENV=production
+PORT=10000
+```
+*(Remove `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `DATABASE_URL`, `DB_PASS`, `DB_USER`, `DEBUG` from this service).*
+
+---
+
+### C. React Frontend (`pharmacy-frontend` / Vercel / Static Site)
+* **Environment / Runtime:** Static Site / React
+* **Root Directory:** `pharmacy`
+
+Add these build-time variables:
+```env
+VITE_API_URL=https://pharmacy-api-exn3.onrender.com
+VITE_SOCKET_URL=https://pharmacy-socket-kkpo.onrender.com
+```
+
+---
+
+## 3. How the Build Error Was Fixed
+
+### Error in Screenshot 1:
 `error: failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory`
 
-### Solution:
-1. **Root `Dockerfile` Created:** Added a root `Dockerfile` that builds and launches the Django API backend when Render or Docker Cloud builds from the repository root.
-2. **Sub-directory Dockerfiles Verified:** Configured `backend/Dockerfile`, `node_backend/Dockerfile`, and `pharmacy/Dockerfile`.
-3. **`render.yaml` Updated:** Configured `rootDir` and `dockerfilePath` for all services in `render.yaml`.
+### Cause & Solution:
+* **Cause:** The service was configured on Render as a **Docker** service at the repository root, but there was no root `Dockerfile`.
+* **Fix Applied:**
+  1. Created `/Dockerfile` at root pointing to the Django API backend.
+  2. Created `node_backend/Dockerfile` for the WebSocket service.
+  3. Updated `render.yaml` with explicit `rootDir` and `dockerfilePath` for all services.
