@@ -40,3 +40,8 @@ class HealthCheckAndApiTests(TestCase):
         self.assertEqual(response.data['role'], 'Pharmacist')
         self.assertEqual(response.data['full_name'], 'Jane Pharmacist')
         self.assertEqual(response.data['department'], 'Pharmacy')
+
+    def test_allowed_hosts_render_domain(self):
+        # Test that requests with Render domain headers are allowed
+        response = self.client.get('/api/health-check/', HTTP_HOST='pharmacy-api-exn3.onrender.com')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
