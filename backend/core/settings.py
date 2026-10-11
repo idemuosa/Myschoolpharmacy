@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import socket
 from pathlib import Path
+from urllib.parse import urlparse, urlunparse
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -19,6 +21,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(os.path.join(BASE_DIR, '.env'))
+load_dotenv(os.path.join(BASE_DIR.parent, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -93,9 +96,28 @@ if not _db_url and os.environ.get('DB_NAME'):
     _db_name = os.environ.get('DB_NAME', 'pharmacy')
     _db_url = f"postgres://{_db_user}:{_db_password}@{_db_host}:{_db_port}/{_db_name}"
 
+# Auto-resolve Render internal database hostnames when running outside Render network
+if _db_url:
+    try:
+        parsed = urlparse(_db_url)
+        if parsed.hostname and parsed.hostname.startswith('dpg-') and '.render.com' not in parsed.hostname:
+            try:
+                socket.gethostbyname(parsed.hostname)
+            except socket.gaierror:
+                ext_host = f"{parsed.hostname}.oregon-postgres.render.com"
+                try:
+                    socket.gethostbyname(ext_host)
+                    netloc = parsed.netloc.replace(parsed.hostname, ext_host)
+                    parsed = parsed._replace(netloc=netloc)
+                    _db_url = urlunparse(parsed)
+                except socket.gaierror:
+                    pass
+    except Exception:
+        pass
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default=_db_url or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    'default': dj_database_url.parse(
+        _db_url or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=int(os.environ.get('DB_CONN_MAX_AGE', 600)),
         conn_health_checks=True,
         ssl_require=os.environ.get('DB_SSL_REQUIRE', 'False').lower() in ('true', '1', 't'),
