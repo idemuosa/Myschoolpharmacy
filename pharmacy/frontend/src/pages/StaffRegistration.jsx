@@ -133,8 +133,8 @@ const StaffRegistration = () => {
 
                   <canvas ref={canvasRef} className="hidden" />
 
-                  <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1.5">Profile Scan</h3>
-                  <p className="text-[8px] font-bold text-slate-400 text-center uppercase tracking-tighter mb-6">Biometric Identification</p>
+                  <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1.5">Profile Photo</h3>
+                  <p className="text-[8px] font-bold text-slate-400 text-center uppercase tracking-tighter mb-6">Personnel Photo Key</p>
                   
                   <div className="w-full flex flex-col gap-2">
                     <label className="w-full py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-slate-50 transition-all">

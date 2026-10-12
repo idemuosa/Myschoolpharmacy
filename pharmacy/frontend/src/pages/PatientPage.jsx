@@ -182,6 +182,14 @@ const PatientPage = () => {
                                     <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">DOB</span>
                                     <span className="text-[12px] font-black text-slate-900 tabular-nums">{patient.date_of_birth || 'N/A'}</span>
                                 </div>
+                                <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Genotype</span>
+                                    <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-[11px] font-black uppercase">{patient.genotype || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Ward / Bed</span>
+                                    <span className="text-[12px] font-black text-slate-900 uppercase">{patient.ward ? `${patient.ward} ${patient.bed ? `(${patient.bed})` : ''}` : 'Unassigned'}</span>
+                                </div>
                                 <div className="flex justify-between items-center py-2">
                                     <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Phone</span>
                                     <span className="text-[12px] font-black text-slate-900 tabular-nums">{patient.phone_number || 'N/A'}</span>
