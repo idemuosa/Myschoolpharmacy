@@ -93,8 +93,8 @@ const AddNewProduct = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.category_obj) {
-            return toast.error("Please select a category");
+        if (!formData.name?.trim() || !formData.category_obj || formData.unit_price === '' || formData.unit_price === null || formData.unit_price === undefined) {
+            return toast.error("Required fields missing: Name, Category, Price");
         }
         try {
             setLoading(true);
@@ -191,7 +191,7 @@ const AddNewProduct = () => {
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Product Name</label>
+                                <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Product Name <span className="text-red-500">*</span></label>
                                 <input
                                     required
                                     name="name"
@@ -217,7 +217,7 @@ const AddNewProduct = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Category</label>
+                                <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Category <span className="text-red-500">*</span></label>
                                 <select
                                     name="category_obj"
                                     value={formData.category_obj}
@@ -271,7 +271,7 @@ const AddNewProduct = () => {
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Unit Price</label>
+                                    <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Unit Price <span className="text-red-500">*</span></label>
                                     <input 
                                         required
                                         type="number"
