@@ -65,7 +65,8 @@ export const AuthProvider = ({ children }) => {
       if (error.response && error.response.status === 401) {
         toast.error('Invalid Credentials. Please check your username and password.');
       } else {
-        toast.error('Connection issue. Please verify backend state.');
+        const errorMsg = error.response?.data?.detail || error.response?.data?.error || 'Connection issue. Please verify backend state.';
+        toast.error(typeof errorMsg === 'string' ? errorMsg : 'Connection issue. Please verify backend state.');
       }
       return false;
     }

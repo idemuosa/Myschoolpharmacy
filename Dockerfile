@@ -15,6 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ /app/
 
-EXPOSE 8000
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "core.wsgi:application"]
+# Run database migrations, static collection, and ensure admin user during container startup or build
+CMD ["sh", "-c", "python manage.py migrate && python ensure_admin.py && gunicorn --bind 0.0.0.0:8000 core.wsgi:application"]

@@ -184,8 +184,11 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        if not SystemSettings.objects.exists():
-            SystemSettings.objects.create(shop_name='Josiah Pharmacy and Stores', location="St. Mary's")
+        try:
+            if not SystemSettings.objects.exists():
+                SystemSettings.objects.create(shop_name='Josiah Pharmacy and Stores', location="St. Mary's")
+        except Exception:
+            pass
         return SystemSettings.objects.all()
 
 class UserViewSet(viewsets.ModelViewSet):
