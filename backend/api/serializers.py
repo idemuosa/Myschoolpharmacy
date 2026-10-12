@@ -8,8 +8,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         user = self.user
 
-        role = "Admin"
-        department = "Management"
+        role = "Admin" if user.is_superuser else "Staff"
+        department = "Management" if user.is_superuser else "General"
         full_name = user.get_full_name() or user.username
 
         staff = Staff.objects.filter(employee_id__iexact=user.username).first()
@@ -20,10 +20,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             role = staff.role
             department = staff.department
             full_name = staff.full_name
-        elif user.is_superuser:
-            role = "Admin"
 
-        is_admin = user.is_superuser or role.lower() in ['admin', 'administrator', 'manager', 'director']
+        is_admin = user.is_superuser or (role and role.lower() in ['admin', 'administrator', 'manager', 'director'])
 
         data['username'] = user.username
         data['role'] = role
