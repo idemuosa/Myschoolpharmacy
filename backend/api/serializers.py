@@ -12,16 +12,19 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         department = "Management" if user.is_superuser else "General"
         full_name = user.get_full_name() or user.username
 
-        staff = Staff.objects.filter(employee_id__iexact=user.username).first()
-        if not staff and user.email:
-            staff = Staff.objects.filter(email__iexact=user.email).first()
+        try:
+            staff = Staff.objects.filter(employee_id__iexact=user.username).first()
+            if not staff and user.email:
+                staff = Staff.objects.filter(email__iexact=user.email).first()
 
-        if staff:
-            role = staff.role
-            department = staff.department
-            full_name = staff.full_name
+            if staff:
+                role = staff.role or role
+                department = staff.department or department
+                full_name = staff.full_name or full_name
+        except Exception:
+            pass
 
-        is_admin = user.is_superuser or (role and role.lower() in ['admin', 'administrator', 'manager', 'director'])
+        is_admin = bool(user.is_superuser or (role and str(role).lower() in ['admin', 'administrator', 'manager', 'director']))
 
         data['username'] = user.username
         data['role'] = role

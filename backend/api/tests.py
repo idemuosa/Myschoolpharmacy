@@ -58,3 +58,31 @@ class HealthCheckAndApiTests(TestCase):
         self.assertIn('access', response.data)
         self.assertEqual(response.data['role'], 'Staff')
         self.assertEqual(response.data['department'], 'General')
+
+    def test_login_with_staff_record_having_none_fields(self):
+        staff = Staff.objects.create(
+            full_name="",
+            email="nonefields@pharmacy.com",
+            phone_number="0000000000",
+            role="",
+            department="",
+            employee_id="EMP-NONE"
+        )
+        user = User.objects.create_user(
+            username="emp-none",
+            email="nonefields@pharmacy.com",
+            password="password123",
+            is_staff=True
+        )
+
+        response = self.client.post('/api/token/', {
+            'username': 'emp-none',
+            'password': 'password123'
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertEqual(response.data['role'], 'Staff')
+
+    def test_system_settings_public_access(self):
+        response = self.client.get('/api/settings/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
