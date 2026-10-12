@@ -56,11 +56,16 @@ const AddNewProduct = () => {
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return;
         try {
-            await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Supermarket' });
+            const res = await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Supermarket' });
+            toast.success("Category added!");
             setNewCategoryName('');
             fetchCategories();
+            if (res.data && res.data.id) {
+                setFormData(prev => ({ ...prev, category_obj: res.data.id.toString() }));
+            }
         } catch (error) {
             console.error("Error adding category:", error);
+            toast.error("Failed to add category.");
         }
     };
 
@@ -68,11 +73,13 @@ const AddNewProduct = () => {
         if (!editingCategory || !newCategoryName.trim()) return;
         try {
             await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Supermarket' });
+            toast.success("Category updated!");
             setEditingCategory(null);
             setNewCategoryName('');
             fetchCategories();
         } catch (error) {
             console.error("Error updating category:", error);
+            toast.error("Failed to update category.");
         }
     };
 
@@ -80,9 +87,11 @@ const AddNewProduct = () => {
         if (!window.confirm("Are you sure? Items in this category will be unassigned.")) return;
         try {
             await categoryService.deleteCategory(id);
+            toast.success("Category deleted!");
             fetchCategories();
         } catch (error) {
             console.error("Error deleting category:", error);
+            toast.error("Failed to delete category.");
         }
     };
 

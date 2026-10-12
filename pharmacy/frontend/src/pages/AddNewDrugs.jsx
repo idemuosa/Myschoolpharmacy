@@ -5,7 +5,7 @@ import categoryService from '../services/categoryService';
 import { AuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
-   FaArrowLeft, FaBarcode, FaCalendarAlt, FaPlus, FaUndo, FaCog, FaPills, FaFlask
+   FaArrowLeft, FaBarcode, FaCalendarAlt, FaPlus, FaUndo, FaCog, FaPills, FaFlask, FaEdit, FaTimes, FaTrash
 } from 'react-icons/fa';
 
 const AddNewDrugs = () => {
@@ -36,6 +36,51 @@ const AddNewDrugs = () => {
       category_obj: '',
    });
    const [categories, setCategories] = useState([]);
+   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+   const [newCategoryName, setNewCategoryName] = useState('');
+   const [editingCategory, setEditingCategory] = useState(null);
+
+   const handleAddCategory = async () => {
+      if (!newCategoryName.trim()) return;
+      try {
+         const res = await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Pharmacy' });
+         toast.success("Category added!");
+         setNewCategoryName('');
+         fetchCategories();
+         if (res.data && res.data.id) {
+            setFormData(prev => ({ ...prev, category_obj: res.data.id.toString() }));
+         }
+      } catch (error) {
+         console.error("Error adding category:", error);
+         toast.error("Failed to add category.");
+      }
+   };
+
+   const handleUpdateCategory = async () => {
+      if (!editingCategory || !newCategoryName.trim()) return;
+      try {
+         await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Pharmacy' });
+         toast.success("Category updated!");
+         setEditingCategory(null);
+         setNewCategoryName('');
+         fetchCategories();
+      } catch (error) {
+         console.error("Error updating category:", error);
+         toast.error("Failed to update category.");
+      }
+   };
+
+   const handleDeleteCategory = async (catId) => {
+      if (!window.confirm("Are you sure? Items in this category will be unassigned.")) return;
+      try {
+         await categoryService.deleteCategory(catId);
+         toast.success("Category deleted!");
+         fetchCategories();
+      } catch (error) {
+         console.error("Error deleting category:", error);
+         toast.error("Failed to delete category.");
+      }
+   };
 
    useEffect(() => {
       fetchCategories();
@@ -174,7 +219,25 @@ const AddNewDrugs = () => {
                   </div>
                </div>
 
-               <div className="flex gap-3">
+               <div className="flex gap-3 items-center">
+                  {user?.isAdmin && (
+                     <>
+                        <button
+                           type="button"
+                           onClick={() => { setEditingCategory(null); setNewCategoryName(''); setIsCategoryModalOpen(true); }}
+                           className="px-4 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-xl font-black uppercase tracking-tight flex items-center gap-2 hover:bg-emerald-50 transition-all text-xs"
+                        >
+                           <FaPlus className="w-2.5 h-2.5" /> Add Category
+                        </button>
+                        <button
+                           type="button"
+                           onClick={() => setIsCategoryModalOpen(true)}
+                           className="px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-black uppercase tracking-tight flex items-center gap-2 hover:bg-slate-50 transition-all text-xs"
+                        >
+                           <FaEdit className="w-2.5 h-2.5" /> Edit Cat
+                        </button>
+                     </>
+                  )}
                   <button onClick={() => navigate(-1)} className="px-5 py-2 rounded-lg bg-slate-50 text-slate-400 font-black text-[12px] uppercase tracking-widest hover:bg-slate-100 transition-all">Cancel</button>
                   <button onClick={handleSave} disabled={loading} className="bg-emerald-500 text-white font-black px-6 py-2 rounded-lg text-[12px] uppercase tracking-widest shadow-none border border-emerald-500 hover:bg-emerald-600 transition-all min-w-[140px]">
                      {loading ? "PROCESSING..." : (isEdit ? "COMMIT UPDATE" : "AUTHORIZE ENTRY")}
@@ -360,6 +423,73 @@ const AddNewDrugs = () => {
 
             </div>
          </div>
+
+         {/* Category Management Modal */}
+         {isCategoryModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 text-xs">
+               <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-in zoom-in duration-300">
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                     <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Manage Pharmacy Categories</h2>
+                     <button onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }} className="p-1 hover:bg-slate-100 rounded-lg">
+                        <FaTimes className="text-slate-400" />
+                     </button>
+                  </div>
+
+                  <div className="p-4 space-y-4">
+                     <div className="flex gap-2">
+                        <input
+                           type="text"
+                           placeholder="New category name..."
+                           value={newCategoryName}
+                           onChange={(e) => setNewCategoryName(e.target.value)}
+                           className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-black focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all outline-none uppercase"
+                        />
+                        <button
+                           type="button"
+                           onClick={editingCategory ? handleUpdateCategory : handleAddCategory}
+                           className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-tight text-[12px]"
+                        >
+                           {editingCategory ? 'Update' : 'Add'}
+                        </button>
+                     </div>
+
+                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                        {categories.filter(c => c.type === 'Pharmacy').map(cat => (
+                           <div key={cat.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 group">
+                              <span className="text-[12px] font-bold text-slate-700 uppercase">{cat.name}</span>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <button
+                                    type="button"
+                                    onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
+                                    className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                 >
+                                    <FaEdit className="text-xs" />
+                                 </button>
+                                 <button
+                                    type="button"
+                                    onClick={() => handleDeleteCategory(cat.id)}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                 >
+                                    <FaTrash className="text-xs" />
+                                 </button>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+
+                  <div className="p-4 border-t border-slate-100 flex justify-end">
+                     <button
+                        type="button"
+                        onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }}
+                        className="px-4 py-2 text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
+                     >
+                        Close
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 };

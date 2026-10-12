@@ -73,10 +73,12 @@ const InventoryManagement = () => {
     if (!newCategoryName.trim()) return;
     try {
       await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Pharmacy' });
+      toast.success("Category added!");
       setNewCategoryName('');
       fetchCategories();
     } catch (error) {
       console.error("Error adding category:", error);
+      toast.error("Failed to add category.");
     }
   };
 
@@ -84,11 +86,13 @@ const InventoryManagement = () => {
     if (!editingCategory || !newCategoryName.trim()) return;
     try {
       await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Pharmacy' });
+      toast.success("Category updated!");
       setEditingCategory(null);
       setNewCategoryName('');
       fetchCategories();
     } catch (error) {
       console.error("Error updating category:", error);
+      toast.error("Failed to update category.");
     }
   };
 
@@ -96,9 +100,11 @@ const InventoryManagement = () => {
     if (!window.confirm("Are you sure? Items in this category will be unassigned.")) return;
     try {
       await categoryService.deleteCategory(id);
+      toast.success("Category deleted!");
       fetchCategories();
     } catch (error) {
       console.error("Error deleting category:", error);
+      toast.error("Failed to delete category.");
     }
   };
 

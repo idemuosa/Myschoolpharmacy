@@ -69,10 +69,12 @@ const SupermarketInventory = () => {
     if (!newCategoryName.trim()) return;
     try {
       await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Supermarket' });
+      toast.success("Category added!");
       setNewCategoryName('');
       fetchCategories();
     } catch (error) {
       console.error("Error adding category:", error);
+      toast.error("Failed to add category.");
     }
   };
 
@@ -80,11 +82,13 @@ const SupermarketInventory = () => {
     if (!editingCategory || !newCategoryName.trim()) return;
     try {
       await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Supermarket' });
+      toast.success("Category updated!");
       setEditingCategory(null);
       setNewCategoryName('');
       fetchCategories();
     } catch (error) {
       console.error("Error updating category:", error);
+      toast.error("Failed to update category.");
     }
   };
 
@@ -92,9 +96,11 @@ const SupermarketInventory = () => {
     if (!window.confirm("Are you sure? Items in this category will be unassigned.")) return;
     try {
       await categoryService.deleteCategory(id);
+      toast.success("Category deleted!");
       fetchCategories();
     } catch (error) {
       console.error("Error deleting category:", error);
+      toast.error("Failed to delete category.");
     }
   };
 
@@ -188,7 +194,7 @@ const SupermarketInventory = () => {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-2 rounded-xl border border-slate-200">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-          {['All', ...categories.filter(c => c.type === 'Supermarket' && !['Grains', 'Dairy', 'Vegetables'].includes(c.name)).map(c => c.name)].map(cat => (
+          {['All', ...categories.filter(c => c.type === 'Supermarket').map(c => c.name)].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
