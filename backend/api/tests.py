@@ -40,3 +40,21 @@ class HealthCheckAndApiTests(TestCase):
         self.assertEqual(response.data['role'], 'Pharmacist')
         self.assertEqual(response.data['full_name'], 'Jane Pharmacist')
         self.assertEqual(response.data['department'], 'Pharmacy')
+
+    def test_non_superuser_non_staff_record_login(self):
+        # Create a user that is not a superuser and does not have a Staff record entry
+        user = User.objects.create_user(
+            username="admin",
+            password="adminpassword",
+            is_staff=True,
+            is_superuser=False
+        )
+
+        response = self.client.post('/api/token/', {
+            'username': 'admin',
+            'password': 'adminpassword'
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertEqual(response.data['role'], 'Staff')
+        self.assertEqual(response.data['department'], 'General')
