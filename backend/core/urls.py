@@ -17,11 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
-from api.views import health_check, CustomTokenObtainPairView
+from api.views import health_check, CustomTokenObtainPairView, SystemSettingsViewSet
+
+settings_list = SystemSettingsViewSet.as_view({'get': 'list', 'post': 'create'})
 
 urlpatterns = [
     path('', health_check, name='root_health'),
     path('health/', health_check, name='health_check'),
+    path('health-check/', health_check, name='health_check_alias'),
+    path('login/', CustomTokenObtainPairView.as_view(), name='root_login_alias'),
+    path('token/', CustomTokenObtainPairView.as_view(), name='root_token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='root_token_refresh'),
+    path('settings/', settings_list, name='root_settings'),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api/login/', CustomTokenObtainPairView.as_view(), name='login_alias'),

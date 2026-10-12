@@ -86,3 +86,23 @@ class HealthCheckAndApiTests(TestCase):
     def test_system_settings_public_access(self):
         response = self.client.get('/api/settings/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_root_level_url_aliases(self):
+        # Verify /health-check/
+        res_health = self.client.get('/health-check/')
+        self.assertEqual(res_health.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_health.data['status'], 'healthy')
+
+        # Verify /settings/
+        res_settings = self.client.get('/settings/')
+        self.assertEqual(res_settings.status_code, status.HTTP_200_OK)
+
+        # Verify /token/ and /login/
+        user = User.objects.create_user(username="testuser", password="password123")
+        res_token = self.client.post('/token/', {'username': 'testuser', 'password': 'password123'})
+        self.assertEqual(res_token.status_code, status.HTTP_200_OK)
+        self.assertIn('access', res_token.data)
+
+        res_login = self.client.post('/login/', {'username': 'testuser', 'password': 'password123'})
+        self.assertEqual(res_login.status_code, status.HTTP_200_OK)
+        self.assertIn('access', res_login.data)
