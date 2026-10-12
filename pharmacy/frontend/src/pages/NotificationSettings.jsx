@@ -16,12 +16,18 @@ const NotificationSettings = () => {
   const fetchSettings = async () => {
     try {
       const response = await settingsService.getSettings();
-      if (response.data && response.data.length > 0) {
-        setSettings(response.data[0]);
+      const list = response.data?.results || response.data;
+      if (Array.isArray(list) && list.length > 0) {
+        setSettings(list[0]);
+      } else {
+        setSettings({});
       }
     } catch (error) {
       console.error("Failed to fetch settings", error);
-      toast.error("Failed to load settings");
+      if (navigator.onLine) {
+        toast.error("Failed to load settings");
+      }
+      setSettings({});
     }
   };
 

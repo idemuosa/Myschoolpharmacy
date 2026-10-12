@@ -46,7 +46,9 @@ const StaffPerformanceReport = () => {
       setStaffMetrics(metrics.sort((a, b) => b.scripts - a.scripts));
     } catch (error) {
       console.error("Error fetching performance data:", error);
-      toast.error("Failed to load performance metrics");
+      if (navigator.onLine) {
+        toast.error("Failed to load performance metrics");
+      }
     }
   };
 

@@ -66,21 +66,26 @@ const SupermarketPOS = () => {
   const fetchStaff = async (signal) => {
     try {
       const response = await staffService.getStaff({ signal });
-      setStaffList(response.data);
+      const list = response.data?.results || response.data;
+      setStaffList(Array.isArray(list) ? list : []);
     } catch (err) {
       if (axios.isCancel(err)) return;
       console.error("Failed to fetch staff", err);
+      setStaffList([]);
     }
   };
 
   const fetchProducts = async (signal) => {
     try {
       const response = await productService.getProducts({ signal });
-      setProducts(response.data);
+      const prods = response.data?.results || response.data;
+      setProducts(Array.isArray(prods) ? prods : []);
     } catch (error) {
        if (axios.isCancel(error)) return;
        console.error("Error fetching products:", error);
-       toast.error("Failed to load supermarket inventory.");
+       if (navigator.onLine) {
+         toast.error("Failed to load supermarket inventory.");
+       }
     } finally {
        if (!(signal && signal.aborted)) {
          setLoading(false);
