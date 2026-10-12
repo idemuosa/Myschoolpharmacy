@@ -23,7 +23,8 @@ const DetailPrescriptionReview = () => {
   const fetchPendingPrescription = async (signal) => {
     try {
       const response = await prescriptionService.getPrescriptions({ signal });
-      const pending = response.data.find(p => p.status === 'Pending');
+      const list = response.data?.results || response.data;
+      const pending = Array.isArray(list) ? list.find(p => p.status === 'Pending') : null;
       if (pending) {
          setPrescription(pending);
       } else {
@@ -32,7 +33,9 @@ const DetailPrescriptionReview = () => {
     } catch (error) {
        if (axios.isCancel(error)) return;
        console.error("Error fetching prescriptions:", error);
-       toast.error("Failed to load prescription queue.");
+       if (navigator.onLine) {
+         toast.error("Failed to load prescription queue.");
+       }
     } finally {
        if (!signal || !signal.aborted) {
           setLoading(false);

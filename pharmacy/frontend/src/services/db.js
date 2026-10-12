@@ -2,8 +2,10 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('PharmacyDB');
 
-db.version(2).stores({
+db.version(3).stores({
   drugs: '++id, name, category, sku',
+  products: '++id, name, category',
+  staff: '++id, full_name, role',
   sales: '++id, customer_id, total_amount, date, status',
   returns: '++id, sale_id, reason, date',
   customers: '++id, name, phone',

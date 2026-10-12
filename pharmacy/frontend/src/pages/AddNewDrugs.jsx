@@ -62,7 +62,7 @@ const AddNewDrugs = () => {
       try {
          setLoading(true);
          const response = await drugService.getDrug(id);
-         const drug = response.data;
+         const drug = response?.data;
 
          if (drug) {
             const formatDate = (dateStr) => {
@@ -83,7 +83,9 @@ const AddNewDrugs = () => {
          }
       } catch (err) {
          console.error("Failed to fetch drug", err);
-         toast.error("Failed to load drug details.");
+         if (navigator.onLine) {
+            toast.error("Failed to load drug details.");
+         }
       } finally {
          setLoading(false);
       }

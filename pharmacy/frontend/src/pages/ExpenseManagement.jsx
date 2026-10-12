@@ -23,10 +23,13 @@ const ExpenseManagement = () => {
     const fetchExpenses = async () => {
         try {
             const response = await api.get('expenses/');
-            setExpenses(response.data.results || response.data);
+            const data = response.data?.results || response.data;
+            setExpenses(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching expenses:", error);
-            toast.error("Failed to load expenses");
+            if (navigator.onLine) {
+                toast.error("Failed to load expenses");
+            }
         } finally {
             setLoading(false);
         }
