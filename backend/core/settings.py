@@ -122,12 +122,17 @@ if _db_url:
     except Exception:
         pass
 
+# Enable SSL mode by default for PostgreSQL database URLs (e.g., Render Postgres)
+_is_postgres = bool(_db_url and ('postgres' in _db_url or 'postgresql' in _db_url))
+_default_ssl = 'True' if _is_postgres else 'False'
+_ssl_require_env = os.environ.get('DB_SSL_REQUIRE', _default_ssl).lower() in ('true', '1', 't')
+
 DATABASES = {
     'default': dj_database_url.parse(
         _db_url or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=int(os.environ.get('DB_CONN_MAX_AGE', 600)),
         conn_health_checks=True,
-        ssl_require=os.environ.get('DB_SSL_REQUIRE', 'False').lower() in ('true', '1', 't'),
+        ssl_require=_ssl_require_env,
     )
 }
 

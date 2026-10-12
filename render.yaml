@@ -23,6 +23,8 @@ services:
         value: "*"
       - key: CORS_ALLOW_ALL_ORIGINS
         value: "True"
+      - key: DB_SSL_REQUIRE
+        value: "True"
 
   # Node.js Socket Server
   - type: web
