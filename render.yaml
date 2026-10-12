@@ -49,9 +49,9 @@ services:
     publishDir: dist
     envVars:
       - key: VITE_API_URL
-        value: https://pharmacy-api.onrender.com
+        value: https://pharmacy-api-exn3.onrender.com/api/
       - key: VITE_SOCKET_URL
-        value: https://pharmacy-socket.onrender.com
+        value: https://pharmacy-socket-kkpo.onrender.com
 
 databases:
   - name: pharmacy-db
