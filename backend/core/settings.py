@@ -33,8 +33,15 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-vf^*kgg*3azp0xj+=gg*g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
+ALLOWED_HOSTS = [
+    "pharmacy-api-exn3.onrender.com",
+]
 _allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '*')
-ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts_env.split(',') if host.strip()]
+if _allowed_hosts_env:
+    for host in _allowed_hosts_env.split(','):
+        h = host.strip()
+        if h and h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(h)
 
 
 # Application definition
@@ -180,23 +187,36 @@ if _hsts_seconds > 0:
     SECURE_HSTS_PRELOAD = True
 
 # CORS and CSRF Settings
+CORS_ALLOWED_ORIGINS = [
+    "https://myschoolpharmacy-nf4jybavq-osas-projects-bd479006.vercel.app",
+]
 _cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', '')
 if _cors_origins_env:
-    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins_env.split(',') if origin.strip()]
-    CORS_ALLOW_ALL_ORIGINS = False
+    for origin in _cors_origins_env.split(','):
+        o = origin.strip()
+        if o and o not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(o)
 else:
-    CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True' if DEBUG else 'False').lower() in ('true', '1', 't')
-    if not CORS_ALLOW_ALL_ORIGINS:
-        CORS_ALLOWED_ORIGINS = [
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:3000",
-        ]
+    for origin in [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ]:
+        if origin not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(origin)
 
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False' if not DEBUG else 'True').lower() in ('true', '1', 't')
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://myschoolpharmacy-nf4jybavq-osas-projects-bd479006.vercel.app",
+]
 _csrf_trusted = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
 if _csrf_trusted:
-    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_trusted.split(',') if origin.strip()]
+    for origin in _csrf_trusted.split(','):
+        o = origin.strip()
+        if o and o not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(o)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
