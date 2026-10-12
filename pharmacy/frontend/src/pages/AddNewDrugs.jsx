@@ -103,7 +103,7 @@ const AddNewDrugs = () => {
    };
 
    const handleSave = async () => {
-      if (!formData.name || !formData.category_obj || !formData.unit_price) {
+      if (!formData.name?.trim() || !formData.category_obj || formData.unit_price === '' || formData.unit_price === null || formData.unit_price === undefined) {
          return toast.error('Required fields missing: Name, Category, Price');
       }
 
@@ -189,7 +189,7 @@ const AddNewDrugs = () => {
                   <h3 className="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-2 border-b border-emerald-50 pb-1">Identification</h3>
 
                   <div className="space-y-2">
-                     <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Brand Name</label>
+                     <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Brand Name <span className="text-red-500">*</span></label>
                      <div className="relative">
                         <FaPills className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm" />
                         <input
@@ -232,7 +232,7 @@ const AddNewDrugs = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">
-                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Clinical Group</label>
+                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Clinical Group <span className="text-red-500">*</span></label>
                         <select
                            name="category_obj"
                            value={formData.category_obj || ""}
@@ -292,7 +292,7 @@ const AddNewDrugs = () => {
                         />
                      </div>
                      <div className="space-y-2">
-                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Price ($)</label>
+                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest">Price ($) <span className="text-red-500">*</span></label>
                         <input
                            type="number"
                            step="0.01"
