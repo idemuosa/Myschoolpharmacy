@@ -193,6 +193,7 @@ if _hsts_seconds > 0:
 
 # CORS and CSRF Settings
 CORS_ALLOWED_ORIGINS = [
+    "https://myschoolpharmacy-79006.vercel.app",
     "https://myschoolpharmacy-nf4jybavq-osas-projects-bd479006.vercel.app",
 ]
 _cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', '')
@@ -214,6 +215,7 @@ else:
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False' if not DEBUG else 'True').lower() in ('true', '1', 't')
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://myschoolpharmacy-79006.vercel.app",
     "https://myschoolpharmacy-nf4jybavq-osas-projects-bd479006.vercel.app",
 ]
 _csrf_trusted = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
