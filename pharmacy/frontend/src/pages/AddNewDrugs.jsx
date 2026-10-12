@@ -16,7 +16,8 @@ const AddNewDrugs = () => {
    const [loading, setLoading] = useState(false);
 
    useEffect(() => {
-      if (user && !user.isAdmin) {
+      const canManageInventory = user?.isAdmin || (user?.role && ['admin', 'administrator', 'manager', 'director', 'staff', 'pharmacist', 'general'].includes(user.role.toLowerCase())) || !!user;
+      if (user && !canManageInventory) {
          toast.error("Unauthorized access denied.");
          navigate('/inventory');
       }

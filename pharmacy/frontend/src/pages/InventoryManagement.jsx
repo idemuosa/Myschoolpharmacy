@@ -11,6 +11,7 @@ import {
 
 const InventoryManagement = () => {
   const { user } = useContext(AuthContext);
+  const canManageInventory = user?.isAdmin || (user?.role && ['admin', 'administrator', 'manager', 'director', 'staff', 'pharmacist', 'general'].includes(user.role.toLowerCase())) || !!user;
   const [inventoryData, setInventoryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,15 +108,15 @@ const InventoryManagement = () => {
     
     const headers = ['Name', 'Generic Name', 'Category', 'Dosage', 'Form', 'Stock', 'Unit Price', 'Expiry Date', 'Status'];
     const rows = filteredData.map(item => [
-      item.name,
+      item.name || '',
       item.generic_name || '',
-      item.category_name || 'Uncategorized',
+      item.category_name || item.category || 'Uncategorized',
       item.dosage || '',
       item.form || '',
       item.stock || 0,
       item.unit_price || 0,
       item.expiry_date || 'N/A',
-      (item.stock || 0) <= (item.reorder_level || 10) ? 'Low Stock' : 'In Stock'
+      (parseInt(item.stock) || 0) <= (parseInt(item.reorder_level) || 10) ? 'Low Stock' : 'In Stock'
     ]);
 
     const csvContent = [
@@ -155,15 +156,18 @@ const InventoryManagement = () => {
   };
 
   const filteredData = inventoryData.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.generic_name && item.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (!item) return false;
+    const search = (searchTerm || "").toLowerCase().trim();
+    const nameStr = (item.name || "").toLowerCase();
+    const genericStr = (item.generic_name || "").toLowerCase();
+    const matchesSearch = !search || nameStr.includes(search) || genericStr.includes(search);
 
-    const drugCategory = (item.category_name || "").toLowerCase();
-    const targetCategory = selectedCategory.toLowerCase();
+    const drugCategory = (item.category_name || item.category || "").toLowerCase();
+    const targetCategory = (selectedCategory || "").toLowerCase();
     const matchesCategory = selectedCategory === 'All' || drugCategory === targetCategory;
 
     const daysToExpiry = getDaysToExpiry(item.expiry_date);
-    const isLow = (item.stock || 0) <= (item.reorder_level || 10);
+    const isLow = (parseInt(item.stock) || 0) <= (parseInt(item.reorder_level) || 10);
     
     let matchesFilter = true;
     if (activeFilter === 'Low Stock') matchesFilter = isLow;
@@ -197,21 +201,21 @@ const InventoryManagement = () => {
             </button>
           </div>
 
-          {user?.isAdmin && (
-            <div className="flex gap-2">
+          {canManageInventory && (
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
               <button
                 onClick={() => { setEditingCategory(null); setNewCategoryName(''); setIsCategoryModalOpen(true); }}
-                className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border bg-white text-emerald-600 border-emerald-200"
+                className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border bg-white text-emerald-600 border-emerald-200 flex-1 sm:flex-initial justify-center"
               >
                 <FaPlus /> Add Category
               </button>
               <button
                 onClick={() => setIsCategoryModalOpen(true)}
-                className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border bg-white text-slate-700"
+                className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border bg-white text-slate-700 flex-1 sm:flex-initial justify-center"
               >
                 <FaEdit /> Edit Categories
               </button>
-              <Link to="/inventory/new" className="btn-pharmacy px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap shadow-none border">
+              <Link to="/inventory/new" className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border flex-1 sm:flex-initial justify-center">
                 <FaPlus /> New Entry
               </Link>
             </div>
@@ -275,7 +279,7 @@ const InventoryManagement = () => {
           </div>
           <div className="flex items-baseline gap-1">
             <p className="text-lg font-black text-slate-900 tabular-nums">
-              ${loading ? "..." : inventoryData.reduce((acc, item) => acc + (parseFloat(item.unit_price) * (item.stock || 0)), 0).toLocaleString()}
+              ${loading ? "..." : inventoryData.reduce((acc, item) => acc + ((parseFloat(item.unit_price) || 0) * (parseInt(item.stock) || 0)), 0).toLocaleString()}
             </p>
             <p className="text-[10px] font-bold text-indigo-500 uppercase">Total</p>
           </div>
@@ -283,15 +287,15 @@ const InventoryManagement = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-2 rounded-xl border border-slate-200">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto">
           {['All', ...categories.filter(c => c.type === 'Pharmacy').map(c => c.name)].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 whitespace-nowrap rounded-lg text-[11px] font-black uppercase tracking-tight transition-all border ${selectedCategory === cat
-                ? 'bg-emerald-500 text-white border-emerald-500'
-                : 'bg-white text-slate-400 border-slate-50 hover:border-slate-200'
+              className={`px-3 py-1.5 whitespace-nowrap rounded-lg text-[11px] font-black uppercase tracking-tight transition-all border shrink-0 ${selectedCategory === cat
+                ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-slate-200'
                 }`}
             >
               {cat === 'All' ? 'Complete' : cat}
@@ -299,10 +303,10 @@ const InventoryManagement = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
           <button 
             onClick={() => setActiveFilter(activeFilter === '100 Days Expiry' ? 'All' : '100 Days Expiry')}
-            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all ${activeFilter === '100 Days Expiry' ? 'bg-blue-500 text-white border-blue-500' : ''}`}
+            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all flex-1 md:flex-initial justify-center ${activeFilter === '100 Days Expiry' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white'}`}
           >
             <FaClock /> 100 Days
           </button>
@@ -311,13 +315,13 @@ const InventoryManagement = () => {
               if (activeFilter !== 'All') setActiveFilter('All');
               else setActiveFilter('Low Stock');
             }}
-            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : ''}`}
+            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all flex-1 md:flex-initial justify-center ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : 'bg-white'}`}
           >
             <FaFilter /> Low Stock
           </button>
           <button 
             onClick={handleExportCSV}
-            className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none hover:bg-slate-50 transition-all"
+            className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none bg-white hover:bg-slate-50 transition-all flex-1 md:flex-initial justify-center"
           >
             <FaFileExport /> CSV
           </button>
@@ -355,8 +359,8 @@ const InventoryManagement = () => {
                         <span className="text-[12px] font-bold text-slate-500 italic truncate block max-w-[100px]">{item.generic_name}</span>
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight ${getCategoryColorClass(item.category_name)}`}>
-                          {item.category_name || "Uncategorized"}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight ${getCategoryColorClass(item.category_name || item.category)}`}>
+                          {item.category_name || item.category || "Uncategorized"}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-center font-bold text-slate-600 text-[12px]">{item.dosage}</td>
@@ -381,7 +385,7 @@ const InventoryManagement = () => {
                         </span>
                       </td>
                       <td className="px-5 py-3">
-                        {user?.isAdmin && (
+                        {canManageInventory && (
                           <div className="flex justify-center">
                             <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all">
                               <FaEdit className="text-sm" />
