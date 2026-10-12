@@ -106,3 +106,24 @@ class HealthCheckAndApiTests(TestCase):
         res_login = self.client.post('/login/', {'username': 'testuser', 'password': 'password123'})
         self.assertEqual(res_login.status_code, status.HTTP_200_OK)
         self.assertIn('access', res_login.data)
+
+class EnsureAdminTestCase(TestCase):
+    def test_ensure_admin_custom_env_vars(self):
+        import os
+        from ensure_admin import ensure_admin
+
+        os.environ['ADMIN_USERNAME'] = 'custom_admin'
+        os.environ['ADMIN_PASSWORD'] = 'custom_pass123'
+        os.environ['ADMIN_EMAIL'] = 'custom@admin.com'
+
+        try:
+            ensure_admin()
+            user = User.objects.get(username='custom_admin')
+            self.assertEqual(user.email, 'custom@admin.com')
+            self.assertTrue(user.is_staff)
+            self.assertTrue(user.is_superuser)
+            self.assertTrue(user.check_password('custom_pass123'))
+        finally:
+            os.environ.pop('ADMIN_USERNAME', None)
+            os.environ.pop('ADMIN_PASSWORD', None)
+            os.environ.pop('ADMIN_EMAIL', None)

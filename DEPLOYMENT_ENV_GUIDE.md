@@ -24,6 +24,9 @@ This guide explains how environment variables are separated between the **Django
 | `SECURE_SSL_REDIRECT` | `False` | SSL termination is handled automatically by Render |
 | `SESSION_COOKIE_SECURE` | `True` | Transmit session cookies over HTTPS only |
 | `CSRF_COOKIE_SECURE` | `True` | Transmit CSRF cookies over HTTPS only |
+| `ADMIN_USERNAME` | `admin` | Default or custom admin username for auto-creation |
+| `ADMIN_PASSWORD` | `<secure_password>` | Default or custom admin password set on deployment startup |
+| `ADMIN_EMAIL` | `admin@example.com` | Admin account email address |
 
 ---
 
