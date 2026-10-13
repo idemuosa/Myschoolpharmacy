@@ -289,7 +289,10 @@ const InventoryManagement = () => {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto">
-          {['All', ...categories.filter(c => c.type === 'Pharmacy').map(c => c.name)].map(cat => (
+          {['All', ...Array.from(new Set([
+            ...categories.filter(c => c.type === 'Pharmacy').map(c => c.name),
+            ...inventoryData.map(item => item.category_name || item.category).filter(Boolean)
+          ]))].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}

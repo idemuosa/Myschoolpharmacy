@@ -30,7 +30,7 @@ const InventoryTurnover = () => {
     .slice(0, 5)
     .map((d, index) => ({
        name: d.name,
-       category: d.category || 'Drug',
+       category: d.category_name || d.category || 'Drug',
        stock: d.stock + ' ' + (d.unit || 'u'),
        turnover: (15.0 - index * 1.5).toFixed(1) + 'x',
        turnoverColor: 'text-emerald-500'
@@ -42,7 +42,7 @@ const InventoryTurnover = () => {
     .slice(0, 5)
     .map((d, index) => ({
        name: d.name,
-       category: d.category || 'Drug',
+       category: d.category_name || d.category || 'Drug',
        stock: d.stock + ' ' + (d.unit || 'u'),
        turnover: (0.5 + index * 0.2).toFixed(1) + 'x',
        turnoverColor: 'text-red-500'

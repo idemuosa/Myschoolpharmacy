@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import drugService from '../services/drugService';
+import categoryService from '../services/categoryService';
 import posService from '../services/posService';
 import staffService from '../services/staffService';
 import barcodeService from '../services/barcodeService';
@@ -24,6 +25,7 @@ const PointOfSales = () => {
   const [lastSale, setLastSale] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categoriesList, setCategoriesList] = useState([]);
   const [lastScanned, setLastScanned] = useState(null);
   const scanInputRef = useRef(null);
 
@@ -31,6 +33,7 @@ const PointOfSales = () => {
     const controller = new AbortController();
     fetchProducts(controller.signal);
     fetchStaff(controller.signal);
+    fetchCategories();
 
     if (scanInputRef.current) {
       scanInputRef.current.focus();
@@ -56,6 +59,15 @@ const PointOfSales = () => {
   useEffect(() => {
     localStorage.setItem('pharmacy_cart', JSON.stringify(cart));
   }, [cart]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryService.getCategories();
+      setCategoriesList(response.data?.results || response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
 
   const fetchStaff = async (signal) => {
     try {
@@ -166,7 +178,7 @@ const PointOfSales = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.generic_name && product.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const drugCategory = (product.category || "").toLowerCase();
+    const drugCategory = (product.category_name || product.category || "").toLowerCase();
     const targetCategory = selectedCategory.toLowerCase();
 
     const matchesCategory = selectedCategory === 'All' ||
@@ -292,7 +304,10 @@ const PointOfSales = () => {
           )}
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-            {['All', 'Antibiotics', 'Analgesics', 'Vitamins', 'Antimalarials'].map(cat => (
+            {['All', ...Array.from(new Set([
+              ...categoriesList.filter(c => c.type === 'Pharmacy').map(c => c.name),
+              ...products.map(p => p.category_name || p.category).filter(Boolean)
+            ]))].map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}

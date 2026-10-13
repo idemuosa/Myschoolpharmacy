@@ -44,10 +44,14 @@ const AddNewProduct = () => {
         setFormData(prev => ({ ...prev, stock_date: `${mm}/${dd}/${yyyy}` }));
     }, []);
 
-    const fetchCategories = async () => {
+    const fetchCategories = async (selectedId = null) => {
         try {
             const response = await categoryService.getCategories();
-            setCategories(response.data.results || response.data);
+            const cats = response.data.results || response.data;
+            setCategories(cats);
+            if (selectedId) {
+                setFormData(prev => ({ ...prev, category_obj: selectedId.toString() }));
+            }
         } catch (error) {
             console.error("Error fetching categories:", error);
         }
@@ -56,11 +60,14 @@ const AddNewProduct = () => {
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return;
         try {
-            await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Supermarket' });
+            const res = await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Supermarket' });
+            const newCat = res.data;
             setNewCategoryName('');
-            fetchCategories();
+            toast.success("Category added!");
+            fetchCategories(newCat?.id);
         } catch (error) {
             console.error("Error adding category:", error);
+            toast.error("Failed to add category");
         }
     };
 
