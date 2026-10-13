@@ -85,7 +85,8 @@ const CategoryManagement = () => {
       fetchAllData();
     } catch (error) {
       console.error('Error saving category:', error);
-      toast.error(editingCategory ? 'Failed to update category' : 'Failed to create category');
+      const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+      toast.error(serverErr || (editingCategory ? 'Failed to update category' : 'Failed to create category'));
     } finally {
       setSaving(false);
     }

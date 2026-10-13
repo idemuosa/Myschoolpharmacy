@@ -2,7 +2,7 @@ from django.db import models
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    type = models.CharField(max_length=50) # 'Pharmacy' or 'Supermarket'
+    type = models.CharField(max_length=50, default='Pharmacy', blank=True) # 'Pharmacy' or 'Supermarket'
 
     def __str__(self):
         return f"{self.name} ({self.type})"

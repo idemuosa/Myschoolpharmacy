@@ -67,7 +67,8 @@ const AddNewProduct = () => {
             fetchCategories(newCat?.id);
         } catch (error) {
             console.error("Error adding category:", error);
-            toast.error("Failed to add category");
+            const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+            toast.error(serverErr || "Failed to add category");
         }
     };
 
@@ -77,9 +78,12 @@ const AddNewProduct = () => {
             await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Supermarket' });
             setEditingCategory(null);
             setNewCategoryName('');
+            toast.success("Category updated!");
             fetchCategories();
         } catch (error) {
             console.error("Error updating category:", error);
+            const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+            toast.error(serverErr || "Failed to update category");
         }
     };
 
