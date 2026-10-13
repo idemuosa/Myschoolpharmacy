@@ -38,14 +38,18 @@ const CategoryManagement = () => {
     setLoading(true);
     try {
       const [catRes, drugRes, prodRes] = await Promise.all([
-        categoryService.getCategories(),
+        categoryService.getCategories().catch(() => ({ data: [] })),
         drugService.getDrugs().catch(() => ({ data: [] })),
         productService.getProducts().catch(() => ({ data: [] }))
       ]);
 
-      setCategories(catRes.data.results || catRes.data || []);
-      setDrugs(drugRes.data.results || drugRes.data || []);
-      setProducts(prodRes.data.results || prodRes.data || []);
+      const catData = catRes.data?.results || catRes.data || [];
+      const drugData = drugRes.data?.results || drugRes.data || [];
+      const prodData = prodRes.data?.results || prodRes.data || [];
+
+      setCategories(Array.isArray(catData) ? catData : []);
+      setDrugs(Array.isArray(drugData) ? drugData : []);
+      setProducts(Array.isArray(prodData) ? prodData : []);
     } catch (error) {
       console.error('Failed to load category data:', error);
       toast.error('Failed to load categories');
