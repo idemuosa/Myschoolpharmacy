@@ -98,8 +98,19 @@ const InventoryManagement = () => {
     try {
       await categoryService.deleteCategory(id);
       fetchCategories();
+      fetchDrugs();
     } catch (error) {
       console.error("Error deleting category:", error);
+    }
+  };
+
+  const handleDeleteDrug = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete medication "${name}"? This action cannot be undone.`)) return;
+    try {
+      await drugService.deleteDrug(id);
+      fetchDrugs();
+    } catch (error) {
+      console.error("Error deleting drug:", error);
     }
   };
 
@@ -162,9 +173,9 @@ const InventoryManagement = () => {
     const genericStr = (item.generic_name || "").toLowerCase();
     const matchesSearch = !search || nameStr.includes(search) || genericStr.includes(search);
 
-    const drugCategory = (item.category_name || item.category || "").toLowerCase();
-    const targetCategory = (selectedCategory || "").toLowerCase();
-    const matchesCategory = selectedCategory === 'All' || drugCategory === targetCategory;
+    const drugCatName = (item.category_name || item.category || "").toLowerCase().trim();
+    const targetCategory = (selectedCategory || "").toLowerCase().trim();
+    const matchesCategory = selectedCategory === 'All' || drugCatName === targetCategory;
 
     const daysToExpiry = getDaysToExpiry(item.expiry_date);
     const isLow = (parseInt(item.stock) || 0) <= (parseInt(item.reorder_level) || 10);
@@ -389,10 +400,17 @@ const InventoryManagement = () => {
                       </td>
                       <td className="px-5 py-3">
                         {canManageInventory && (
-                          <div className="flex justify-center">
-                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all">
+                          <div className="flex justify-center items-center gap-1">
+                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Edit Medication">
                               <FaEdit className="text-sm" />
                             </Link>
+                            <button
+                              onClick={() => handleDeleteDrug(item.id, item.name)}
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              title="Delete Medication"
+                            >
+                              <FaTrash className="text-sm" />
+                            </button>
                           </div>
                         )}
                       </td>
@@ -401,6 +419,12 @@ const InventoryManagement = () => {
                 })}
             </tbody>
           </table>
+          {filteredData.length === 0 && !loading && (
+            <div className="py-16 text-center space-y-2">
+              <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No medications found matching filter</p>
+              <p className="text-slate-400 text-[11px]">Try searching with a different keyword or resetting selected category</p>
+            </div>
+          )}
         </div>
       </div>
 
