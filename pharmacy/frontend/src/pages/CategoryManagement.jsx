@@ -159,7 +159,8 @@ const CategoryManagement = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchAllData}
-            className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-all shadow-sm"
+            disabled={loading}
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-all shadow-sm cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Refresh Categories"
           >
             <FaSync className={loading ? 'animate-spin' : ''} />
@@ -219,7 +220,7 @@ const CategoryManagement = () => {
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-wider"
+                  className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-wider cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
@@ -258,10 +259,12 @@ const CategoryManagement = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="w-full btn-pharmacy py-2.5 text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm"
+                  disabled={saving || !categoryName.trim()}
+                  className="w-full btn-pharmacy py-2.5 text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  {editingCategory ? (
+                  {saving ? (
+                    <><FaSync className="animate-spin" /> {editingCategory ? 'Updating...' : 'Adding...'}</>
+                  ) : editingCategory ? (
                     <>Update Category</>
                   ) : (
                     <><FaPlus /> Add Category</>
@@ -280,7 +283,7 @@ const CategoryManagement = () => {
             <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl shrink-0">
               <button
                 onClick={() => setActiveTab('Pharmacy')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-tight transition-all flex items-center gap-2 ${
+                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-tight transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
                   activeTab === 'Pharmacy'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-900'
@@ -290,7 +293,7 @@ const CategoryManagement = () => {
               </button>
               <button
                 onClick={() => setActiveTab('Supermarket')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-tight transition-all flex items-center gap-2 ${
+                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-tight transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
                   activeTab === 'Supermarket'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-900'
@@ -373,14 +376,14 @@ const CategoryManagement = () => {
                               <div className="flex items-center justify-center gap-1">
                                 <button
                                   onClick={() => handleEditClick(cat)}
-                                  className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                  className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer active:scale-90"
                                   title="Edit Category"
                                 >
                                   <FaEdit className="text-xs" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer active:scale-90"
                                   title="Delete Category"
                                 >
                                   <FaTrash className="text-xs" />

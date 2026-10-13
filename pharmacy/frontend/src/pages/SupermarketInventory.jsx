@@ -185,17 +185,17 @@ const SupermarketInventory = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => { setEditingCategory(null); setNewCategoryName(''); setIsCategoryModalOpen(true); }}
-                className="px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap bg-white text-emerald-600 border border-emerald-200 rounded-xl font-black uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all shadow-sm"
+                className="px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap bg-white text-emerald-600 border border-emerald-200 rounded-xl font-black uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all shadow-sm cursor-pointer active:scale-95"
               >
                 <FaPlus /> Add Category
               </button>
               <button
                 onClick={() => setIsCategoryModalOpen(true)}
-                className="px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap bg-white text-slate-700 border border-slate-200 rounded-xl font-black uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm"
+                className="px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap bg-white text-slate-700 border border-slate-200 rounded-xl font-black uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm cursor-pointer active:scale-95"
               >
                 <FaEdit /> Edit Categories
               </button>
-              <Link to="/supermarket/inventory/new" className="px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap bg-emerald-600 text-white rounded-xl font-black uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">
+              <Link to="/supermarket/inventory/new" className="px-4 py-2 w-full sm:w-auto text-xs whitespace-nowrap bg-emerald-600 text-white rounded-xl font-black uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 cursor-pointer active:scale-95">
                 <FaPlus /> New Product
               </Link>
             </div>
@@ -254,7 +254,7 @@ const SupermarketInventory = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-tight transition-all border ${selectedCategory === cat
+              className={`px-3 py-1 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-tight transition-all border cursor-pointer active:scale-95 ${selectedCategory === cat
                   ? 'bg-emerald-500 text-white border-emerald-500'
                   : 'bg-white text-slate-400 border-slate-50 hover:border-slate-200'
                 }`}
@@ -267,13 +267,14 @@ const SupermarketInventory = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveFilter(activeFilter === 'Low Stock' ? 'All' : 'Low Stock')}
-            className={`px-3 py-1.5 border rounded-lg text-[9px] font-black uppercase flex items-center gap-2 transition-all ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            className={`px-3 py-1.5 border rounded-lg text-[9px] font-black uppercase flex items-center gap-2 transition-all cursor-pointer active:scale-95 ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
           >
             <FaFilter /> Low Stock
           </button>
           <button
             onClick={handleExportCSV}
-            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-all"
+            disabled={inventoryData.length === 0}
+            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaFileExport /> Export CSV
           </button>
@@ -335,12 +336,12 @@ const SupermarketInventory = () => {
                       <td className="px-5 py-3">
                         {user?.isAdmin && (
                           <div className="flex justify-center items-center gap-1">
-                            <Link to={`/supermarket/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Edit Product">
+                            <Link to={`/supermarket/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer active:scale-90" title="Edit Product">
                               <FaEdit className="text-sm" />
                             </Link>
                             <button
                               onClick={() => handleDeleteProduct(item.id, item.name)}
-                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer active:scale-90"
                               title="Delete Product"
                             >
                               <FaTrash className="text-sm" />
@@ -366,7 +367,7 @@ const SupermarketInventory = () => {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-in zoom-in duration-300">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Manage Market Categories</h2>
-              <button onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }} className="p-1 hover:bg-slate-100 rounded-lg">
+              <button onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }} className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
                 <FaTimes className="text-slate-400" />
               </button>
             </div>
@@ -382,7 +383,8 @@ const SupermarketInventory = () => {
                 />
                 <button
                   onClick={editingCategory ? handleUpdateCategory : handleAddCategory}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-tight text-[10px]"
+                  disabled={!newCategoryName.trim()}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-tight text-[10px] cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {editingCategory ? 'Update' : 'Add'}
                 </button>
@@ -395,13 +397,13 @@ const SupermarketInventory = () => {
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
-                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all cursor-pointer active:scale-90"
                       >
                         <FaEdit className="text-xs" />
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer active:scale-90"
                       >
                         <FaTrash className="text-xs" />
                       </button>
@@ -414,7 +416,7 @@ const SupermarketInventory = () => {
             <div className="p-4 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }}
-                className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
+                className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 cursor-pointer transition-colors"
               >
                 Close
               </button>

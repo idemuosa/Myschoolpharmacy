@@ -205,10 +205,10 @@ const AddNewDrugs = () => {
       <div className="w-full space-y-6 animate-in fade-in duration-500 pb-10 text-sm py-8 px-4 md:px-6 lg:px-8">
 
          <header className="flex items-center justify-between px-2">
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[12px] font-black text-slate-400 hover:text-emerald-500 transition-colors uppercase tracking-widest">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[12px] font-black text-slate-400 hover:text-emerald-500 transition-colors uppercase tracking-widest cursor-pointer">
                <FaArrowLeft className="w-2.5 h-2.5" /> Close Entry
             </button>
-            <Link to="/sales/return" className="text-[12px] font-black text-red-400 hover:text-red-500 transition-colors uppercase tracking-widest flex items-center gap-2">
+            <Link to="/sales/return" className="text-[12px] font-black text-red-400 hover:text-red-500 transition-colors uppercase tracking-widest flex items-center gap-2 cursor-pointer">
                <FaUndo className="w-2.5 h-2.5" /> Adjustments
             </Link>
          </header>
@@ -226,8 +226,8 @@ const AddNewDrugs = () => {
                </div>
 
                <div className="flex gap-3">
-                  <button onClick={() => navigate(-1)} className="px-5 py-2 rounded-lg bg-slate-50 text-slate-400 font-black text-[12px] uppercase tracking-widest hover:bg-slate-100 transition-all">Cancel</button>
-                  <button onClick={handleSave} disabled={loading} className="bg-emerald-500 text-white font-black px-6 py-2 rounded-lg text-[12px] uppercase tracking-widest shadow-none border border-emerald-500 hover:bg-emerald-600 transition-all min-w-[140px]">
+                  <button onClick={() => navigate(-1)} className="px-5 py-2 rounded-lg bg-slate-50 text-slate-400 font-black text-[12px] uppercase tracking-widest hover:bg-slate-100 transition-all cursor-pointer active:scale-95">Cancel</button>
+                  <button onClick={handleSave} disabled={loading} className="bg-emerald-500 text-white font-black px-6 py-2 rounded-lg text-[12px] uppercase tracking-widest shadow-none border border-emerald-500 hover:bg-emerald-600 transition-all min-w-[140px] cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                      {loading ? "PROCESSING..." : (isEdit ? "COMMIT UPDATE" : "AUTHORIZE ENTRY")}
                   </button>
                </div>
@@ -288,7 +288,7 @@ const AddNewDrugs = () => {
                            <button
                               type="button"
                               onClick={() => { setEditingCategory(null); setNewCategoryName(''); setIsCategoryModalOpen(true); }}
-                              className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 flex items-center gap-1 uppercase tracking-tight"
+                              className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 flex items-center gap-1 uppercase tracking-tight cursor-pointer transition-colors"
                            >
                               <FaPlus className="text-[9px]" /> Add New
                            </button>
@@ -427,7 +427,7 @@ const AddNewDrugs = () => {
                <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-in zoom-in duration-300">
                   <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                      <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Manage Pharmacy Categories</h2>
-                     <button onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }} className="p-1 hover:bg-slate-100 rounded-lg">
+                     <button onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }} className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
                         <FaTimes className="text-slate-400" />
                      </button>
                   </div>
@@ -443,7 +443,8 @@ const AddNewDrugs = () => {
                         />
                         <button
                            onClick={editingCategory ? handleUpdateCategory : handleAddCategory}
-                           className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-tight text-[12px]"
+                           disabled={!newCategoryName.trim()}
+                           className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-tight text-[12px] cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                            {editingCategory ? 'Update' : 'Add'}
                         </button>
@@ -456,13 +457,13 @@ const AddNewDrugs = () => {
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                  <button
                                     onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
-                                    className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                    className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all cursor-pointer active:scale-90"
                                  >
                                     <FaEdit className="text-xs" />
                                  </button>
                                  <button
                                     onClick={() => handleDeleteCategory(cat.id)}
-                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer active:scale-90"
                                  >
                                     <FaTrash className="text-xs" />
                                  </button>
@@ -475,7 +476,7 @@ const AddNewDrugs = () => {
                   <div className="p-4 border-t border-slate-100 flex justify-end">
                      <button
                         onClick={() => { setIsCategoryModalOpen(false); setEditingCategory(null); setNewCategoryName(''); }}
-                        className="px-4 py-2 text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
+                        className="px-4 py-2 text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 cursor-pointer transition-colors"
                      >
                         Close
                      </button>

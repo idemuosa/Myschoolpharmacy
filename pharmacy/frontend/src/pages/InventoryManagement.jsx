@@ -216,17 +216,17 @@ const InventoryManagement = () => {
             <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
               <button
                 onClick={() => { setEditingCategory(null); setNewCategoryName(''); setIsCategoryModalOpen(true); }}
-                className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border bg-white text-emerald-600 border-emerald-200 flex-1 sm:flex-initial justify-center"
+                className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border bg-white text-emerald-600 border-emerald-200 flex-1 sm:flex-initial justify-center cursor-pointer active:scale-95 transition-all"
               >
                 <FaPlus /> Add Category
               </button>
               <button
                 onClick={() => setIsCategoryModalOpen(true)}
-                className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border bg-white text-slate-700 flex-1 sm:flex-initial justify-center"
+                className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border bg-white text-slate-700 flex-1 sm:flex-initial justify-center cursor-pointer active:scale-95 transition-all"
               >
                 <FaEdit /> Edit Categories
               </button>
-              <Link to="/inventory/new" className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border flex-1 sm:flex-initial justify-center">
+              <Link to="/inventory/new" className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border flex-1 sm:flex-initial justify-center cursor-pointer active:scale-95 transition-all">
                 <FaPlus /> New Entry
               </Link>
             </div>
@@ -307,7 +307,7 @@ const InventoryManagement = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 whitespace-nowrap rounded-lg text-[11px] font-black uppercase tracking-tight transition-all border shrink-0 ${selectedCategory === cat
+              className={`px-3 py-1.5 whitespace-nowrap rounded-lg text-[11px] font-black uppercase tracking-tight transition-all border shrink-0 cursor-pointer active:scale-95 ${selectedCategory === cat
                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
                 : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-slate-200'
                 }`}
@@ -320,7 +320,7 @@ const InventoryManagement = () => {
         <div className="flex items-center gap-2 w-full md:w-auto justify-end">
           <button 
             onClick={() => setActiveFilter(activeFilter === '100 Days Expiry' ? 'All' : '100 Days Expiry')}
-            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all flex-1 md:flex-initial justify-center ${activeFilter === '100 Days Expiry' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white'}`}
+            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all flex-1 md:flex-initial justify-center cursor-pointer active:scale-95 ${activeFilter === '100 Days Expiry' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white'}`}
           >
             <FaClock /> 100 Days
           </button>
@@ -329,13 +329,14 @@ const InventoryManagement = () => {
               if (activeFilter !== 'All') setActiveFilter('All');
               else setActiveFilter('Low Stock');
             }}
-            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all flex-1 md:flex-initial justify-center ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : 'bg-white'}`}
+            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all flex-1 md:flex-initial justify-center cursor-pointer active:scale-95 ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : 'bg-white'}`}
           >
             <FaFilter /> Low Stock
           </button>
           <button 
             onClick={handleExportCSV}
-            className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none bg-white hover:bg-slate-50 transition-all flex-1 md:flex-initial justify-center"
+            disabled={inventoryData.length === 0}
+            className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none bg-white hover:bg-slate-50 transition-all flex-1 md:flex-initial justify-center cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaFileExport /> CSV
           </button>
@@ -401,12 +402,12 @@ const InventoryManagement = () => {
                       <td className="px-5 py-3">
                         {canManageInventory && (
                           <div className="flex justify-center items-center gap-1">
-                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Edit Medication">
+                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer active:scale-90" title="Edit Medication">
                               <FaEdit className="text-sm" />
                             </Link>
                             <button
                               onClick={() => handleDeleteDrug(item.id, item.name)}
-                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer active:scale-90"
                               title="Delete Medication"
                             >
                               <FaTrash className="text-sm" />
@@ -434,7 +435,7 @@ const InventoryManagement = () => {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-in zoom-in duration-300">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Manage Categories</h2>
-              <button onClick={() => setIsCategoryModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg">
+              <button onClick={() => setIsCategoryModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
                 <FaTimes className="text-slate-400" />
               </button>
             </div>
@@ -450,7 +451,8 @@ const InventoryManagement = () => {
                 />
                 <button
                   onClick={editingCategory ? handleUpdateCategory : handleAddCategory}
-                  className="btn-pharmacy px-4 py-2 text-[12px]"
+                  disabled={!newCategoryName.trim()}
+                  className="btn-pharmacy px-4 py-2 text-[12px] cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {editingCategory ? 'Update' : 'Add'}
                 </button>
@@ -463,13 +465,13 @@ const InventoryManagement = () => {
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
-                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all cursor-pointer active:scale-90"
                       >
                         <FaEdit className="text-xs" />
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer active:scale-90"
                       >
                         <FaTrash className="text-xs" />
                       </button>
@@ -482,7 +484,7 @@ const InventoryManagement = () => {
             <div className="p-4 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setIsCategoryModalOpen(false)}
-                className="px-4 py-2 text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+                className="px-4 py-2 text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors cursor-pointer"
               >
                 Close
               </button>
