@@ -114,21 +114,21 @@ function App() {
             </PrivateRoute>
           } />
           <Route path="/staff/new" element={
-            <PrivateRoute>
+            <PrivateRoute adminOnly={true}>
               <Layout>
                 <StaffRegistration />
               </Layout>
             </PrivateRoute>
           } />
           <Route path="/staff" element={
-            <PrivateRoute>
+            <PrivateRoute adminOnly={true}>
               <Layout>
                 <StaffManagement />
               </Layout>
             </PrivateRoute>
           } />
           <Route path="/staff/dashboards" element={
-            <PrivateRoute>
+            <PrivateRoute adminOnly={true}>
               <Layout>
                 <StaffSalesDashboard />
               </Layout>
@@ -149,14 +149,14 @@ function App() {
             </PrivateRoute>
           } />
           <Route path="/reports/attendance" element={
-            <PrivateRoute>
+            <PrivateRoute adminOnly={true}>
               <Layout>
                 <StaffAttendanceReport />
               </Layout>
             </PrivateRoute>
           } />
           <Route path="/reports/performance" element={
-            <PrivateRoute>
+            <PrivateRoute adminOnly={true}>
               <Layout>
                 <StaffPerformanceReport />
               </Layout>

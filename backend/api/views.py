@@ -6,12 +6,12 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Sum, Count, F
-from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
+from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense, ClinicalResearch
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     CategorySerializer, DrugSerializer, StaffSerializer, CustomerSerializer,
     PrescriptionSerializer, SaleSerializer, SaleReturnSerializer,
-    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer, UserProfileSerializer, UserSerializer, ExpenseSerializer,
+    ProductSerializer, SupermarketSaleSerializer, SystemSettingsSerializer, UserProfileSerializer, UserSerializer, ExpenseSerializer, ClinicalResearchSerializer,
     CustomTokenObtainPairSerializer
 )
 
@@ -339,3 +339,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             'profit': float(profit),
             'sales_count': total_sales_count
         })
+
+class ClinicalResearchViewSet(viewsets.ModelViewSet):
+    queryset = ClinicalResearch.objects.all().order_by('-created_at')
+    serializer_class = ClinicalResearchSerializer

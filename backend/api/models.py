@@ -172,3 +172,15 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.category}: {self.amount}"
+
+class ClinicalResearch(models.Model):
+    disease_name = models.CharField(max_length=255)
+    drug_name = models.CharField(max_length=255)
+    side_effects = models.TextField()
+    findings = models.TextField()
+    severity = models.CharField(max_length=50, default='Moderate')
+    researcher = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.disease_name} - {self.drug_name}"
