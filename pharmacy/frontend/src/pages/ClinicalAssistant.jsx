@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
   FaFlask, FaPlus, FaTrash, FaEdit, FaSearch, FaShieldAlt,
@@ -29,8 +29,60 @@ const EMPTY_FORM = {
   physiotherapists: ''
 };
 
+const DEFAULT_PROTOCOLS = [
+  {
+    id: 1,
+    title: 'Efficacy & Safety Study of Novel Cardiovascular & Metabolic Interventions',
+    pi: 'Dr. Sarah Jenkins, MD',
+    phase: 'Phase III',
+    enrolled: 42,
+    target: 100,
+    status: 'Active',
+    startDate: '2026-01-15',
+    description: 'Multi-center clinical investigation evaluating therapeutic outcomes, adverse event profiles, and rehabilitation protocols for combination therapies.',
+    disease: 'Essential Hypertension & Type 2 Diabetes Mellitus',
+    drugs: 'Amlodipine Besylate (10mg), Metformin HCl (850mg), Lisinopril (20mg)',
+    sideEffects: 'Mild dizziness (12%), dry cough (8%), peripheral edema (4%), transient gastrointestinal discomfort (15%)',
+    doctors: 'Dr. Sarah Jenkins (Cardiology Lead), Dr. Michael Aris (Endocrinology)',
+    nurses: 'Nurse Elena Rostova (Lead Clinical Nurse), Nurse David Kalu',
+    scientists: 'Dr. Aris Thorne (Lead Research Scientist), Dr. Maya Lin (Biostatistician)',
+    pharmacists: 'Pharm. Chidi Okonkwo (Clinical Pharmacist), Pharm. Chloe Bennett',
+    physiotherapists: 'Physio. Marcus Vance (Cardiopulmonary Rehabilitation Specialist)'
+  },
+  {
+    id: 2,
+    title: 'Post-Market Surveillance on Extended-Release Respiratory Therapeutic Agents',
+    pi: 'Dr. Alexander Vance',
+    phase: 'Phase IV',
+    enrolled: 85,
+    target: 150,
+    status: 'Active',
+    startDate: '2025-11-01',
+    description: 'Evaluating patient compliance, pulmonary function responses, and adverse drug reactions in outpatient clinical settings.',
+    disease: 'Chronic Obstructive Pulmonary Disease (COPD) & Asthma',
+    drugs: 'Fluticasone Propionate / Salmeterol Inhaler (250/50 mcg), Tiotropium Bromide',
+    sideEffects: 'Oropharyngeal candidiasis (5%), headache (7%), muscle cramps (3%)',
+    doctors: 'Dr. Alexander Vance (Pulmonology), Dr. Miriam Zhang',
+    nurses: 'Nurse Rebecca Taylor (Senior Clinical Research Nurse)',
+    scientists: 'Dr. Robert Sterling (Pharmacologist & Principal Scientist)',
+    pharmacists: 'Pharm. Grace Adebayo (Director of Clinical Pharmacy Services)',
+    physiotherapists: 'Physio. Samantha Reed (Chest Physiotherapist)'
+  }
+];
+
 const ClinicalAssistant = () => {
-  const [protocols, setProtocols] = useState([]);
+  const [protocols, setProtocols] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (err) {
+        console.error("Failed to parse stored research protocols", err);
+      }
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PROTOCOLS));
+    return DEFAULT_PROTOCOLS;
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -38,61 +90,6 @@ const ClinicalAssistant = () => {
   const [expandedRowId, setExpandedRowId] = useState(null);
 
   const [formData, setFormData] = useState(EMPTY_FORM);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        setProtocols(JSON.parse(saved));
-      } catch (err) {
-        console.error("Failed to parse stored research protocols", err);
-      }
-    } else {
-      // Default initial protocols if none exist
-      const defaultProtocols = [
-        {
-          id: 1,
-          title: 'Efficacy & Safety Study of Novel Cardiovascular & Metabolic Interventions',
-          pi: 'Dr. Sarah Jenkins, MD',
-          phase: 'Phase III',
-          enrolled: 42,
-          target: 100,
-          status: 'Active',
-          startDate: '2026-01-15',
-          description: 'Multi-center clinical investigation evaluating therapeutic outcomes, adverse event profiles, and rehabilitation protocols for combination therapies.',
-          disease: 'Essential Hypertension & Type 2 Diabetes Mellitus',
-          drugs: 'Amlodipine Besylate (10mg), Metformin HCl (850mg), Lisinopril (20mg)',
-          sideEffects: 'Mild dizziness (12%), dry cough (8%), peripheral edema (4%), transient gastrointestinal discomfort (15%)',
-          doctors: 'Dr. Sarah Jenkins (Cardiology Lead), Dr. Michael Aris (Endocrinology)',
-          nurses: 'Nurse Elena Rostova (Lead Clinical Nurse), Nurse David Kalu',
-          scientists: 'Dr. Aris Thorne (Lead Research Scientist), Dr. Maya Lin (Biostatistician)',
-          pharmacists: 'Pharm. Chidi Okonkwo (Clinical Pharmacist), Pharm. Chloe Bennett',
-          physiotherapists: 'Physio. Marcus Vance (Cardiopulmonary Rehabilitation Specialist)'
-        },
-        {
-          id: 2,
-          title: 'Post-Market Surveillance on Extended-Release Respiratory Therapeutic Agents',
-          pi: 'Dr. Alexander Vance',
-          phase: 'Phase IV',
-          enrolled: 85,
-          target: 150,
-          status: 'Active',
-          startDate: '2025-11-01',
-          description: 'Evaluating patient compliance, pulmonary function responses, and adverse drug reactions in outpatient clinical settings.',
-          disease: 'Chronic Obstructive Pulmonary Disease (COPD) & Asthma',
-          drugs: 'Fluticasone Propionate / Salmeterol Inhaler (250/50 mcg), Tiotropium Bromide',
-          sideEffects: 'Oropharyngeal candidiasis (5%), headache (7%), muscle cramps (3%)',
-          doctors: 'Dr. Alexander Vance (Pulmonology), Dr. Miriam Zhang',
-          nurses: 'Nurse Rebecca Taylor (Senior Clinical Research Nurse)',
-          scientists: 'Dr. Robert Sterling (Pharmacologist & Principal Scientist)',
-          pharmacists: 'Pharm. Grace Adebayo (Director of Clinical Pharmacy Services)',
-          physiotherapists: 'Physio. Samantha Reed (Chest Physiotherapist)'
-        }
-      ];
-      setProtocols(defaultProtocols);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultProtocols));
-    }
-  }, []);
 
   const saveProtocolsToStorage = (updated) => {
     setProtocols(updated);
