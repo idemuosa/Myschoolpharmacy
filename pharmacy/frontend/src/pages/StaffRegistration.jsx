@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
-  FaBell, FaCog, FaCamera, FaUser, FaTimes
+  FaBell, FaCog, FaCamera, FaUser, FaTimes, FaShieldAlt
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -87,28 +87,55 @@ const StaffRegistration = () => {
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
              <span>Staff</span>
              <span className="text-slate-300">/</span>
-             <span className="text-emerald-500">Registration</span>
+             <span className="text-blue-800">Registration Portal</span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">
-            <FaBell className="w-3.5 h-3.5 hover:text-emerald-500 cursor-pointer" />
-            <FaCog className="w-3.5 h-3.5 hover:text-emerald-500 cursor-pointer" />
+            <FaBell className="w-3.5 h-3.5 hover:text-blue-800 cursor-pointer" />
+            <FaCog className="w-3.5 h-3.5 hover:text-blue-800 cursor-pointer" />
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-5 md:p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-6">
-              <h1 className="text-sm font-black text-slate-900 tracking-tight uppercase font-outfit">New staff registry</h1>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Personnel authentication & identification</p>
+        <main className="flex-1 overflow-y-auto p-5 md:p-8 bg-slate-50">
+          <div className="max-w-4xl mx-auto space-y-6">
+
+            {/* Pharmacist Portal Top Header Banner */}
+            <div className="bg-gradient-to-r from-blue-900 via-blue-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex items-center justify-between border border-blue-800/50">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 text-white">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+                    <path d="M12 28 C12 28, 14 48, 32 48 C50 48, 52 28, 52 28 Z" fill="#60a5fa" />
+                    <path d="M10 26 H54 V29 H10 Z" fill="#3b82f6" />
+                    <path d="M26 48 L22 56 H42 L38 48 Z" fill="#1d4ed8" />
+                    <path d="M38 12 L48 24 L42 28 L32 16 Z" fill="#93c5fd" />
+                    <path d="M29 33 H35 V39 H29 Z" fill="white" />
+                    <path d="M30 31 H34 V41 H30 Z" fill="white" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-blue-500/20 text-blue-300 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-blue-400/30">
+                      Pharmacist Registration Portal
+                    </span>
+                  </div>
+                  <h1 className="text-base font-black text-white tracking-tight uppercase font-outfit mt-1">
+                    Personnel Access & Staff Onboarding
+                  </h1>
+                </div>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
+                <FaShieldAlt className="text-blue-300 text-sm" />
+                <span className="text-[10px] font-black uppercase tracking-wider text-blue-100">Verified Access</span>
+              </div>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-50">
+              <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
 
                 {/* Photo Column */}
-                <div className="md:w-[35%] p-8 flex flex-col items-center bg-slate-50/20">
-                  <div className="relative w-32 h-32 bg-slate-100 rounded-2xl flex items-center justify-center mb-6 overflow-hidden border border-slate-200 shadow-inner">
+                <div className="md:w-[35%] p-8 flex flex-col items-center bg-slate-50/50">
+                  <div className="relative w-32 h-32 bg-white rounded-2xl flex items-center justify-center mb-6 overflow-hidden border border-slate-200 shadow-inner">
                     {isCameraOpen ? (
                       <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
                     ) : capturedImage ? (
@@ -118,7 +145,7 @@ const StaffRegistration = () => {
                     )}
                     
                     {!isCameraOpen && (
-                      <button onClick={startCamera} className="absolute bottom-2 right-2 bg-emerald-500 text-white p-2 rounded-lg shadow-lg">
+                      <button onClick={startCamera} className="absolute bottom-2 right-2 bg-blue-800 text-white p-2 rounded-lg shadow-lg hover:bg-blue-900 transition-colors">
                         <FaCamera className="w-3 h-3" />
                       </button>
                     )}
@@ -126,7 +153,7 @@ const StaffRegistration = () => {
                   
                   {isCameraOpen && (
                     <div className="flex gap-2 mb-4 w-full">
-                      <button onClick={capturePhoto} className="flex-1 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Capture</button>
+                      <button onClick={capturePhoto} className="flex-1 py-1.5 bg-blue-800 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Capture</button>
                       <button onClick={stopCamera} className="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-[9px]"><FaTimes /></button>
                     </div>
                   )}
@@ -156,19 +183,19 @@ const StaffRegistration = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Full Name</label>
-                      <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none uppercase" />
+                      <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none uppercase focus:border-blue-800" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Email</label>
-                      <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none" />
+                      <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none focus:border-blue-800" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Phone</label>
-                      <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none" />
+                      <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none focus:border-blue-800" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Clinical Role</label>
-                      <select name="role" value={formData.role} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[10px] font-black text-slate-900 outline-none">
+                      <select name="role" value={formData.role} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-black text-slate-900 outline-none focus:border-blue-800">
                         <option value="">Select Role</option>
                         <option value="pharmacist">Pharmacist</option>
                         <option value="tech">Technician</option>
@@ -180,33 +207,33 @@ const StaffRegistration = () => {
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Department</label>
-                      <select name="department" value={formData.department} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[10px] font-black text-slate-900 outline-none">
+                      <select name="department" value={formData.department} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-black text-slate-900 outline-none focus:border-blue-800">
                         <option value="">Select Dept</option>
                         <option value="clinical">Clinical</option>
                         <option value="ops">Inventory</option>
                       </select>
                     </div>
 
-                    <div className="md:col-span-2 bg-slate-50/50 rounded-xl p-4 border border-slate-100">
+                    <div className="md:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
                       <div className="flex justify-between items-center mb-3">
                          <span className="text-[10px] font-black text-slate-900 uppercase">System ID</span>
-                         <button onClick={() => setAutoGenerate(!autoGenerate)} className={`w-8 h-4 rounded-full transition-all relative ${autoGenerate ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                         <button onClick={() => setAutoGenerate(!autoGenerate)} className={`w-8 h-4 rounded-full transition-all relative ${autoGenerate ? 'bg-blue-800' : 'bg-slate-300'}`}>
                             <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${autoGenerate ? 'left-4.5' : 'left-0.5'}`} />
                          </button>
                       </div>
-                      <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} disabled={autoGenerate} className="w-full bg-white border border-slate-100 rounded-lg px-3 py-2 font-mono text-[10px] font-black text-slate-600 uppercase" />
+                      <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} disabled={autoGenerate} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-mono text-[10px] font-black text-slate-600 uppercase" />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-slate-50/50 border-t border-slate-50 flex justify-end gap-3">
+              <div className="px-8 py-4 bg-slate-50/80 border-t border-slate-100 flex justify-end gap-3">
                 <button onClick={() => navigate('/staff')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 py-2 hover:text-slate-600">Dismiss</button>
                 <button 
                   onClick={handleSave} 
                   disabled={isSaving}
-                  className="bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-lg border border-emerald-500 shadow-none hover:bg-emerald-600 transition-all min-w-[140px]"
+                  className="bg-blue-900 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-xl border border-blue-900 shadow-md hover:bg-blue-950 transition-all min-w-[140px]"
                 >
                   {isSaving ? "Saving..." : "Authorize Personnel"}
                 </button>
