@@ -102,24 +102,33 @@ class DrugSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 class StaffSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    department = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = Staff
         fields = '__all__'
+
+    def validate_email(self, value):
+        if value is None or (isinstance(value, str) and value.strip() == ""):
+            return None
+        return value.strip()
 
     def create(self, validated_data):
         # Create the staff member first
         staff = Staff.objects.create(**validated_data)
         
-        # Automatically create a corresponding Django User for login
-        # We use employee_id as username and a default password
-        username = staff.employee_id.lower()
-        if not User.objects.filter(username=username).exists():
-            User.objects.create_user(
-                username=username,
-                email=staff.email,
-                password='admin123',
-                is_staff=True # Allow access to staff features
-            )
+        # Automatically create a corresponding Django User for login if employee_id is available
+        if staff.employee_id:
+            username = staff.employee_id.lower()
+            if not User.objects.filter(username=username).exists():
+                User.objects.create_user(
+                    username=username,
+                    email=staff.email or '',
+                    password='admin123',
+                    is_staff=True # Allow access to staff features
+                )
         return staff
 
     def update(self, instance, validated_data):
@@ -139,8 +148,8 @@ class StaffSerializer(serializers.ModelSerializer):
         if user:
             if new_username and user.username != new_username and not User.objects.filter(username=new_username).exists():
                 user.username = new_username
-            if staff.email and user.email != staff.email:
-                user.email = staff.email
+            if user.email != (staff.email or ''):
+                user.email = staff.email or ''
             user.save()
 
         return staff

@@ -268,3 +268,18 @@ class StaffApiTestCase(TestCase):
         self.assertFalse(Staff.objects.filter(id=staff_id).exists())
         # Verify associated non-superuser user is deleted
         self.assertFalse(User.objects.filter(username='ep-1002').exists())
+
+    def test_staff_registration_with_optional_fields_blank(self):
+        # Test registering a staff member with empty email, phone_number, and department
+        res = self.client.post('/api/staff/', {
+            'full_name': 'Optional Field User',
+            'role': 'Nurse',
+            'employee_id': 'EP-OPTIONAL-1',
+            'email': '',
+            'phone_number': '',
+            'department': ''
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['full_name'], 'Optional Field User')
+        self.assertIsNone(res.data['email'])
+        self.assertTrue(User.objects.filter(username='ep-optional-1').exists())
