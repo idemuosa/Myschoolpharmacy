@@ -7,26 +7,34 @@ def ensure_admin():
     password = os.environ.get('ADMIN_PASSWORD', 'admin123')
     email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
 
-    from django.contrib.auth.models import User
+admin_username = os.environ.get('ADMIN_USERNAME', 'admin').strip() or 'admin'
+admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com').strip() or 'admin@example.com'
+admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123').strip() or 'admin123'
 
-    user, created = User.objects.get_or_create(
-        username=username,
-        defaults={
-            'email': email,
-            'is_staff': True,
-            'is_superuser': True,
-        }
-    )
-    user.email = email
-    user.set_password(password)
-    user.is_staff = True
-    user.is_superuser = True
-    user.save()
+print(f"--- Processing Admin and Staff Credentials ---")
+print(f"Target Username: {admin_username}")
+print(f"Target Email: {admin_email}")
 
-    if created:
-        print(f"--- Created superuser '{username}' ---")
-    else:
-        print(f"--- Updated superuser '{username}' password and credentials ---")
+# Ensure specified admin superuser exists and is up-to-date
+admin_user = User.objects.filter(username=admin_username).first()
+if admin_user:
+    admin_user.email = admin_email
+    admin_user.set_password(admin_password)
+    admin_user.is_staff = True
+    admin_user.is_superuser = True
+    admin_user.save()
+    print(f"Updated existing superuser '{admin_username}' with configured email and password.")
+else:
+    User.objects.create_superuser(username=admin_username, email=admin_email, password=admin_password)
+    print(f"Created new superuser '{admin_username}' with email '{admin_email}'.")
+
+# Standardize passwords for remaining staff users if needed
+staff_users = User.objects.filter(is_staff=True)
+for staff in staff_users:
+    if staff.username != admin_username:
+        staff.set_password(admin_password)
+        staff.save()
+        print(f"Standardized password for staff user: {staff.username}")
 
 
 if __name__ == '__main__':

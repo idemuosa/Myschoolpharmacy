@@ -19,6 +19,7 @@ import PharmacyDashboard from './pages/PharmacyDashboard';
 import UploadPrescription from './pages/UploadPrescription';
 import DetailPrescriptionReview from './pages/DetailPrescriptionReview';
 import InventoryManagement from './pages/InventoryManagement';
+import CategoryManagement from './pages/CategoryManagement';
 import AddNewDrugs from './pages/AddNewDrugs';
 import CustomerManagement from './pages/CustomerManagement';
 import AddCustomer from './pages/AddCustomer';
@@ -39,6 +40,7 @@ import NotificationSettings from './pages/NotificationSettings';
 import StaffPerformanceReport from './pages/StaffPerfomanceReport';
 import ExpenseManagement from './pages/ExpenseManagement';
 import Financials from './pages/Financials';
+import ClinicalAssistant from './pages/ClinicalAssistant';
 import './App.css';
 
 function App() {
@@ -94,6 +96,20 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <PharmacyDashboard />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/categories" element={
+            <PrivateRoute>
+              <Layout>
+                <CategoryManagement />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/clinical-assistant" element={
+            <PrivateRoute>
+              <Layout>
+                <ClinicalAssistant />
               </Layout>
             </PrivateRoute>
           } />

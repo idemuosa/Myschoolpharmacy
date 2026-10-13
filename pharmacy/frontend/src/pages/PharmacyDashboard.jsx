@@ -10,7 +10,7 @@ import {
   FaCalendarAlt, FaMoneyBill, FaFilePrescription, FaExclamationTriangle, FaUsers,
   FaThLarge, FaCashRegister, FaBox, FaAddressCard, 
   FaBriefcaseMedical, FaChartLine, FaCog, FaPlus, FaArrowRight, FaSearch, FaBell,
-  FaShoppingCart
+  FaShoppingCart, FaRobot, FaShieldAlt
 } from 'react-icons/fa';
 
 const PharmacyDashboard = () => {
@@ -23,7 +23,7 @@ const PharmacyDashboard = () => {
   });
   const [lowStockDrugs, setLowStockDrugs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState({ shop_name: 'pharmacylogo', location: "St. Mary's" });
+  const [settings, setSettings] = useState({ shop_name: 'PharmaCare Connect', location: "St. Mary's" });
 
   const fetchData = async (signal) => {
     try {
@@ -93,11 +93,47 @@ const PharmacyDashboard = () => {
     { name: 'Settings', icon: <FaCog />, path: '/settings', desc: 'Integrations.' }
   ];
 
-  // For the grid display below, we'll use a subset or update the count
-
   return (
     <div className="space-y-4 animate-in fade-in duration-500 overflow-x-hidden text-sm">
       
+      {/* Pharmacist Portal Branding Hero Banner */}
+      <div className="bg-gradient-to-r from-blue-900 via-blue-950 to-slate-900 rounded-3xl p-5 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-blue-800/50">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 text-white shrink-0">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+              <path d="M12 28 C12 28, 14 48, 32 48 C50 48, 52 28, 52 28 Z" fill="#60a5fa" />
+              <path d="M10 26 H54 V29 H10 Z" fill="#3b82f6" />
+              <path d="M26 48 L22 56 H42 L38 48 Z" fill="#1d4ed8" />
+              <path d="M38 12 L48 24 L42 28 L32 16 Z" fill="#93c5fd" />
+              <path d="M29 33 H35 V39 H29 Z" fill="white" />
+              <path d="M30 31 H34 V41 H30 Z" fill="white" />
+            </svg>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-500/20 text-blue-300 text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md border border-blue-400/30">
+                Pharmacist Portal
+              </span>
+              <span className="text-slate-400 text-xs">•</span>
+              <span className="text-slate-300 text-xs font-bold">{settings.shop_name || 'PharmaCare Connect'}</span>
+            </div>
+            <h1 className="text-base font-black text-white tracking-tight uppercase font-outfit mt-1">
+              Admin & Clinical Dashboard
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 self-end md:self-auto">
+          <div className="hidden sm:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
+            <FaShieldAlt className="text-blue-300 text-sm" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-blue-100">Secure Session</span>
+          </div>
+          <button onClick={() => navigate('/staff/new')} className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all border border-blue-500/50 shadow-md">
+            + Add Staff
+          </button>
+        </div>
+      </div>
+
       {/* Search Header */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div className="relative w-full max-w-[600px]">
@@ -105,28 +141,28 @@ const PharmacyDashboard = () => {
           <input 
             type="text" 
             placeholder="Search pharmacopeia, transactions, or patients..." 
-            className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all outline-none placeholder:text-slate-300"
+            className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-50 focus:border-blue-800 transition-all outline-none placeholder:text-slate-300"
           />
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
-            <FaCalendarAlt className="text-emerald-500 text-sm" />
-            <span className="text-[13px] font-black text-emerald-800 uppercase tracking-tight">
+          <div className="hidden md:flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100">
+            <FaCalendarAlt className="text-blue-800 text-sm" />
+            <span className="text-[13px] font-black text-blue-900 uppercase tracking-tight">
               {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
 
-          <button className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:border-emerald-200 transition-all relative">
+          <button className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-800 hover:border-blue-200 transition-all relative">
             <FaBell className="text-xl" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 border border-white rounded-full"></span>
           </button>
 
-          <div className="group relative flex items-center gap-2 bg-white pl-1 pr-3 py-1 rounded-xl border border-slate-200 hover:border-emerald-200 transition-all cursor-pointer" onClick={() => navigate('/settings')}>
-            <div className="w-8 h-8 bg-emerald-500 text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg shadow-emerald-200">A</div>
+          <div className="group relative flex items-center gap-2 bg-white pl-1 pr-3 py-1 rounded-xl border border-slate-200 hover:border-blue-200 transition-all cursor-pointer" onClick={() => navigate('/settings')}>
+            <div className="w-8 h-8 bg-blue-900 text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg shadow-blue-200">A</div>
             <div>
               <p className="text-[13px] font-black text-slate-900 leading-none">Admin Panel</p>
-              <p className="text-[11px] font-black text-emerald-500 uppercase tracking-widest mt-0.5">{settings.location}</p>
+              <p className="text-[11px] font-black text-blue-800 uppercase tracking-widest mt-0.5">{settings.location}</p>
             </div>
           </div>
         </div>
@@ -148,7 +184,7 @@ const PharmacyDashboard = () => {
                   </div>
                </div>
                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><FaFilePrescription /></div>
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center text-sm"><FaFilePrescription /></div>
                   <div>
                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Scripts</p>
                     <p className="text-sm font-black text-slate-900 tabular-nums">{stats.scripts}</p>
@@ -162,7 +198,7 @@ const PharmacyDashboard = () => {
                   </div>
                </div>
                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><FaUsers /></div>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><FaUsers /></div>
                   <div>
                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Patients</p>
                     <p className="text-sm font-black text-slate-900 tabular-nums">{stats.customers}</p>
@@ -177,7 +213,7 @@ const PharmacyDashboard = () => {
                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Stock Replenishment</h3>
                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Inventory Alert</p>
                   </div>
-                  <button onClick={() => navigate('/inventory')} className="text-[11px] font-black text-emerald-500 uppercase tracking-widest hover:text-emerald-600">Full Audit</button>
+                  <button onClick={() => navigate('/inventory')} className="text-[11px] font-black text-blue-800 uppercase tracking-widest hover:text-blue-900">Full Audit</button>
                </div>
                <div className="overflow-x-auto">
                   <table className="w-full text-left">
@@ -198,11 +234,11 @@ const PharmacyDashboard = () => {
                            lowStockDrugs.map(drug => (
                               <tr key={drug.id} className="hover:bg-slate-50 transition-colors group">
                                  <td className="px-5 py-3">
-                                    <p className="text-[13px] font-black text-slate-900 group-hover:text-emerald-600 uppercase tracking-tight">{drug.name}</p>
+                                    <p className="text-[13px] font-black text-slate-900 group-hover:text-blue-800 uppercase tracking-tight">{drug.name}</p>
                                     <p className="text-[10px] font-bold text-slate-400">{drug.generic_name}</p>
                                  </td>
                                  <td className="px-5 py-3">
-                                    <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-black uppercase">{drug.category}</span>
+                                    <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-black uppercase">{drug.category_name || drug.category || 'Uncategorized'}</span>
                                  </td>
                                  <td className="px-5 py-3 text-center">
                                     <span className="text-[13px] font-black text-red-600 tabular-nums">{drug.stock}</span>
@@ -223,14 +259,39 @@ const PharmacyDashboard = () => {
          {/* Right Side: Quick Links & Actions */}
          <div className="lg:col-span-4 space-y-4">
             
+            {/* AI Safety Feature Hero Card */}
+            <div
+              onClick={() => navigate('/clinical-assistant')}
+              className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition-all border border-indigo-800/40 group relative overflow-hidden"
+            >
+               <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-500/20 blur-2xl rounded-full pointer-events-none"></div>
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform">
+                        <FaRobot />
+                     </div>
+                     <div>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          AI Clinical Safety
+                        </span>
+                        <h4 className="text-xs font-black text-white uppercase tracking-tight mt-0.5">Drug Safety Check</h4>
+                     </div>
+                  </div>
+                  <FaArrowRight className="text-slate-400 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+               </div>
+               <p className="text-[11px] text-slate-300 mt-2 font-medium">
+                  Scan drug interactions, dosage warnings, & patient allergy triggers.
+               </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
-               <div className="bg-emerald-600 rounded-2xl p-4 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-emerald-700 transition-all shadow-lg" onClick={() => navigate('/pos')}>
+               <div className="bg-blue-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-blue-900 transition-all shadow-lg" onClick={() => navigate('/pos')}>
                   <div className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-lg mb-2 shadow-sm group-hover:scale-110 transition-transform">
                      <FaPlus />
                   </div>
                   <p className="text-[13px] font-black text-white uppercase tracking-tight">New Sale</p>
                </div>
-               <div className="bg-blue-600 rounded-2xl p-4 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-blue-700 transition-all shadow-lg" onClick={() => navigate('/customers')}>
+               <div className="bg-indigo-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-indigo-900 transition-all shadow-lg" onClick={() => navigate('/customers')}>
                   <div className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-lg mb-2 shadow-sm group-hover:scale-110 transition-transform">
                      <FaFilePrescription />
                   </div>
@@ -243,12 +304,12 @@ const PharmacyDashboard = () => {
                   <div 
                      key={module.path} 
                      onClick={() => navigate(module.path)} 
-                     className="group bg-white p-3 rounded-2xl border border-slate-200 hover:border-emerald-300 transition-all cursor-pointer flex flex-col items-center text-center justify-center gap-2"
+                     className="group bg-white p-3 rounded-2xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer flex flex-col items-center text-center justify-center gap-2"
                   >
-                     <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center text-lg group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
+                     <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center text-lg group-hover:bg-blue-800 group-hover:text-white transition-all shadow-sm">
                         {module.icon}
                      </div>
-                     <h3 className="text-[12px] font-black text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{module.name}</h3>
+                     <h3 className="text-[12px] font-black text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight">{module.name}</h3>
                   </div>
                ))}
             </div>

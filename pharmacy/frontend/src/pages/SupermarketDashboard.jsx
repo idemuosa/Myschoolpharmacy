@@ -168,7 +168,7 @@ const SupermarketDashboard = () => {
                                        <p className="text-[10px] font-bold text-slate-400">SKU-{prod.id}</p>
                                     </td>
                                     <td className="px-5 py-3">
-                                       <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-black uppercase">{prod.category}</span>
+                                       <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-black uppercase">{prod.category_name || prod.category || 'Uncategorized'}</span>
                                     </td>
                                     <td className="px-5 py-3 text-center">
                                        <span className="text-[13px] font-black text-red-600 tabular-nums">{prod.stock}</span>

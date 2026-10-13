@@ -7,7 +7,8 @@ import {
   FaBriefcaseMedical,
   FaChartLine, FaUsers, FaCog,
   FaShoppingCart, FaSignOutAlt, FaTimes,
-  FaUserPlus, FaArrowLeft, FaMoneyBill
+  FaUserPlus, FaArrowLeft, FaMoneyBill,
+  FaRobot, FaFolder
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -53,7 +54,9 @@ const Sidebar = ({ isOpen, onClose }) => {
       items: [
         { name: 'Pharmacy Stock', icon: <FaBox />, path: '/inventory', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
         { name: 'Supermarket Hub', icon: <FaShoppingCart />, path: '/supermarket', roles: ['admin', 'cashier', 'all'] },
+        { name: 'Categories', icon: <FaFolder />, path: '/categories', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
         { name: 'Prescriptions', icon: <FaBriefcaseMedical />, path: '/prescriptions/review', roles: ['admin', 'pharmacist', 'all'] },
+        { name: 'AI Clinical Safety', icon: <FaRobot />, path: '/clinical-assistant', badge: 'AI Safety', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
       ]
     },
     {

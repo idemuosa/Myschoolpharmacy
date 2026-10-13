@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaUser, FaLock } from 'react-icons/fa';
 import api from '../services/api';
 import './AdminLogin.css';
 
@@ -9,14 +9,15 @@ const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [shopName, setShopName] = useState('Pharmacy');
+  const [shopName, setShopName] = useState('PharmaCare Connect');
 
   useEffect(() => {
     const fetchBranding = async () => {
       try {
         const res = await api.get('settings/');
-        if (res.data && res.data.length > 0) {
+        if (res.data && res.data.length > 0 && res.data[0].shop_name) {
           setShopName(res.data[0].shop_name);
         }
       } catch {
@@ -40,60 +41,111 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="admin-login-container text-xs">
-      <div className="login-card">
-        <div className="login-header text-center">
-          <div className="login-logo text-sm font-black mx-auto mb-4">P</div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase font-outfit">{shopName}</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 px-4 italic underline decoration-emerald-500/30">Pharmacy and Clinical Consultation Portal</p>
-        </div>
-        <form className="login-form mt-8 space-y-4" onSubmit={handleSubmit}>
-          <div className="form-group space-y-1.5">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Username</label>
-            <input
-              type="text"
-              placeholder="System Identity"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-lg px-4 py-2.5 text-[11px] font-black text-slate-900 outline-none focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all placeholder:text-slate-200"
-              required
-            />
-          </div>
+    <div className="pharmacist-portal-container">
+      {/* Top Banner Heading */}
+      <h1 className="portal-main-heading">Pharmacist Login Portal</h1>
 
-          <div className="form-group space-y-1.5">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-100 rounded-lg pl-4 pr-10 py-2.5 text-[11px] font-black text-slate-900 outline-none focus:ring-2 focus:ring-emerald-50 focus:border-emerald-500 transition-all placeholder:text-slate-200"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-emerald-500 transition-colors"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
+      {/* Main Login Card */}
+      <div className="pharmacist-card-wrapper">
+        <div className="pharmacist-card-header-bar"></div>
+        <div className="pharmacist-card-content">
+
+          {/* Logo Branding Header */}
+          <div className="pharmacist-logo-container">
+            <div className="mortar-logo-icon">
+              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12">
+                {/* Mortar Bowl */}
+                <path d="M12 28 C12 28, 14 48, 32 48 C50 48, 52 28, 52 28 Z" fill="#1e40af" />
+                <path d="M10 26 H54 V29 H10 Z" fill="#1e3a8a" />
+                <path d="M26 48 L22 56 H42 L38 48 Z" fill="#1e3a8a" />
+                {/* Pestle */}
+                <path d="M38 12 L48 24 L42 28 L32 16 Z" fill="#2563eb" rx="2" />
+                {/* White Cross */}
+                <path d="M29 33 H35 V39 H29 Z" fill="white" />
+                <path d="M30 31 H34 V41 H30 Z" fill="white" />
+              </svg>
+            </div>
+            <div className="brand-text-block">
+              <span className="brand-title-primary">{shopName.split(' ')[0] || 'PharmaCare'}</span>
+              <span className="brand-title-secondary">{shopName.split(' ').slice(1).join(' ') || 'Connect'}</span>
             </div>
           </div>
 
-          <div className="form-options flex justify-between items-center py-2">
-            <label className="remember-me flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest cursor-pointer">
-              <input type="checkbox" className="w-3.5 h-3.5 rounded border-slate-200 text-emerald-500" /> Remember Me
-            </label>
-            <Link to="/forgot-password" size="sm" className="forgot-password text-[9px] font-black text-emerald-500 uppercase tracking-widest hover:underline">Reset Password</Link>
+          <div className="login-title-section">
+            <h2 className="login-card-title">Pharmacist Login</h2>
+            <p className="login-card-subtitle">Access Your Secure Pharmacy Dashboard</p>
           </div>
 
-          <button type="submit" className="w-full bg-emerald-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100 border border-emerald-500 hover:bg-emerald-600 transition-all mt-4" disabled={isLoading}>
-            {isLoading ? 'Authenticating...' : 'Authorize Session'}
-          </button>
-        </form>
+          {/* Form */}
+          <form className="pharmacist-login-form" onSubmit={handleSubmit}>
+            <div className="form-field-group">
+              <label className="field-label">Username / Pharmacist ID</label>
+              <div className="input-with-icon">
+                <FaUser className="field-icon-left" />
+                <input
+                  type="text"
+                  placeholder="e.g., P12345"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="portal-input"
+                  required
+                />
+              </div>
+            </div>
 
+            <div className="form-field-group">
+              <label className="field-label">Password</label>
+              <div className="input-with-icon">
+                <FaLock className="field-icon-left" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="portal-input"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="password-toggle-btn"
+                  tabIndex="-1"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
 
+            <div className="form-meta-row">
+              <label className="checkbox-container">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span className="checkbox-label">Remember Me</span>
+              </label>
+              <Link to="/forgot-password" className="forgot-password-link">
+                Forgot Password?
+              </Link>
+            </div>
+
+            <button type="submit" className="login-submit-btn" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Log In'}
+            </button>
+          </form>
+
+          {/* Card Footer */}
+          <div className="card-footer-info">
+            <p className="account-help-text">
+              Don't have an account? <Link to="/staff/new" className="contact-admin-link">Contact Administrator</Link>
+            </p>
+            <p className="copyright-text">
+              © {new Date().getFullYear()} {shopName}. All Rights Reserved.
+            </p>
+          </div>
+
+        </div>
       </div>
     </div>
   );

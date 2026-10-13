@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import drugService from '../services/drugService';
 import categoryService from '../services/categoryService';
 import { AuthContext } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import {
   FaSearch, FaBell, FaPlus, FaThLarge, FaCashRegister, FaBox,
   FaUsers, FaClipboardList, FaCog, FaPills, FaExclamationTriangle,
@@ -76,8 +77,11 @@ const InventoryManagement = () => {
       await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Pharmacy' });
       setNewCategoryName('');
       fetchCategories();
+      toast.success("Category created successfully!");
     } catch (error) {
       console.error("Error adding category:", error);
+      const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+      toast.error(serverErr || "Failed to create category");
     }
   };
 
@@ -88,8 +92,11 @@ const InventoryManagement = () => {
       setEditingCategory(null);
       setNewCategoryName('');
       fetchCategories();
+      toast.success("Category updated successfully!");
     } catch (error) {
       console.error("Error updating category:", error);
+      const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+      toast.error(serverErr || "Failed to update category");
     }
   };
 
@@ -98,8 +105,21 @@ const InventoryManagement = () => {
     try {
       await categoryService.deleteCategory(id);
       fetchCategories();
+      fetchDrugs();
+      toast.success("Category deleted");
     } catch (error) {
       console.error("Error deleting category:", error);
+      toast.error("Failed to delete category");
+    }
+  };
+
+  const handleDeleteDrug = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete medication "${name}"? This action cannot be undone.`)) return;
+    try {
+      await drugService.deleteDrug(id);
+      fetchDrugs();
+    } catch (error) {
+      console.error("Error deleting drug:", error);
     }
   };
 
@@ -162,9 +182,18 @@ const InventoryManagement = () => {
     const genericStr = (item.generic_name || "").toLowerCase();
     const matchesSearch = !search || nameStr.includes(search) || genericStr.includes(search);
 
-    const drugCategory = (item.category_name || item.category || "").toLowerCase();
-    const targetCategory = (selectedCategory || "").toLowerCase();
-    const matchesCategory = selectedCategory === 'All' || drugCategory === targetCategory;
+    const targetCategory = (selectedCategory || "").toLowerCase().trim();
+    let matchesCategory = selectedCategory === 'All';
+
+    if (!matchesCategory) {
+      const selectedCatObj = categories.find(c => (c.name || "").toLowerCase().trim() === targetCategory);
+      if (selectedCatObj && item.category_obj !== null && item.category_obj !== undefined && String(item.category_obj) === String(selectedCatObj.id)) {
+        matchesCategory = true;
+      } else {
+        const drugCatName = (item.category_name || item.category || "").toLowerCase().trim();
+        matchesCategory = drugCatName === targetCategory;
+      }
+    }
 
     const daysToExpiry = getDaysToExpiry(item.expiry_date);
     const isLow = (parseInt(item.stock) || 0) <= (parseInt(item.reorder_level) || 10);
@@ -289,7 +318,10 @@ const InventoryManagement = () => {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto">
-          {['All', ...categories.filter(c => c.type === 'Pharmacy').map(c => c.name)].map(cat => (
+          {['All', ...Array.from(new Set([
+            ...categories.filter(c => c.type === 'Pharmacy').map(c => c.name),
+            ...inventoryData.map(item => item.category_name || item.category).filter(Boolean)
+          ]))].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -386,10 +418,17 @@ const InventoryManagement = () => {
                       </td>
                       <td className="px-5 py-3">
                         {canManageInventory && (
-                          <div className="flex justify-center">
-                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all">
+                          <div className="flex justify-center items-center gap-1">
+                            <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Edit Medication">
                               <FaEdit className="text-sm" />
                             </Link>
+                            <button
+                              onClick={() => handleDeleteDrug(item.id, item.name)}
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              title="Delete Medication"
+                            >
+                              <FaTrash className="text-sm" />
+                            </button>
                           </div>
                         )}
                       </td>
@@ -398,6 +437,12 @@ const InventoryManagement = () => {
                 })}
             </tbody>
           </table>
+          {filteredData.length === 0 && !loading && (
+            <div className="py-16 text-center space-y-2">
+              <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No medications found matching filter</p>
+              <p className="text-slate-400 text-[11px]">Try searching with a different keyword or resetting selected category</p>
+            </div>
+          )}
         </div>
       </div>
 

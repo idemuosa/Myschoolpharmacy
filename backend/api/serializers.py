@@ -35,20 +35,71 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 class CategorySerializer(serializers.ModelSerializer):
+    type = serializers.CharField(max_length=50, required=False, default='Pharmacy', allow_blank=True)
+
     class Meta:
         model = Category
         fields = '__all__'
 
+    def validate(self, attrs):
+        name = attrs.get('name', '').strip() if attrs.get('name') else ''
+        cat_type = attrs.get('type')
+        if not cat_type or not str(cat_type).strip():
+            cat_type = 'Pharmacy'
+        else:
+            cat_type = str(cat_type).strip()
+
+        if not name:
+            raise serializers.ValidationError({'name': 'Category name cannot be empty.'})
+
+        attrs['name'] = name
+        attrs['type'] = cat_type
+
+        # Check for duplicate category (case-insensitive) for the same type
+        queryset = Category.objects.filter(name__iexact=name, type__iexact=cat_type)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError({'name': f'A category named "{name}" already exists in {cat_type}.'})
+
+        return attrs
+
 class DrugSerializer(serializers.ModelSerializer):
-    category_name = serializers.ReadOnlyField(source='category_obj.name')
+    category_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Drug
         fields = '__all__'
+
+    def get_category_name(self, obj):
+        if obj.category_obj:
+            return obj.category_obj.name
+        return obj.category or ""
 
     def validate_barcode(self, value):
         if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
         return value.strip()
+
+    def create(self, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj and not validated_data.get('category'):
+            validated_data['category'] = category_obj.name
+        elif not category_obj and validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Pharmacy').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj:
+            validated_data['category'] = category_obj.name
+        elif validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Pharmacy').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().update(instance, validated_data)
 
 class StaffSerializer(serializers.ModelSerializer):
     class Meta:
@@ -112,15 +163,41 @@ class SaleReturnSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.ReadOnlyField(source='category_obj.name')
+    category_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = '__all__'
+
+    def get_category_name(self, obj):
+        if obj.category_obj:
+            return obj.category_obj.name
+        return obj.category or ""
 
     def validate_barcode(self, value):
         if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
         return value.strip()
+
+    def create(self, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj and not validated_data.get('category'):
+            validated_data['category'] = category_obj.name
+        elif not category_obj and validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Supermarket').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj:
+            validated_data['category'] = category_obj.name
+        elif validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Supermarket').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().update(instance, validated_data)
 
 class SupermarketSaleItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')

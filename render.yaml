@@ -27,10 +27,10 @@ services:
         value: "True"
       - key: ADMIN_USERNAME
         value: "admin"
-      - key: ADMIN_PASSWORD
-        value: "admin123"
       - key: ADMIN_EMAIL
-        value: "admin@example.com"
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
 
   # Node.js Socket Server
   - type: web

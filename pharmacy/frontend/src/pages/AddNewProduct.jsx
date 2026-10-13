@@ -44,10 +44,14 @@ const AddNewProduct = () => {
         setFormData(prev => ({ ...prev, stock_date: `${mm}/${dd}/${yyyy}` }));
     }, []);
 
-    const fetchCategories = async () => {
+    const fetchCategories = async (selectedId = null) => {
         try {
             const response = await categoryService.getCategories();
-            setCategories(response.data.results || response.data);
+            const cats = response.data.results || response.data;
+            setCategories(cats);
+            if (selectedId) {
+                setFormData(prev => ({ ...prev, category_obj: selectedId.toString() }));
+            }
         } catch (error) {
             console.error("Error fetching categories:", error);
         }
@@ -56,11 +60,15 @@ const AddNewProduct = () => {
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return;
         try {
-            await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Supermarket' });
+            const res = await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Supermarket' });
+            const newCat = res.data;
             setNewCategoryName('');
-            fetchCategories();
+            toast.success("Category added!");
+            fetchCategories(newCat?.id);
         } catch (error) {
             console.error("Error adding category:", error);
+            const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+            toast.error(serverErr || "Failed to add category");
         }
     };
 
@@ -70,9 +78,12 @@ const AddNewProduct = () => {
             await categoryService.updateCategory(editingCategory.id, { name: newCategoryName.trim(), type: 'Supermarket' });
             setEditingCategory(null);
             setNewCategoryName('');
+            toast.success("Category updated!");
             fetchCategories();
         } catch (error) {
             console.error("Error updating category:", error);
+            const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+            toast.error(serverErr || "Failed to update category");
         }
     };
 
@@ -93,7 +104,7 @@ const AddNewProduct = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.name?.trim() || !formData.category_obj || formData.unit_price === '' || formData.unit_price === null || formData.unit_price === undefined) {
+        if (!formData.name?.trim() || (!formData.category_obj && !formData.category?.trim()) || formData.unit_price === '' || formData.unit_price === null || formData.unit_price === undefined) {
             return toast.error("Required fields missing: Name, Category, Price");
         }
         try {

@@ -81,7 +81,12 @@ const Layout = ({ children }) => {
         />
       )}
 
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50">
+      <main
+        className="flex-1 flex flex-col min-w-0 bg-slate-50 bg-cover bg-center bg-no-repeat relative"
+        style={{
+          backgroundImage: "linear-gradient(180deg, rgba(248, 250, 252, 0.93), rgba(241, 245, 249, 0.95)), url('https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=1920&q=80')"
+        }}
+      >
         {/* Production Topbar Header */}
         <header className="bg-white border-b border-slate-200 px-4 py-3 md:px-6 flex items-center justify-between shrink-0 shadow-xs z-20">
           <div className="flex items-center gap-3">

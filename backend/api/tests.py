@@ -107,23 +107,103 @@ class HealthCheckAndApiTests(TestCase):
         self.assertEqual(res_login.status_code, status.HTTP_200_OK)
         self.assertIn('access', res_login.data)
 
-class EnsureAdminTestCase(TestCase):
-    def test_ensure_admin_custom_env_vars(self):
-        import os
-        from ensure_admin import ensure_admin
+    def test_category_creation_and_drug_sync(self):
+        # Authenticate user
+        user = User.objects.create_user(username="testadmin", password="password123", is_staff=True)
+        self.client.force_authenticate(user=user)
 
-        os.environ['ADMIN_USERNAME'] = 'custom_admin'
-        os.environ['ADMIN_PASSWORD'] = 'custom_pass123'
-        os.environ['ADMIN_EMAIL'] = 'custom@admin.com'
+        # Create Category via API
+        cat_res = self.client.post('/api/categories/', {
+            'name': 'Antibiotics',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(cat_res.status_code, status.HTTP_201_CREATED)
+        cat_id = cat_res.data['id']
 
-        try:
-            ensure_admin()
-            user = User.objects.get(username='custom_admin')
-            self.assertEqual(user.email, 'custom@admin.com')
-            self.assertTrue(user.is_staff)
-            self.assertTrue(user.is_superuser)
-            self.assertTrue(user.check_password('custom_pass123'))
-        finally:
-            os.environ.pop('ADMIN_USERNAME', None)
-            os.environ.pop('ADMIN_PASSWORD', None)
-            os.environ.pop('ADMIN_EMAIL', None)
+        # Create Drug referencing category_obj
+        drug_res = self.client.post('/api/drugs/', {
+            'name': 'Amoxicillin',
+            'dosage': '500mg',
+            'form': 'Capsule',
+            'unit_price': 15.00,
+            'stock': 100,
+            'category_obj': cat_id
+        })
+        self.assertEqual(drug_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(drug_res.data['category_name'], 'Antibiotics')
+        self.assertEqual(drug_res.data['category'], 'Antibiotics')
+
+        # Test product creation with supermarket category
+        mkt_cat_res = self.client.post('/api/categories/', {
+            'name': 'Beverages',
+            'type': 'Supermarket'
+        })
+        self.assertEqual(mkt_cat_res.status_code, status.HTTP_201_CREATED)
+        mkt_cat_id = mkt_cat_res.data['id']
+
+        prod_res = self.client.post('/api/products/', {
+            'name': 'Orange Juice',
+            'unit_price': 3.50,
+            'stock': 50,
+            'category_obj': mkt_cat_id
+        })
+        self.assertEqual(prod_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(prod_res.data['category_name'], 'Beverages')
+        self.assertEqual(prod_res.data['category'], 'Beverages')
+
+class CategoryApiTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testadmin", password="password123", is_staff=True)
+        self.client.force_authenticate(user=self.user)
+
+    def test_category_crud_operations(self):
+        # 1. GET empty list
+        get_res = self.client.get('/api/categories/')
+        self.assertEqual(get_res.status_code, status.HTTP_200_OK)
+
+        # 2. POST create category
+        post_res = self.client.post('/api/categories/', {
+            'name': 'Vitamins',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(post_res.status_code, status.HTTP_201_CREATED)
+        cat_id = post_res.data['id']
+        self.assertEqual(post_res.data['name'], 'Vitamins')
+        self.assertEqual(post_res.data['type'], 'Pharmacy')
+
+        # 3. PUT update category
+        put_res = self.client.put(f'/api/categories/{cat_id}/', {
+            'name': 'Vitamins & Supplements',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(put_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(put_res.data['name'], 'Vitamins & Supplements')
+
+        # 4. DELETE category
+        del_res = self.client.delete(f'/api/categories/{cat_id}/')
+        self.assertEqual(del_res.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_category_creation_without_type(self):
+        post_res = self.client.post('/api/categories/', {
+            'name': 'Analgesics'
+        })
+        self.assertEqual(post_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(post_res.data['name'], 'Analgesics')
+        self.assertEqual(post_res.data['type'], 'Pharmacy')
+
+    def test_duplicate_category_creation(self):
+        # First creation
+        res1 = self.client.post('/api/categories/', {
+            'name': 'Antibiotics',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(res1.status_code, status.HTTP_201_CREATED)
+
+        # Duplicate creation (case-insensitive)
+        res2 = self.client.post('/api/categories/', {
+            'name': 'antibiotics',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('name', res2.data)
