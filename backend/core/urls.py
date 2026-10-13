@@ -17,7 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
-from api.views import health_check, CustomTokenObtainPairView, SystemSettingsViewSet
+from api.views import health_check, CustomTokenObtainPairView, SystemSettingsViewSet, custom_500_handler
+
+handler500 = custom_500_handler
 
 settings_list = SystemSettingsViewSet.as_view({'get': 'list', 'post': 'create'})
 
