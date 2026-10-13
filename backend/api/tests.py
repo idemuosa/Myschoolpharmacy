@@ -107,6 +107,18 @@ class HealthCheckAndApiTests(TestCase):
         self.assertEqual(res_login.status_code, status.HTTP_200_OK)
         self.assertIn('access', res_login.data)
 
+    def test_root_level_api_router_urls(self):
+        user = User.objects.create_user(username="testadmin", password="password123", is_staff=True)
+        self.client.force_authenticate(user=user)
+
+        endpoints = ['/prescriptions/', '/drugs/', '/customers/', '/categories/', '/staff/', '/users/', '/reports/']
+        for ep in endpoints:
+            res_root = self.client.get(ep)
+            self.assertNotEqual(res_root.status_code, status.HTTP_404_NOT_FOUND, f"Endpoint {ep} returned 404")
+
+            res_api = self.client.get(f'/api{ep}')
+            self.assertNotEqual(res_api.status_code, status.HTTP_404_NOT_FOUND, f"Endpoint /api{ep} returned 404")
+
     def test_category_creation_and_drug_sync(self):
         # Authenticate user
         user = User.objects.create_user(username="testadmin", password="password123", is_staff=True)

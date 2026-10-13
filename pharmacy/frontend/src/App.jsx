@@ -41,6 +41,7 @@ import StaffPerformanceReport from './pages/StaffPerfomanceReport';
 import ExpenseManagement from './pages/ExpenseManagement';
 import Financials from './pages/Financials';
 import ClinicalAssistant from './pages/ClinicalAssistant';
+import StaffEducation from './pages/StaffEducation';
 import './App.css';
 
 function App() {
@@ -107,9 +108,16 @@ function App() {
             </PrivateRoute>
           } />
           <Route path="/clinical-assistant" element={
-            <PrivateRoute>
+            <PrivateRoute adminOnly={true}>
               <Layout>
                 <ClinicalAssistant />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/staff/education" element={
+            <PrivateRoute adminOnly={true}>
+              <Layout>
+                <StaffEducation />
               </Layout>
             </PrivateRoute>
           } />

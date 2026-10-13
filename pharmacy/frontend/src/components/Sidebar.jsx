@@ -8,7 +8,7 @@ import {
   FaChartLine, FaUsers, FaCog,
   FaShoppingCart, FaSignOutAlt, FaTimes,
   FaUserPlus, FaArrowLeft, FaMoneyBill,
-  FaFlask, FaFolder
+  FaFlask, FaGraduationCap, FaFolder
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -56,7 +56,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { name: 'Supermarket Hub', icon: <FaShoppingCart />, path: '/supermarket', roles: ['admin', 'cashier', 'all'] },
         { name: 'Categories', icon: <FaFolder />, path: '/categories', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
         { name: 'Prescriptions', icon: <FaBriefcaseMedical />, path: '/prescriptions/review', roles: ['admin', 'pharmacist', 'all'] },
-        { name: 'Clinical Research', icon: <FaFlask />, path: '/clinical-assistant', badge: 'Research', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
+        { name: 'Clinical Research', icon: <FaFlask />, path: '/clinical-assistant', badge: 'Admin Only', roles: ['admin'] },
       ]
     },
     {
@@ -65,7 +65,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         { name: 'Patients & Clients', icon: <FaUsers />, path: '/customers', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
         { name: 'Staff List', icon: <FaUsers />, path: '/staff', roles: ['admin'] },
         { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new', roles: ['admin'] },
-        { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards', roles: ['admin'] },
+        { name: 'Staff Rotation & Dev', icon: <FaGraduationCap />, path: '/staff/education', roles: ['admin'] },
+        { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards', roles: ['admin', 'pharmacist'] },
       ]
     },
     {
