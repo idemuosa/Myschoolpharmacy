@@ -173,9 +173,18 @@ const InventoryManagement = () => {
     const genericStr = (item.generic_name || "").toLowerCase();
     const matchesSearch = !search || nameStr.includes(search) || genericStr.includes(search);
 
-    const drugCatName = (item.category_name || item.category || "").toLowerCase().trim();
     const targetCategory = (selectedCategory || "").toLowerCase().trim();
-    const matchesCategory = selectedCategory === 'All' || drugCatName === targetCategory;
+    let matchesCategory = selectedCategory === 'All';
+
+    if (!matchesCategory) {
+      const selectedCatObj = categories.find(c => (c.name || "").toLowerCase().trim() === targetCategory);
+      if (selectedCatObj && item.category_obj !== null && item.category_obj !== undefined && String(item.category_obj) === String(selectedCatObj.id)) {
+        matchesCategory = true;
+      } else {
+        const drugCatName = (item.category_name || item.category || "").toLowerCase().trim();
+        matchesCategory = drugCatName === targetCategory;
+      }
+    }
 
     const daysToExpiry = getDaysToExpiry(item.expiry_date);
     const isLow = (parseInt(item.stock) || 0) <= (parseInt(item.reorder_level) || 10);

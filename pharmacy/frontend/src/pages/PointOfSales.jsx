@@ -178,13 +178,20 @@ const PointOfSales = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.generic_name && product.generic_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const drugCategory = (product.category_name || product.category || "").toLowerCase();
-    const targetCategory = selectedCategory.toLowerCase();
+    const targetCategory = selectedCategory.toLowerCase().trim();
+    let matchesCategory = selectedCategory === 'All';
 
-    const matchesCategory = selectedCategory === 'All' ||
-      drugCategory === targetCategory ||
-      drugCategory.includes(targetCategory.replace(/s$/, '')) ||
-      targetCategory.includes(drugCategory.replace(/s$/, ''));
+    if (!matchesCategory) {
+      const selectedCatObj = categoriesList.find(c => (c.name || "").toLowerCase().trim() === targetCategory);
+      if (selectedCatObj && product.category_obj !== null && product.category_obj !== undefined && String(product.category_obj) === String(selectedCatObj.id)) {
+        matchesCategory = true;
+      } else {
+        const drugCategory = (product.category_name || product.category || "").toLowerCase().trim();
+        matchesCategory = drugCategory === targetCategory ||
+          drugCategory.includes(targetCategory.replace(/s$/, '')) ||
+          targetCategory.includes(drugCategory.replace(/s$/, ''));
+      }
+    }
 
     return matchesSearch && matchesCategory;
   }).sort((a, b) => {
