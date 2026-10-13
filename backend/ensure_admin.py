@@ -1,10 +1,11 @@
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-django.setup()
 
-from django.contrib.auth.models import User
+def ensure_admin():
+    username = os.environ.get('ADMIN_USERNAME', 'admin')
+    password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+    email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
 
 admin_username = os.environ.get('ADMIN_USERNAME', 'admin').strip() or 'admin'
 admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com').strip() or 'admin@example.com'
@@ -35,4 +36,8 @@ for staff in staff_users:
         staff.save()
         print(f"Standardized password for staff user: {staff.username}")
 
-print("--- Done ---")
+
+if __name__ == '__main__':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    django.setup()
+    ensure_admin()
