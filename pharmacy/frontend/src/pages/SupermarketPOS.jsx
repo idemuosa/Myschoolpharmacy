@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import productService from '../services/productService';
+import categoryService from '../services/categoryService';
 import supermarketSaleService from '../services/supermarketSaleService';
 import staffService from '../services/staffService';
 import toast from 'react-hot-toast';
@@ -22,6 +23,7 @@ const SupermarketPOS = () => {
   const [lastSale, setLastSale] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categoriesList, setCategoriesList] = useState([]);
    const [lastScanned, setLastScanned] = useState(null);
    const [autoPrint, setAutoPrint] = useState(false);
    const scanInputRef = useRef(null);
@@ -30,6 +32,7 @@ const SupermarketPOS = () => {
     const controller = new AbortController();
     fetchProducts(controller.signal);
     fetchStaff(controller.signal);
+    fetchCategories();
     
     // Auto-focus the scan input on mount
     if (scanInputRef.current) {
@@ -62,6 +65,15 @@ const SupermarketPOS = () => {
   useEffect(() => {
     localStorage.setItem('supermarket_cart', JSON.stringify(cart));
   }, [cart]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryService.getCategories();
+      setCategoriesList(response.data?.results || response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
 
   const fetchStaff = async (signal) => {
     try {
@@ -135,9 +147,10 @@ const SupermarketPOS = () => {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
+                          (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (product.category_name && product.category_name.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const productCategory = (product.category || "").toLowerCase();
+    const productCategory = (product.category_name || product.category || "").toLowerCase();
     const targetCategory = selectedCategory.toLowerCase();
     
     const matchesCategory = selectedCategory === 'All' || productCategory === targetCategory;
@@ -198,7 +211,10 @@ const SupermarketPOS = () => {
      }
   };
 
-  const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
+  const categories = ['All', ...Array.from(new Set([
+    ...categoriesList.filter(c => c.type === 'Supermarket').map(c => c.name),
+    ...products.map(p => p.category_name || p.category).filter(Boolean)
+  ]))];
 
   return (
     <div className="flex flex-col lg:flex-row h-full gap-4 animate-in fade-in duration-500 text-sm">
@@ -316,7 +332,7 @@ const SupermarketPOS = () => {
                           </td>
                           <td className="px-4 py-3">
                              <span className="px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[11px] font-black uppercase">
-                                {product.category}
+                                {product.category_name || product.category || 'Uncategorized'}
                              </span>
                           </td>
                           <td className="px-4 py-3 text-center">

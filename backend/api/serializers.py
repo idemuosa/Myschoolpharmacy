@@ -40,15 +40,41 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class DrugSerializer(serializers.ModelSerializer):
-    category_name = serializers.ReadOnlyField(source='category_obj.name')
+    category_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Drug
         fields = '__all__'
+
+    def get_category_name(self, obj):
+        if obj.category_obj:
+            return obj.category_obj.name
+        return obj.category or ""
 
     def validate_barcode(self, value):
         if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
         return value.strip()
+
+    def create(self, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj and not validated_data.get('category'):
+            validated_data['category'] = category_obj.name
+        elif not category_obj and validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Pharmacy').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj:
+            validated_data['category'] = category_obj.name
+        elif validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Pharmacy').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().update(instance, validated_data)
 
 class StaffSerializer(serializers.ModelSerializer):
     class Meta:
@@ -112,15 +138,41 @@ class SaleReturnSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.ReadOnlyField(source='category_obj.name')
+    category_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = '__all__'
+
+    def get_category_name(self, obj):
+        if obj.category_obj:
+            return obj.category_obj.name
+        return obj.category or ""
 
     def validate_barcode(self, value):
         if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
         return value.strip()
+
+    def create(self, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj and not validated_data.get('category'):
+            validated_data['category'] = category_obj.name
+        elif not category_obj and validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Supermarket').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        category_obj = validated_data.get('category_obj')
+        if category_obj:
+            validated_data['category'] = category_obj.name
+        elif validated_data.get('category'):
+            cat = Category.objects.filter(name__iexact=validated_data['category'].strip(), type='Supermarket').first()
+            if cat:
+                validated_data['category_obj'] = cat
+        return super().update(instance, validated_data)
 
 class SupermarketSaleItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')

@@ -106,3 +106,47 @@ class HealthCheckAndApiTests(TestCase):
         res_login = self.client.post('/login/', {'username': 'testuser', 'password': 'password123'})
         self.assertEqual(res_login.status_code, status.HTTP_200_OK)
         self.assertIn('access', res_login.data)
+
+    def test_category_creation_and_drug_sync(self):
+        # Authenticate user
+        user = User.objects.create_user(username="testadmin", password="password123", is_staff=True)
+        self.client.force_authenticate(user=user)
+
+        # Create Category via API
+        cat_res = self.client.post('/api/categories/', {
+            'name': 'Antibiotics',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(cat_res.status_code, status.HTTP_201_CREATED)
+        cat_id = cat_res.data['id']
+
+        # Create Drug referencing category_obj
+        drug_res = self.client.post('/api/drugs/', {
+            'name': 'Amoxicillin',
+            'dosage': '500mg',
+            'form': 'Capsule',
+            'unit_price': 15.00,
+            'stock': 100,
+            'category_obj': cat_id
+        })
+        self.assertEqual(drug_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(drug_res.data['category_name'], 'Antibiotics')
+        self.assertEqual(drug_res.data['category'], 'Antibiotics')
+
+        # Test product creation with supermarket category
+        mkt_cat_res = self.client.post('/api/categories/', {
+            'name': 'Beverages',
+            'type': 'Supermarket'
+        })
+        self.assertEqual(mkt_cat_res.status_code, status.HTTP_201_CREATED)
+        mkt_cat_id = mkt_cat_res.data['id']
+
+        prod_res = self.client.post('/api/products/', {
+            'name': 'Orange Juice',
+            'unit_price': 3.50,
+            'stock': 50,
+            'category_obj': mkt_cat_id
+        })
+        self.assertEqual(prod_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(prod_res.data['category_name'], 'Beverages')
+        self.assertEqual(prod_res.data['category'], 'Beverages')

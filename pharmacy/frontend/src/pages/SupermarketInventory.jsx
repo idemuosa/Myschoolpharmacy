@@ -188,7 +188,10 @@ const SupermarketInventory = () => {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-2 rounded-xl border border-slate-200">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-          {['All', ...categories.filter(c => c.type === 'Supermarket' && !['Grains', 'Dairy', 'Vegetables'].includes(c.name)).map(c => c.name)].map(cat => (
+          {['All', ...Array.from(new Set([
+            ...categories.filter(c => c.type === 'Supermarket').map(c => c.name),
+            ...inventoryData.map(item => item.category_name || item.category).filter(Boolean)
+          ]))].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -231,7 +234,8 @@ const SupermarketInventory = () => {
               {inventoryData
                 .filter(item => {
                   const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-                  const matchesCategory = selectedCategory === 'All' || item.category_name === selectedCategory;
+                  const itemCat = item.category_name || item.category || "";
+                  const matchesCategory = selectedCategory === 'All' || itemCat.toLowerCase() === selectedCategory.toLowerCase();
                   return matchesSearch && matchesCategory;
                 })
                 .map((item) => {
@@ -248,8 +252,8 @@ const SupermarketInventory = () => {
                         <p className="text-[8px] font-bold text-slate-400 uppercase">Items-{item.id.toString().padStart(4, '0')}</p>
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tight ${getCategoryColorClass(item.category_name)}`}>
-                          {item.category_name || "Uncategorized"}
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tight ${getCategoryColorClass(item.category_name || item.category)}`}>
+                          {item.category_name || item.category || "Uncategorized"}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-center">
