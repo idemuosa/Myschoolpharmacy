@@ -1,13 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  FaBell, FaCog, FaCamera, FaUser, FaTimes, FaShieldAlt
+  FaBell, FaCog, FaCamera, FaUser, FaTimes, FaShieldAlt, FaArrowLeft
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 
 const StaffRegistration = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -16,12 +19,44 @@ const StaffRegistration = () => {
     department: '',
     employee_id: 'EP-' + Math.floor(Math.random() * 100000)
   });
-  const [autoGenerate, setAutoGenerate] = useState(true);
+  const [autoGenerate, setAutoGenerate] = useState(!isEditMode);
   const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(isEditMode);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchStaffMember = async () => {
+        try {
+          setLoading(true);
+          const response = await api.get(`staff/${id}/`);
+          const data = response.data;
+          setFormData({
+            full_name: data.full_name || '',
+            email: data.email || '',
+            phone_number: data.phone_number || '',
+            role: data.role || '',
+            department: data.department || '',
+            employee_id: data.employee_id || ''
+          });
+          if (data.photo) {
+            setCapturedImage(data.photo);
+          }
+          setAutoGenerate(false);
+        } catch (error) {
+          console.error("Failed to load staff member data", error);
+          toast.error("Failed to load staff details.");
+          navigate('/staff');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchStaffMember();
+    }
+  }, [id, isEditMode, navigate]);
 
   const startCamera = async () => {
     try {
@@ -69,25 +104,38 @@ const StaffRegistration = () => {
     try {
       setIsSaving(true);
       const payload = { ...formData, photo: capturedImage };
-      await api.post('staff/', payload);
-      toast.success("Staff profile created.");
+      if (isEditMode) {
+        await api.put(`staff/${id}/`, payload);
+        toast.success("Staff profile updated.");
+      } else {
+        await api.post('staff/', payload);
+        toast.success("Staff profile created.");
+      }
       navigate('/staff');
     } catch (err) {
       console.error(err);
-      toast.error("Registration failed.");
+      toast.error(isEditMode ? "Update failed." : "Registration failed.");
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-screen bg-slate-50">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Loading staff profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden text-xs">
         {/* Header */}
         <header className="bg-white px-5 py-3 border-b border-slate-100 flex justify-between items-center z-10 w-full h-14">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-             <span>Staff</span>
+             <button onClick={() => navigate('/staff')} className="hover:text-blue-800 flex items-center gap-1"><FaArrowLeft className="text-xs" /> Staff</button>
              <span className="text-slate-300">/</span>
-             <span className="text-blue-800">Registration Portal</span>
+             <span className="text-blue-800">{isEditMode ? 'Edit Staff Profile' : 'Registration Portal'}</span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <FaBell className="w-3.5 h-3.5 hover:text-blue-800 cursor-pointer" />
@@ -115,11 +163,11 @@ const StaffRegistration = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="bg-blue-500/20 text-blue-300 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-blue-400/30">
-                      Pharmacist Registration Portal
+                      {isEditMode ? 'Staff Modification Portal' : 'Pharmacist Registration Portal'}
                     </span>
                   </div>
                   <h1 className="text-base font-black text-white tracking-tight uppercase font-outfit mt-1">
-                    Personnel Access & Staff Onboarding
+                    {isEditMode ? 'Edit Staff Personal Details' : 'Personnel Access & Staff Onboarding'}
                   </h1>
                 </div>
               </div>
@@ -235,7 +283,7 @@ const StaffRegistration = () => {
                   disabled={isSaving}
                   className="bg-blue-900 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-xl border border-blue-900 shadow-md hover:bg-blue-950 transition-all min-w-[140px]"
                 >
-                  {isSaving ? "Saving..." : "Authorize Personnel"}
+                  {isSaving ? "Saving..." : (isEditMode ? "Update Personnel" : "Authorize Personnel")}
                 </button>
               </div>
             </div>

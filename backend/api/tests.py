@@ -219,3 +219,52 @@ class CategoryApiTestCase(TestCase):
         })
         self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('name', res2.data)
+
+
+class StaffApiTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_superuser(username="adminuser", password="adminpassword123", email="admin@pharmacy.com")
+        self.client.force_authenticate(user=self.admin)
+
+    def test_staff_create_update_delete(self):
+        # 1. Create Staff
+        create_res = self.client.post('/api/staff/', {
+            'full_name': 'John Doe',
+            'email': 'john.doe@pharmacy.com',
+            'phone_number': '+1234567890',
+            'role': 'Pharmacist',
+            'department': 'Dispensary',
+            'employee_id': 'EP-1001'
+        })
+        self.assertEqual(create_res.status_code, status.HTTP_201_CREATED)
+        staff_id = create_res.data['id']
+        self.assertEqual(create_res.data['full_name'], 'John Doe')
+        # Check associated user was created
+        self.assertTrue(User.objects.filter(username='ep-1001').exists())
+
+        # 2. Update Staff (PUT)
+        update_res = self.client.put(f'/api/staff/{staff_id}/', {
+            'full_name': 'Johnathan Doe',
+            'email': 'johnathan.doe@pharmacy.com',
+            'phone_number': '+9876543210',
+            'role': 'Senior Pharmacist',
+            'department': 'Clinical',
+            'employee_id': 'EP-1002'
+        })
+        self.assertEqual(update_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(update_res.data['full_name'], 'Johnathan Doe')
+        self.assertEqual(update_res.data['role'], 'Senior Pharmacist')
+        self.assertEqual(update_res.data['employee_id'], 'EP-1002')
+
+        # Check updated associated user username and email
+        self.assertTrue(User.objects.filter(username='ep-1002', email='johnathan.doe@pharmacy.com').exists())
+
+        # 3. Delete Staff (DELETE)
+        delete_res = self.client.delete(f'/api/staff/{staff_id}/')
+        self.assertEqual(delete_res.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify staff record is gone
+        self.assertFalse(Staff.objects.filter(id=staff_id).exists())
+        # Verify associated non-superuser user is deleted
+        self.assertFalse(User.objects.filter(username='ep-1002').exists())

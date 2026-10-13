@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 import {
-  FaPlus, FaSearch, FaEye, FaPen, FaCalendarAlt, FaCheckCircle, FaUserShield
+  FaPlus, FaSearch, FaEye, FaPen, FaTrash, FaCalendarAlt, FaCheckCircle, FaUserShield, FaTimes
 } from 'react-icons/fa';
 
 const StaffManagement = () => {
@@ -10,6 +11,7 @@ const StaffManagement = () => {
   const [staffData, setStaffData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStaff, setSelectedStaff] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -34,6 +36,20 @@ const StaffManagement = () => {
       case 'TECHNICIAN': return 'bg-blue-50 text-blue-600';
       case 'ADMIN': return 'bg-indigo-50 text-indigo-600';
       default: return 'bg-slate-50 text-slate-500';
+    }
+  };
+
+  const handleDelete = async (staffMember) => {
+    const staffName = staffMember.full_name || staffMember.name || 'this staff member';
+    if (window.confirm(`Are you sure you want to delete ${staffName}? This action cannot be undone.`)) {
+      try {
+        await api.delete(`staff/${staffMember.id}/`);
+        toast.success(`Staff member "${staffName}" deleted successfully.`);
+        setStaffData(prev => prev.filter(s => s.id !== staffMember.id));
+      } catch (error) {
+        console.error("Failed to delete staff:", error);
+        toast.error("Failed to delete staff member.");
+      }
     }
   };
 
@@ -140,9 +156,28 @@ const StaffManagement = () => {
                         </div>
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1.5 text-slate-300">
-                          <button className="p-1.5 hover:bg-emerald-50 hover:text-emerald-500 rounded-lg transition-all"><FaEye className="text-sm" /></button>
-                          <button className="p-1.5 hover:bg-emerald-50 hover:text-emerald-500 rounded-lg transition-all"><FaPen className="text-xs" /></button>
+                        <div className="flex items-center justify-end gap-1.5 text-slate-400">
+                          <button
+                            onClick={() => setSelectedStaff(staff)}
+                            title="View Staff Details"
+                            className="p-1.5 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-all"
+                          >
+                            <FaEye className="text-sm" />
+                          </button>
+                          <button
+                            onClick={() => navigate(`/staff/edit/${staff.id}`)}
+                            title="Edit Personal Info"
+                            className="p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
+                          >
+                            <FaPen className="text-xs" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(staff)}
+                            title="Delete Staff Member"
+                            className="p-1.5 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-all"
+                          >
+                            <FaTrash className="text-xs" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -152,6 +187,71 @@ const StaffManagement = () => {
             </table>
            </div>
         </div>
+
+        {/* View Staff Modal */}
+        {selectedStaff && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-md w-full border border-slate-200 shadow-xl space-y-4 relative">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 className="font-black text-slate-900 uppercase text-xs tracking-wider">Staff Details</h3>
+                <button
+                  onClick={() => setSelectedStaff(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center gap-3 py-2">
+                <img
+                  src={selectedStaff.photo || 'https://via.placeholder.com/150'}
+                  alt={selectedStaff.full_name || selectedStaff.name}
+                  className="w-20 h-20 rounded-2xl object-cover ring-2 ring-slate-100 shadow-sm"
+                />
+                <div className="text-center">
+                  <h4 className="font-black text-slate-900 text-base">{selectedStaff.full_name || selectedStaff.name}</h4>
+                  <p className="text-xs font-bold text-slate-400">{selectedStaff.email}</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-4 space-y-2.5 text-xs">
+                <div className="flex justify-between border-b border-slate-200/60 pb-2">
+                  <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Employee ID</span>
+                  <span className="font-black text-slate-800 font-mono">{selectedStaff.employee_id || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200/60 pb-2">
+                  <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Role</span>
+                  <span className="font-black text-slate-800">{selectedStaff.role || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200/60 pb-2">
+                  <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Department</span>
+                  <span className="font-black text-slate-800">{selectedStaff.department || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200/60 pb-2">
+                  <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Phone</span>
+                  <span className="font-black text-slate-800">{selectedStaff.phone_number || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Status</span>
+                  <span className="font-black text-emerald-600 uppercase">{selectedStaff.status || 'Active'}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    const id = selectedStaff.id;
+                    setSelectedStaff(null);
+                    navigate(`/staff/edit/${id}`);
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all"
+                >
+                  Edit Info
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };
