@@ -150,3 +150,36 @@ class HealthCheckAndApiTests(TestCase):
         self.assertEqual(prod_res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(prod_res.data['category_name'], 'Beverages')
         self.assertEqual(prod_res.data['category'], 'Beverages')
+
+class CategoryApiTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testadmin", password="password123", is_staff=True)
+        self.client.force_authenticate(user=self.user)
+
+    def test_category_crud_operations(self):
+        # 1. GET empty list
+        get_res = self.client.get('/api/categories/')
+        self.assertEqual(get_res.status_code, status.HTTP_200_OK)
+
+        # 2. POST create category
+        post_res = self.client.post('/api/categories/', {
+            'name': 'Vitamins',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(post_res.status_code, status.HTTP_201_CREATED)
+        cat_id = post_res.data['id']
+        self.assertEqual(post_res.data['name'], 'Vitamins')
+        self.assertEqual(post_res.data['type'], 'Pharmacy')
+
+        # 3. PUT update category
+        put_res = self.client.put(f'/api/categories/{cat_id}/', {
+            'name': 'Vitamins & Supplements',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(put_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(put_res.data['name'], 'Vitamins & Supplements')
+
+        # 4. DELETE category
+        del_res = self.client.delete(f'/api/categories/{cat_id}/')
+        self.assertEqual(del_res.status_code, status.HTTP_204_NO_CONTENT)
