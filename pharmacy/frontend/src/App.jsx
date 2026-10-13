@@ -128,6 +128,13 @@ function App() {
               </Layout>
             </PrivateRoute>
           } />
+          <Route path="/staff/edit/:id" element={
+            <PrivateRoute>
+              <Layout>
+                <StaffRegistration />
+              </Layout>
+            </PrivateRoute>
+          } />
           <Route path="/staff" element={
             <PrivateRoute>
               <Layout>

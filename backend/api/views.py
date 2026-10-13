@@ -30,6 +30,22 @@ class StaffViewSet(viewsets.ModelViewSet):
     queryset = Staff.objects.all()
     serializer_class = StaffSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        username = instance.employee_id.lower() if instance.employee_id else None
+        email = instance.email
+
+        user = None
+        if username:
+            user = User.objects.filter(username=username).first()
+        if not user and email:
+            user = User.objects.filter(email__iexact=email).first()
+
+        if user and not user.is_superuser:
+            user.delete()
+
+        return super().destroy(request, *args, **kwargs)
+
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer

@@ -122,6 +122,29 @@ class StaffSerializer(serializers.ModelSerializer):
             )
         return staff
 
+    def update(self, instance, validated_data):
+        old_employee_id = instance.employee_id
+        old_email = instance.email
+
+        staff = super().update(instance, validated_data)
+
+        # Sync associated Django User if employee_id or email changed
+        new_username = staff.employee_id.lower() if staff.employee_id else ""
+        old_username = old_employee_id.lower() if old_employee_id else new_username
+
+        user = User.objects.filter(username=old_username).first()
+        if not user and old_email:
+            user = User.objects.filter(email__iexact=old_email).first()
+
+        if user:
+            if new_username and user.username != new_username and not User.objects.filter(username=new_username).exists():
+                user.username = new_username
+            if staff.email and user.email != staff.email:
+                user.email = staff.email
+            user.save()
+
+        return staff
+
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
