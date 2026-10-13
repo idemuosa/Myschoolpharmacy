@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense
+from .models import Category, Drug, Staff, Customer, Prescription, PrescriptionItem, Sale, SaleItem, SaleReturn, Product, SupermarketSale, SupermarketSaleItem, SystemSettings, Expense, ClinicalResearch
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -258,4 +258,9 @@ class ExpenseSerializer(serializers.ModelSerializer):
     staff_name = serializers.ReadOnlyField(source='staff.full_name')
     class Meta:
         model = Expense
+        fields = '__all__'
+
+class ClinicalResearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClinicalResearch
         fields = '__all__'

@@ -240,6 +240,7 @@ const ClinicalAssistant = () => {
               Admin Only Access
             </span>
           </div>
+        </div>
 
           <form onSubmit={handleFormSubmit} className="space-y-6">
 

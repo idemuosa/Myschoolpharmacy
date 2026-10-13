@@ -219,3 +219,30 @@ class CategoryApiTestCase(TestCase):
         })
         self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('name', res2.data)
+
+    def test_clinical_research_crud(self):
+        user = User.objects.create_user(username="researcher", password="password123", is_staff=True)
+        self.client.force_authenticate(user=user)
+
+        # Create
+        res = self.client.post('/api/clinical-research/', {
+            'disease_name': 'Hypertension',
+            'drug_name': 'Lisinopril',
+            'side_effects': 'Dry cough, dizziness',
+            'findings': 'Effective for blood pressure control with minor side effect profile in 85% patients.',
+            'severity': 'Mild',
+            'researcher': 'Dr. Smith'
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        research_id = res.data['id']
+
+        # Read list
+        list_res = self.client.get('/api/clinical-research/')
+        self.assertEqual(list_res.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(list_res.data), 1)
+
+        # Retrieve detail
+        detail_res = self.client.get(f'/api/clinical-research/{research_id}/')
+        self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_res.data['disease_name'], 'Hypertension')
+        self.assertEqual(detail_res.data['drug_name'], 'Lisinopril')
