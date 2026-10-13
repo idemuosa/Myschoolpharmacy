@@ -1,28 +1,96 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const isDev = !app.isPackaged;
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1280,
+    height: 850,
+    minWidth: 900,
+    minHeight: 600,
+    title: 'Josiah Pharmacy & Store Management System',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.cjs')
     },
-    // The icon is optional; if favicon.ico is missing, Electron will use a default.
-    icon: path.join(__dirname, isDev ? 'public/favicon.ico' : 'dist/favicon.ico')
+    icon: path.join(__dirname, isDev ? 'public/favicon.ico' : 'dist/favicon.ico'),
+    show: false
+  });
+
+  win.once('ready-to-show', () => {
+    win.show();
+  });
+
+  // Handle IPC window controls from renderer
+  ipcMain.on('window-minimize', () => {
+    if (win) win.minimize();
+  });
+
+  ipcMain.on('window-maximize', () => {
+    if (win) {
+      if (win.isMaximized()) {
+        win.unmaximize();
+      } else {
+        win.maximize();
+      }
+    }
+  });
+
+  ipcMain.on('window-close', () => {
+    if (win) win.close();
+  });
+
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
   });
 
   if (isDev) {
     win.loadURL('http://localhost:5173');
   } else {
-    // In production, the file is loaded from the packaged dist folder
     win.loadFile(path.join(__dirname, 'dist/index.html'));
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+
+  // Custom application menu
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        { label: 'Reload', role: 'reload' },
+        { label: 'Force Reload', role: 'forceReload' },
+        { type: 'separator' },
+        { label: 'Exit', role: 'quit' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'toggledevtools' },
+        { type: 'separator' },
+        { role: 'resetzoom' },
+        { role: 'zoomin' },
+        { role: 'zoomout' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        { role: 'close' }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

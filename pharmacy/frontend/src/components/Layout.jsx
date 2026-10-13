@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Sidebar from './Sidebar';
-import { FaBars, FaArrowLeft } from 'react-icons/fa';
+import TabBar from './TabBar';
+import MobileBottomNav from './MobileBottomNav';
+import { FaBars, FaArrowLeft, FaMobileAlt, FaDesktop, FaGlobe } from 'react-icons/fa';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import { useContext } from 'react';
+import { getPlatformLabel, getPlatformType } from '../services/platform';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -14,6 +15,9 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+
+  const platformType = getPlatformType();
+  const platformLabel = getPlatformLabel();
 
   // Check API Connection status on mount and periodically
   useEffect(() => {
@@ -68,6 +72,12 @@ const Layout = ({ children }) => {
     return 'Pharmacy Management System';
   };
 
+  const renderPlatformIcon = () => {
+    if (platformType === 'desktop') return <FaDesktop className="text-xs" />;
+    if (platformType === 'mobile_native' || platformType === 'mobile_web') return <FaMobileAlt className="text-xs" />;
+    return <FaGlobe className="text-xs" />;
+  };
+
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden text-base font-sans">
       {/* Sidebar with mobile state */}
@@ -88,7 +98,7 @@ const Layout = ({ children }) => {
         }}
       >
         {/* Production Topbar Header */}
-        <header className="bg-white border-b border-slate-200 px-4 py-3 md:px-6 flex items-center justify-between shrink-0 shadow-xs z-20">
+        <header className="bg-white border-b border-slate-200 px-4 py-2.5 md:px-6 flex items-center justify-between shrink-0 shadow-xs z-20">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -104,9 +114,16 @@ const Layout = ({ children }) => {
               <FaArrowLeft />
             </button>
             <div>
-              <h1 className="text-sm md:text-base font-black font-outfit text-slate-900 tracking-tight leading-none">
-                {getPageTitle(location.pathname)}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm md:text-base font-black font-outfit text-slate-900 tracking-tight leading-none">
+                  {getPageTitle(location.pathname)}
+                </h1>
+                {/* Platform Badge */}
+                <span className="hidden sm:inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                  {renderPlatformIcon()}
+                  <span>{platformLabel}</span>
+                </span>
+              </div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mt-0.5">
                 {location.pathname}
               </span>
@@ -125,7 +142,7 @@ const Layout = ({ children }) => {
             </div>
 
             {/* User Profile Pill */}
-            <div className="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1.5 rounded-xl border border-slate-200/80">
+            <div className="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1 rounded-xl border border-slate-200/80">
               <div className="w-7 h-7 bg-emerald-600 text-white rounded-lg flex items-center justify-center font-black text-xs shadow-xs">
                 {(user?.fullName || user?.username || 'U')[0].toUpperCase()}
               </div>
@@ -141,11 +158,18 @@ const Layout = ({ children }) => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        {/* Workspace TabBar */}
+        <TabBar />
+
+        {/* Workspace Content View */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-16 lg:pb-0">
           <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
             {children}
           </div>
         </div>
+
+        {/* Mobile Bottom Navigation Bar */}
+        <MobileBottomNav onToggleSidebar={() => setIsSidebarOpen(true)} />
       </main>
     </div>
   );
