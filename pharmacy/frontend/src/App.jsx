@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { TabProvider } from './context/TabContext';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 import { useEffect } from 'react';
@@ -86,8 +87,9 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="top-right" />
-        <Routes>
+        <TabProvider>
+          <Toaster position="top-right" />
+          <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<AdminLogin />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -330,6 +332,7 @@ function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </TabProvider>
       </Router>
     </AuthProvider>
   );
