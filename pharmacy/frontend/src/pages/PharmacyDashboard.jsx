@@ -10,7 +10,7 @@ import {
   FaCalendarAlt, FaMoneyBill, FaFilePrescription, FaExclamationTriangle, FaUsers,
   FaThLarge, FaCashRegister, FaBox, FaAddressCard, 
   FaBriefcaseMedical, FaChartLine, FaCog, FaPlus, FaArrowRight, FaSearch, FaBell,
-  FaShoppingCart
+  FaShoppingCart, FaRobot, FaShieldAlt
 } from 'react-icons/fa';
 
 const PharmacyDashboard = () => {
@@ -223,6 +223,31 @@ const PharmacyDashboard = () => {
          {/* Right Side: Quick Links & Actions */}
          <div className="lg:col-span-4 space-y-4">
             
+            {/* AI Safety Feature Hero Card */}
+            <div
+              onClick={() => navigate('/clinical-assistant')}
+              className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition-all border border-indigo-800/40 group relative overflow-hidden"
+            >
+               <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-500/20 blur-2xl rounded-full pointer-events-none"></div>
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform">
+                        <FaRobot />
+                     </div>
+                     <div>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          AI Clinical Safety
+                        </span>
+                        <h4 className="text-xs font-black text-white uppercase tracking-tight mt-0.5">Drug Safety Check</h4>
+                     </div>
+                  </div>
+                  <FaArrowRight className="text-slate-400 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+               </div>
+               <p className="text-[11px] text-slate-300 mt-2 font-medium">
+                  Scan drug interactions, dosage warnings, & patient allergy triggers.
+               </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
                <div className="bg-emerald-600 rounded-2xl p-4 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-emerald-700 transition-all shadow-lg" onClick={() => navigate('/pos')}>
                   <div className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-lg mb-2 shadow-sm group-hover:scale-110 transition-transform">

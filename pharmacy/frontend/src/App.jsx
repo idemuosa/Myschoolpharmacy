@@ -39,6 +39,7 @@ import NotificationSettings from './pages/NotificationSettings';
 import StaffPerformanceReport from './pages/StaffPerfomanceReport';
 import ExpenseManagement from './pages/ExpenseManagement';
 import Financials from './pages/Financials';
+import ClinicalAssistant from './pages/ClinicalAssistant';
 import './App.css';
 
 function App() {
@@ -94,6 +95,13 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <PharmacyDashboard />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/clinical-assistant" element={
+            <PrivateRoute>
+              <Layout>
+                <ClinicalAssistant />
               </Layout>
             </PrivateRoute>
           } />
