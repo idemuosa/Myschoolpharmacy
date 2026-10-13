@@ -26,10 +26,10 @@ class Drug(models.Model):
 
 class Staff(models.Model):
     full_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20)
+    email = models.EmailField(unique=True, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=100)
-    department = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, blank=True, null=True)
     employee_id = models.CharField(max_length=50, unique=True)
     photo = models.TextField(blank=True, null=True) # Storing data URL for simplicity
     status = models.CharField(max_length=50, default='Active')

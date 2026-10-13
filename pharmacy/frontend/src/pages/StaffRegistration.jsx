@@ -114,7 +114,18 @@ const StaffRegistration = () => {
       navigate('/staff');
     } catch (err) {
       console.error(err);
-      toast.error(isEditMode ? "Update failed." : "Registration failed.");
+      let errorMsg = isEditMode ? "Update failed." : "Registration failed.";
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (typeof err.response.data === 'object') {
+          const messages = Object.values(err.response.data).flat();
+          if (messages.length > 0) {
+            errorMsg = messages.join(' ');
+          }
+        }
+      }
+      toast.error(errorMsg);
     } finally {
       setIsSaving(false);
     }
