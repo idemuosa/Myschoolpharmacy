@@ -154,7 +154,7 @@ const AddNewDrugs = () => {
    };
 
    const handleSave = async () => {
-      if (!formData.name?.trim() || !formData.category_obj || formData.unit_price === '' || formData.unit_price === null || formData.unit_price === undefined) {
+      if (!formData.name?.trim() || (!formData.category_obj && !formData.category?.trim()) || formData.unit_price === '' || formData.unit_price === null || formData.unit_price === undefined) {
          return toast.error('Required fields missing: Name, Category, Price');
       }
 

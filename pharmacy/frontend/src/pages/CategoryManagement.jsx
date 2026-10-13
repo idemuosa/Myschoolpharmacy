@@ -119,19 +119,20 @@ const CategoryManagement = () => {
 
   // Calculate item counts per category
   const getItemCount = (category) => {
-    if (category.type === 'Pharmacy') {
-      return drugs.filter(d =>
-        d.category_obj === category.id ||
-        (d.category && d.category.toLowerCase() === category.name.toLowerCase()) ||
-        (d.category_name && d.category_name.toLowerCase() === category.name.toLowerCase())
-      ).length;
-    } else {
-      return products.filter(p =>
-        p.category_obj === category.id ||
-        (p.category && p.category.toLowerCase() === category.name.toLowerCase()) ||
-        (p.category_name && p.category_name.toLowerCase() === category.name.toLowerCase())
-      ).length;
-    }
+    const isPharmacy = (category.type || 'Pharmacy') === 'Pharmacy';
+    const items = isPharmacy ? drugs : products;
+    const catIdStr = String(category.id);
+    const catNameLower = (category.name || '').trim().toLowerCase();
+
+    return items.filter(item => {
+      if (!item) return false;
+      const itemCatObjStr = item.category_obj !== null && item.category_obj !== undefined ? String(item.category_obj) : null;
+      if (itemCatObjStr && itemCatObjStr === catIdStr) {
+        return true;
+      }
+      const itemCat = (item.category_name || item.category || '').trim().toLowerCase();
+      return itemCat && itemCat === catNameLower;
+    }).length;
   };
 
   const filteredCategories = categories.filter(cat => {

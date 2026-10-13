@@ -142,9 +142,19 @@ const SupermarketInventory = () => {
 
   const filteredData = inventoryData.filter(item => {
     if (!item) return false;
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const itemCat = (item.category_name || item.category || "").toLowerCase().trim();
-    const matchesCategory = selectedCategory === 'All' || itemCat === selectedCategory.toLowerCase().trim();
+    const matchesSearch = (item.name || "").toLowerCase().includes((searchTerm || "").toLowerCase().trim());
+    const targetCategory = (selectedCategory || "").toLowerCase().trim();
+    let matchesCategory = selectedCategory === 'All';
+
+    if (!matchesCategory) {
+      const selectedCatObj = categories.find(c => (c.name || "").toLowerCase().trim() === targetCategory);
+      if (selectedCatObj && item.category_obj !== null && item.category_obj !== undefined && String(item.category_obj) === String(selectedCatObj.id)) {
+        matchesCategory = true;
+      } else {
+        const itemCat = (item.category_name || item.category || "").toLowerCase().trim();
+        matchesCategory = itemCat === targetCategory;
+      }
+    }
 
     const isLow = (item.stock || 0) <= (item.reorder_level || 10);
     const isExpiring = item.expiry_date &&
