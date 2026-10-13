@@ -107,6 +107,15 @@ class HealthCheckAndApiTests(TestCase):
         self.assertEqual(res_login.status_code, status.HTTP_200_OK)
         self.assertIn('access', res_login.data)
 
+    def test_custom_500_handler(self):
+        from api.views import custom_500_handler
+        response = custom_500_handler(None)
+        self.assertEqual(response.status_code, 500)
+        import json
+        data = json.loads(response.content)
+        self.assertEqual(data.get('error'), 'Server Error (500)')
+        self.assertEqual(data.get('message'), 'An internal server error occurred.')
+
     def test_root_level_api_router_urls(self):
         user = User.objects.create_user(username="testadmin", password="password123", is_staff=True)
         self.client.force_authenticate(user=user)
