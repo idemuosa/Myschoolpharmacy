@@ -76,7 +76,8 @@ const AddNewDrugs = () => {
          fetchCategories(newCat?.id);
       } catch (error) {
          console.error("Error adding category:", error);
-         toast.error("Failed to add category");
+         const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+         toast.error(serverErr || "Failed to add category");
       }
    };
 
@@ -90,7 +91,8 @@ const AddNewDrugs = () => {
          fetchCategories(editingCategory.id);
       } catch (error) {
          console.error("Error updating category:", error);
-         toast.error("Failed to update category");
+         const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+         toast.error(serverErr || "Failed to update category");
       }
    };
 

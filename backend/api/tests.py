@@ -183,3 +183,27 @@ class CategoryApiTestCase(TestCase):
         # 4. DELETE category
         del_res = self.client.delete(f'/api/categories/{cat_id}/')
         self.assertEqual(del_res.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_category_creation_without_type(self):
+        post_res = self.client.post('/api/categories/', {
+            'name': 'Analgesics'
+        })
+        self.assertEqual(post_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(post_res.data['name'], 'Analgesics')
+        self.assertEqual(post_res.data['type'], 'Pharmacy')
+
+    def test_duplicate_category_creation(self):
+        # First creation
+        res1 = self.client.post('/api/categories/', {
+            'name': 'Antibiotics',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(res1.status_code, status.HTTP_201_CREATED)
+
+        # Duplicate creation (case-insensitive)
+        res2 = self.client.post('/api/categories/', {
+            'name': 'antibiotics',
+            'type': 'Pharmacy'
+        })
+        self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('name', res2.data)

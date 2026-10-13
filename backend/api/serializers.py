@@ -35,9 +35,34 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 class CategorySerializer(serializers.ModelSerializer):
+    type = serializers.CharField(max_length=50, required=False, default='Pharmacy', allow_blank=True)
+
     class Meta:
         model = Category
         fields = '__all__'
+
+    def validate(self, attrs):
+        name = attrs.get('name', '').strip() if attrs.get('name') else ''
+        cat_type = attrs.get('type')
+        if not cat_type or not str(cat_type).strip():
+            cat_type = 'Pharmacy'
+        else:
+            cat_type = str(cat_type).strip()
+
+        if not name:
+            raise serializers.ValidationError({'name': 'Category name cannot be empty.'})
+
+        attrs['name'] = name
+        attrs['type'] = cat_type
+
+        # Check for duplicate category (case-insensitive) for the same type
+        queryset = Category.objects.filter(name__iexact=name, type__iexact=cat_type)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError({'name': f'A category named "{name}" already exists in {cat_type}.'})
+
+        return attrs
 
 class DrugSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()

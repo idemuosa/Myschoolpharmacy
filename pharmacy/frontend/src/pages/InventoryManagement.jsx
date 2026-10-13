@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import drugService from '../services/drugService';
 import categoryService from '../services/categoryService';
 import { AuthContext } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import {
   FaSearch, FaBell, FaPlus, FaThLarge, FaCashRegister, FaBox,
   FaUsers, FaClipboardList, FaCog, FaPills, FaExclamationTriangle,
@@ -76,8 +77,11 @@ const InventoryManagement = () => {
       await categoryService.addCategory({ name: newCategoryName.trim(), type: 'Pharmacy' });
       setNewCategoryName('');
       fetchCategories();
+      toast.success("Category created successfully!");
     } catch (error) {
       console.error("Error adding category:", error);
+      const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+      toast.error(serverErr || "Failed to create category");
     }
   };
 
@@ -88,8 +92,11 @@ const InventoryManagement = () => {
       setEditingCategory(null);
       setNewCategoryName('');
       fetchCategories();
+      toast.success("Category updated successfully!");
     } catch (error) {
       console.error("Error updating category:", error);
+      const serverErr = error.response?.data?.name?.[0] || error.response?.data?.type?.[0] || error.response?.data?.detail;
+      toast.error(serverErr || "Failed to update category");
     }
   };
 
@@ -99,8 +106,10 @@ const InventoryManagement = () => {
       await categoryService.deleteCategory(id);
       fetchCategories();
       fetchDrugs();
+      toast.success("Category deleted");
     } catch (error) {
       console.error("Error deleting category:", error);
+      toast.error("Failed to delete category");
     }
   };
 
