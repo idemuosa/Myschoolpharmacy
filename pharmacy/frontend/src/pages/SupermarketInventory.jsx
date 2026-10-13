@@ -411,16 +411,18 @@ const SupermarketInventory = () => {
                 {categories.filter(c => c.type === 'Supermarket').map(cat => (
                   <div key={cat.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 group">
                     <span className="text-[10px] font-bold text-slate-700 uppercase">{cat.name}</span>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
-                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                        className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Edit Category"
                       >
                         <FaEdit className="text-xs" />
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete Category"
                       >
                         <FaTrash className="text-xs" />
                       </button>
