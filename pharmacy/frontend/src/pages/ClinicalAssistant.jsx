@@ -420,11 +420,26 @@ const ClinicalAssistant = () => {
             {/* Section 3: Clinical Research Personnel Involved in Findings */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2 border-b border-slate-200 pb-1.5">
-                <FaUserMd className="text-indigo-600" />
-                3. Clinical Findings Personnel (Doctors, Nurses, Scientists, Pharmacists, Physiotherapists)
+                <FaPills className="text-emerald-600" />
+                3. Clinical Findings Personnel (Pharmacists & Clinical Team)
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl">
+                  <label className="block text-xs font-black text-emerald-900 uppercase mb-1 flex items-center gap-1.5">
+                    <FaPills className="text-emerald-600" />
+                    Pharmacists (Lead Clinical Pharmacy Personnel)
+                  </label>
+                  <input
+                    type="text"
+                    name="pharmacists"
+                    value={formData.pharmacists}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Pharm. Chidi Okonkwo, Pharm. Chloe Bennett"
+                    className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-800 uppercase mb-1 flex items-center gap-1.5">
                     <FaUserMd className="text-indigo-600" />
@@ -471,21 +486,6 @@ const ClinicalAssistant = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 uppercase mb-1 flex items-center gap-1.5">
-                    <FaPills className="text-emerald-600" />
-                    Pharmacists involved
-                  </label>
-                  <input
-                    type="text"
-                    name="pharmacists"
-                    value={formData.pharmacists}
-                    onChange={handleInputChange}
-                    placeholder="e.g. Pharm. Chidi Okonkwo, Pharm. Chloe Bennett"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-800 uppercase mb-1 flex items-center gap-1.5">
                     <FaStethoscope className="text-amber-600" />
                     Physiotherapists involved
@@ -695,6 +695,15 @@ const ClinicalAssistant = () => {
                                   Research Findings Team & Healthcare Personnel
                                 </h5>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                                  <div className="p-2.5 bg-emerald-100/70 rounded-xl border border-emerald-300 ring-1 ring-emerald-400/20 col-span-1 sm:col-span-2 md:col-span-1">
+                                    <p className="text-[10px] font-black text-emerald-900 uppercase flex items-center gap-1 mb-1">
+                                      <FaPills className="text-emerald-700" /> Pharmacists (Lead)
+                                    </p>
+                                    <p className="text-[11px] font-extrabold text-emerald-950">
+                                      {protocol.pharmacists || 'None listed'}
+                                    </p>
+                                  </div>
+
                                   <div className="p-2.5 bg-indigo-50/50 rounded-xl border border-indigo-100">
                                     <p className="text-[10px] font-black text-indigo-800 uppercase flex items-center gap-1 mb-1">
                                       <FaUserMd /> Doctors
@@ -719,15 +728,6 @@ const ClinicalAssistant = () => {
                                     </p>
                                     <p className="text-[11px] font-bold text-slate-700">
                                       {protocol.scientists || 'None listed'}
-                                    </p>
-                                  </div>
-
-                                  <div className="p-2.5 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                                    <p className="text-[10px] font-black text-emerald-800 uppercase flex items-center gap-1 mb-1">
-                                      <FaPills /> Pharmacists
-                                    </p>
-                                    <p className="text-[11px] font-bold text-slate-700">
-                                      {protocol.pharmacists || 'None listed'}
                                     </p>
                                   </div>
 
