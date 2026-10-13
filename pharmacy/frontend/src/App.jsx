@@ -19,6 +19,7 @@ import PharmacyDashboard from './pages/PharmacyDashboard';
 import UploadPrescription from './pages/UploadPrescription';
 import DetailPrescriptionReview from './pages/DetailPrescriptionReview';
 import InventoryManagement from './pages/InventoryManagement';
+import CategoryManagement from './pages/CategoryManagement';
 import AddNewDrugs from './pages/AddNewDrugs';
 import CustomerManagement from './pages/CustomerManagement';
 import AddCustomer from './pages/AddCustomer';
@@ -95,6 +96,13 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <PharmacyDashboard />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/categories" element={
+            <PrivateRoute>
+              <Layout>
+                <CategoryManagement />
               </Layout>
             </PrivateRoute>
           } />

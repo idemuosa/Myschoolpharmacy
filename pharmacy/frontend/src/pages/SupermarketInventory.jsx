@@ -19,6 +19,7 @@ const SupermarketInventory = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('All'); // 'All' | 'Low Stock' | 'Expiring Soon'
   const location = useLocation();
 
   useEffect(() => {
@@ -93,10 +94,68 @@ const SupermarketInventory = () => {
     try {
       await categoryService.deleteCategory(id);
       fetchCategories();
+      fetchProducts();
     } catch (error) {
       console.error("Error deleting category:", error);
     }
   };
+
+  const handleDeleteProduct = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete product "${name}"? This action cannot be undone.`)) return;
+    try {
+      await productService.deleteProduct(id);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (inventoryData.length === 0) return;
+
+    const headers = ['Product Name', 'SKU', 'Category', 'In Stock', 'Unit Price ($)', 'Expiry Date', 'Status'];
+    const rows = filteredData.map(item => [
+      item.name || '',
+      `SKU-${item.id}`,
+      item.category_name || item.category || 'Uncategorized',
+      item.stock || 0,
+      parseFloat(item.unit_price || 0).toFixed(2),
+      item.expiry_date || 'N/A',
+      (item.stock || 0) <= (item.reorder_level || 10) ? 'Low Stock' : 'In Stock'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(e => e.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `supermarket_inventory_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredData = inventoryData.filter(item => {
+    if (!item) return false;
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const itemCat = (item.category_name || item.category || "").toLowerCase().trim();
+    const matchesCategory = selectedCategory === 'All' || itemCat === selectedCategory.toLowerCase().trim();
+
+    const isLow = (item.stock || 0) <= (item.reorder_level || 10);
+    const isExpiring = item.expiry_date &&
+      (new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24) < 60;
+
+    let matchesFilter = true;
+    if (activeFilter === 'Low Stock') matchesFilter = isLow;
+    else if (activeFilter === 'Expiring Soon') matchesFilter = isExpiring;
+
+    return matchesSearch && matchesCategory && matchesFilter;
+  });
 
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-500 text-xs py-8 px-4 md:px-6 lg:px-8">
@@ -206,11 +265,17 @@ const SupermarketInventory = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-all">
-            <FaFilter /> Refine
+          <button
+            onClick={() => setActiveFilter(activeFilter === 'Low Stock' ? 'All' : 'Low Stock')}
+            className={`px-3 py-1.5 border rounded-lg text-[9px] font-black uppercase flex items-center gap-2 transition-all ${activeFilter === 'Low Stock' ? 'bg-red-500 text-white border-red-500' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+          >
+            <FaFilter /> Low Stock
           </button>
-          <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-all">
-            <FaFileExport /> Export
+          <button
+            onClick={handleExportCSV}
+            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-all"
+          >
+            <FaFileExport /> Export CSV
           </button>
         </div>
       </div>
@@ -231,13 +296,7 @@ const SupermarketInventory = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {inventoryData
-                .filter(item => {
-                  const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-                  const itemCat = item.category_name || item.category || "";
-                  const matchesCategory = selectedCategory === 'All' || itemCat.toLowerCase() === selectedCategory.toLowerCase();
-                  return matchesSearch && matchesCategory;
-                })
+              {filteredData
                 .map((item) => {
                   const isLow = (item.stock || 0) <= (item.reorder_level || 10);
 
@@ -275,19 +334,26 @@ const SupermarketInventory = () => {
                       </td>
                       <td className="px-5 py-3">
                         {user?.isAdmin && (
-                          <div className="flex justify-center">
-                            <Link to={`/supermarket/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all">
+                          <div className="flex justify-center items-center gap-1">
+                            <Link to={`/supermarket/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Edit Product">
                               <FaEdit className="text-sm" />
                             </Link>
+                            <button
+                              onClick={() => handleDeleteProduct(item.id, item.name)}
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              title="Delete Product"
+                            >
+                              <FaTrash className="text-sm" />
+                            </button>
                           </div>
                         )}
                       </td>
                     </tr>
                   )
                 })}
-              {inventoryData.length === 0 && !loading && (
+              {filteredData.length === 0 && !loading && (
                 <tr>
-                  <td colSpan="7" className="py-20 text-center text-slate-400 font-black uppercase tracking-widest text-[10px]">No products in repository</td>
+                  <td colSpan="7" className="py-20 text-center text-slate-400 font-black uppercase tracking-widest text-[10px]">No products in repository matching search/filter</td>
                 </tr>
               )}
             </tbody>
