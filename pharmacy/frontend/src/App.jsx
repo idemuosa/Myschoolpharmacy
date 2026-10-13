@@ -40,6 +40,11 @@ import StaffPerformanceReport from './pages/StaffPerfomanceReport';
 import ExpenseManagement from './pages/ExpenseManagement';
 import Financials from './pages/Financials';
 import ClinicalAssistant from './pages/ClinicalAssistant';
+import PrescriptionScanner from './pages/PrescriptionScanner';
+import BatchExpiryTracker from './pages/BatchExpiryTracker';
+import RefillAutomation from './pages/RefillAutomation';
+import TeleConsultation from './pages/TeleConsultation';
+import FinancialHeatmap from './pages/FinancialHeatmap';
 import './App.css';
 
 function App() {
@@ -102,6 +107,41 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <ClinicalAssistant />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/prescription-scanner" element={
+            <PrivateRoute>
+              <Layout>
+                <PrescriptionScanner />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/batch-expiry-tracker" element={
+            <PrivateRoute>
+              <Layout>
+                <BatchExpiryTracker />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/refill-automation" element={
+            <PrivateRoute>
+              <Layout>
+                <RefillAutomation />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/tele-consultation" element={
+            <PrivateRoute>
+              <Layout>
+                <TeleConsultation />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/financial-heatmap" element={
+            <PrivateRoute>
+              <Layout>
+                <FinancialHeatmap />
               </Layout>
             </PrivateRoute>
           } />

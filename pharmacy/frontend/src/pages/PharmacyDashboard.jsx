@@ -10,7 +10,7 @@ import {
   FaCalendarAlt, FaMoneyBill, FaFilePrescription, FaExclamationTriangle, FaUsers,
   FaThLarge, FaCashRegister, FaBox, FaAddressCard, 
   FaBriefcaseMedical, FaChartLine, FaCog, FaPlus, FaArrowRight, FaSearch, FaBell,
-  FaShoppingCart, FaRobot, FaShieldAlt
+  FaShoppingCart, FaRobot, FaShieldAlt, FaCamera, FaSync, FaVideo, FaChartBar
 } from 'react-icons/fa';
 
 const PharmacyDashboard = () => {
@@ -81,19 +81,13 @@ const PharmacyDashboard = () => {
     };
   }, []);
 
-  const modules = [
-    { name: 'Dashboard', icon: <FaThLarge />, path: '/', desc: 'Real-time metrics.' },
-    { name: 'POS Terminal', icon: <FaCashRegister />, path: '/pos', desc: 'Efficiency & payments.' },
-    { name: 'Supermarket', icon: <FaShoppingCart />, path: '/supermarket', desc: 'Retail Hub.' },
-    { name: 'Inventory', icon: <FaBox />, path: '/inventory', desc: 'Stock control.' },
-    { name: 'Patients', icon: <FaAddressCard />, path: '/customers', desc: 'History.' },
-    { name: 'Prescriptions', icon: <FaBriefcaseMedical />, path: '/prescriptions/review', desc: 'E-scripts.' },
-    { name: 'Reports', icon: <FaChartLine />, path: '/reports/sales', desc: 'Audits.' },
-    { name: 'Staff List', icon: <FaUsers />, path: '/staff', desc: 'Access levels.' },
-    { name: 'Settings', icon: <FaCog />, path: '/settings', desc: 'Integrations.' }
+  const featureCards = [
+    { title: 'AI Prescription OCR', icon: <FaCamera />, path: '/prescription-scanner', badge: 'Vision AI', color: 'from-teal-800 to-emerald-700' },
+    { title: 'Batch Expiry & Reorder', icon: <FaExclamationTriangle />, path: '/batch-expiry-tracker', badge: 'Smart Supply', color: 'from-amber-800 to-orange-700' },
+    { title: 'Patient Refill Automation', icon: <FaSync />, path: '/refill-automation', badge: 'WhatsApp', color: 'from-emerald-800 to-teal-800' },
+    { title: 'Telehealth & E-Sign Pad', icon: <FaVideo />, path: '/tele-consultation', badge: 'Live Consult', color: 'from-indigo-900 to-slate-800' },
+    { title: 'Financial Profit Heatmap', icon: <FaChartBar />, path: '/financial-heatmap', badge: 'Margin AI', color: 'from-emerald-900 to-teal-900' }
   ];
-
-  // For the grid display below, we'll use a subset or update the count
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500 overflow-x-hidden text-sm">
@@ -130,6 +124,27 @@ const PharmacyDashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Feature Launcher Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        {featureCards.map((feat, i) => (
+          <div
+            key={i}
+            onClick={() => navigate(feat.path)}
+            className={`bg-gradient-to-r ${feat.color} text-white p-3.5 rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between space-y-2 border border-white/10`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="bg-white/20 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase">
+                {feat.badge}
+              </span>
+              <span className="text-base">{feat.icon}</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-black tracking-tight">{feat.title}</h4>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Main Grid */}
@@ -261,21 +276,6 @@ const PharmacyDashboard = () => {
                   </div>
                   <p className="text-[13px] font-black text-white uppercase tracking-tight">Prescribe</p>
                </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-               {modules.slice(1, 5).map(module => (
-                  <div 
-                     key={module.path} 
-                     onClick={() => navigate(module.path)} 
-                     className="group bg-white p-3 rounded-2xl border border-slate-200 hover:border-emerald-300 transition-all cursor-pointer flex flex-col items-center text-center justify-center gap-2"
-                  >
-                     <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center text-lg group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
-                        {module.icon}
-                     </div>
-                     <h3 className="text-[12px] font-black text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{module.name}</h3>
-                  </div>
-               ))}
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">

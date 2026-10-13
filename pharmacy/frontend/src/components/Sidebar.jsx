@@ -8,7 +8,7 @@ import {
   FaChartLine, FaUsers, FaCog,
   FaShoppingCart, FaSignOutAlt, FaTimes,
   FaUserPlus, FaArrowLeft, FaMoneyBill,
-  FaRobot
+  FaRobot, FaCamera, FaExclamationTriangle, FaSync, FaVideo, FaChartBar
 } from 'react-icons/fa';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -56,12 +56,21 @@ const Sidebar = ({ isOpen, onClose }) => {
         { name: 'Supermarket Hub', icon: <FaShoppingCart />, path: '/supermarket', roles: ['admin', 'cashier', 'all'] },
         { name: 'Prescriptions', icon: <FaBriefcaseMedical />, path: '/prescriptions/review', roles: ['admin', 'pharmacist', 'all'] },
         { name: 'AI Clinical Safety', icon: <FaRobot />, path: '/clinical-assistant', badge: 'AI Safety', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
+        { name: 'Prescription OCR Scanner', icon: <FaCamera />, path: '/prescription-scanner', badge: 'OCR AI', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
+        { name: 'Batch Expiry & Reorder', icon: <FaExclamationTriangle />, path: '/batch-expiry-tracker', badge: 'Supply', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
+      ]
+    },
+    {
+      title: 'PATIENT CARE & TELEHEALTH',
+      items: [
+        { name: 'Refill Adherence', icon: <FaSync />, path: '/refill-automation', badge: 'WhatsApp', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
+        { name: 'Tele-Consultation & E-Sign', icon: <FaVideo />, path: '/tele-consultation', badge: 'Live', roles: ['admin', 'pharmacist', 'all'] },
+        { name: 'Patients & Clients', icon: <FaUsers />, path: '/customers', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
       ]
     },
     {
       title: 'MANAGEMENT',
       items: [
-        { name: 'Patients & Clients', icon: <FaUsers />, path: '/customers', roles: ['admin', 'pharmacist', 'cashier', 'all'] },
         { name: 'Staff List', icon: <FaUsers />, path: '/staff', roles: ['admin'] },
         { name: 'Staff Registration', icon: <FaUserPlus />, path: '/staff/new', roles: ['admin'] },
         { name: 'Staff Dashboards', icon: <FaChartLine />, path: '/staff/dashboards', roles: ['admin', 'pharmacist'] },
@@ -70,6 +79,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       title: 'FINANCIALS & AUDIT',
       items: [
+        { name: 'Financial Profit Heatmap', icon: <FaChartBar />, path: '/financial-heatmap', badge: 'Profit Heatmap', roles: ['admin', 'pharmacist'] },
         { name: 'Sales Reports', icon: <FaChartLine />, path: '/reports/sales', roles: ['admin', 'pharmacist'] },
         { name: 'Expenses', icon: <FaMoneyBill />, path: '/expenses', roles: ['admin'] },
         { name: 'Financial Overview', icon: <FaChartLine />, path: '/financials', roles: ['admin'] },
