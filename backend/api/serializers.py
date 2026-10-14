@@ -102,13 +102,37 @@ class DrugSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 class StaffSerializer(serializers.ModelSerializer):
+    employee_id = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
     phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     department = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    username = serializers.CharField(required=False, allow_blank=True, write_only=False)
+    password = serializers.CharField(required=False, allow_blank=True, write_only=True)
 
     class Meta:
         model = Staff
         fields = '__all__'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        username = instance.employee_id.lower() if instance.employee_id else ""
+        user = User.objects.filter(username=username).first()
+        if not user and instance.email:
+            user = User.objects.filter(email__iexact=instance.email).first()
+        data['username'] = user.username if user else instance.employee_id
+        return data
+
+    def validate(self, attrs):
+        username_val = attrs.get('username')
+        employee_id_val = attrs.get('employee_id')
+
+        if not employee_id_val and username_val and str(username_val).strip():
+            attrs['employee_id'] = str(username_val).strip()
+        elif not employee_id_val and not username_val:
+            import random
+            attrs['employee_id'] = f'EP-{random.randint(10000, 99999)}'
+
+        return super().validate(attrs)
 
     def validate_email(self, value):
         if value is None or (isinstance(value, str) and value.strip() == ""):
@@ -116,28 +140,48 @@ class StaffSerializer(serializers.ModelSerializer):
         return value.strip()
 
     def create(self, validated_data):
+        username_val = validated_data.pop('username', None)
+        password_val = validated_data.pop('password', None)
+
+        if username_val and str(username_val).strip():
+            validated_data['employee_id'] = str(username_val).strip()
+
         # Create the staff member first
         staff = Staff.objects.create(**validated_data)
         
-        # Automatically create a corresponding Django User for login if employee_id is available
-        if staff.employee_id:
-            username = staff.employee_id.lower()
-            if not User.objects.filter(username=username).exists():
+        # Automatically create or update a corresponding Django User for login
+        username = (username_val or staff.employee_id or '').strip().lower()
+        if username:
+            password = str(password_val).strip() if (password_val and str(password_val).strip()) else 'admin123'
+            user = User.objects.filter(username=username).first()
+            if not user:
                 User.objects.create_user(
                     username=username,
                     email=staff.email or '',
-                    password='admin123',
-                    is_staff=True # Allow access to staff features
+                    password=password,
+                    is_staff=True
                 )
+            else:
+                if password_val and str(password_val).strip():
+                    user.set_password(str(password_val).strip())
+                user.email = staff.email or ''
+                user.is_staff = True
+                user.save()
         return staff
 
     def update(self, instance, validated_data):
         old_employee_id = instance.employee_id
         old_email = instance.email
 
+        username_val = validated_data.pop('username', None)
+        password_val = validated_data.pop('password', None)
+
+        if username_val and str(username_val).strip():
+            validated_data['employee_id'] = str(username_val).strip()
+
         staff = super().update(instance, validated_data)
 
-        # Sync associated Django User if employee_id or email changed
+        # Sync associated Django User if employee_id, email or password changed
         new_username = staff.employee_id.lower() if staff.employee_id else ""
         old_username = old_employee_id.lower() if old_employee_id else new_username
 
@@ -150,7 +194,17 @@ class StaffSerializer(serializers.ModelSerializer):
                 user.username = new_username
             if user.email != (staff.email or ''):
                 user.email = staff.email or ''
+            if password_val and str(password_val).strip():
+                user.set_password(str(password_val).strip())
             user.save()
+        elif new_username:
+            password = str(password_val).strip() if (password_val and str(password_val).strip()) else 'admin123'
+            User.objects.create_user(
+                username=new_username,
+                email=staff.email or '',
+                password=password,
+                is_staff=True
+            )
 
         return staff
 
