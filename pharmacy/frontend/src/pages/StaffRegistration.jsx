@@ -17,6 +17,8 @@ const StaffRegistration = () => {
     phone_number: '',
     role: '',
     department: '',
+    username: 'EP-' + Math.floor(Math.random() * 100000),
+    password: '',
     employee_id: 'EP-' + Math.floor(Math.random() * 100000)
   });
   const [autoGenerate, setAutoGenerate] = useState(!isEditMode);
@@ -40,6 +42,8 @@ const StaffRegistration = () => {
             phone_number: data.phone_number || '',
             role: data.role || '',
             department: data.department || '',
+            username: data.username || data.employee_id || '',
+            password: '',
             employee_id: data.employee_id || ''
           });
           if (data.photo) {
@@ -93,7 +97,16 @@ const StaffRegistration = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'username' && autoGenerate) {
+      setFormData(prev => ({
+        ...prev,
+        username: value,
+        employee_id: value
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSave = async () => {
@@ -273,14 +286,29 @@ const StaffRegistration = () => {
                       </select>
                     </div>
 
-                    <div className="md:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
-                      <div className="flex justify-between items-center mb-3">
-                         <span className="text-[10px] font-black text-slate-900 uppercase">System ID</span>
-                         <button onClick={() => setAutoGenerate(!autoGenerate)} className={`w-8 h-4 rounded-full transition-all relative ${autoGenerate ? 'bg-blue-800' : 'bg-slate-300'}`}>
-                            <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${autoGenerate ? 'left-4.5' : 'left-0.5'}`} />
-                         </button>
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Username / User ID</label>
+                        <button type="button" onClick={() => {
+                          const newAuto = !autoGenerate;
+                          setAutoGenerate(newAuto);
+                          if (newAuto && !isEditMode) {
+                            const genId = 'EP-' + Math.floor(Math.random() * 100000);
+                            setFormData(prev => ({ ...prev, username: genId, employee_id: genId }));
+                          }
+                        }} className={`w-8 h-4 rounded-full transition-all relative ${autoGenerate ? 'bg-blue-800' : 'bg-slate-300'}`}>
+                           <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${autoGenerate ? 'left-4.5' : 'left-0.5'}`} />
+                        </button>
                       </div>
-                      <input type="text" name="employee_id" value={formData.employee_id} onChange={handleChange} disabled={autoGenerate} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-mono text-[10px] font-black text-slate-600 uppercase" />
+                      <input type="text" name="username" value={formData.username} onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData(prev => ({ ...prev, username: val, employee_id: val }));
+                      }} disabled={autoGenerate} className={`w-full border border-slate-200 rounded-lg px-3 py-2 font-mono text-[11px] font-black outline-none focus:border-blue-800 ${autoGenerate ? 'bg-slate-100 text-slate-500' : 'bg-slate-50 text-slate-900'}`} placeholder="e.g. jdoe or EP-1234" />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{isEditMode ? 'New Password (Optional)' : 'Password'}</label>
+                      <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[11px] font-black text-slate-900 outline-none focus:border-blue-800" placeholder={isEditMode ? "Leave blank to keep current" : "Default: admin123"} />
                     </div>
                   </div>
                 </div>

@@ -283,3 +283,25 @@ class StaffApiTestCase(TestCase):
         self.assertEqual(res.data['full_name'], 'Optional Field User')
         self.assertIsNone(res.data['email'])
         self.assertTrue(User.objects.filter(username='ep-optional-1').exists())
+
+    def test_staff_registration_with_custom_username_and_password(self):
+        # Register staff member with custom username and custom password
+        res = self.client.post('/api/staff/', {
+            'full_name': 'Sarah Connor',
+            'email': 'sarah@pharmacy.com',
+            'role': 'Pharmacist',
+            'username': 'sconnor',
+            'password': 'custompassword123'
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['username'], 'sconnor')
+        self.assertTrue(User.objects.filter(username='sconnor').exists())
+
+        # Verify login with custom credentials
+        login_res = self.client.post('/api/token/', {
+            'username': 'sconnor',
+            'password': 'custompassword123'
+        })
+        self.assertEqual(login_res.status_code, status.HTTP_200_OK)
+        self.assertIn('access', login_res.data)
+        self.assertEqual(login_res.data['full_name'], 'Sarah Connor')
