@@ -203,9 +203,9 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
         try:
             if not SystemSettings.objects.exists():
                 SystemSettings.objects.create(shop_name='Josiah Pharmacy and Stores', location="St. Mary's")
+            return SystemSettings.objects.all()
         except Exception:
-            pass
-        return SystemSettings.objects.all()
+            return SystemSettings.objects.none()
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.filter(is_staff=True)

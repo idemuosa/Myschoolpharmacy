@@ -21,6 +21,9 @@ from api.views import health_check, CustomTokenObtainPairView, SystemSettingsVie
 
 settings_list = SystemSettingsViewSet.as_view({'get': 'list', 'post': 'create'})
 
+handler500 = 'api.exceptions.custom_handler500'
+handler404 = 'api.exceptions.custom_handler404'
+
 urlpatterns = [
     path('', health_check, name='root_health'),
     path('health/', health_check, name='health_check'),
