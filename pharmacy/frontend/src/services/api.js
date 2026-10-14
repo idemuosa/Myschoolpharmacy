@@ -1,8 +1,19 @@
 import axios from 'axios';
 
-const getBaseURL = () => {
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
+export const getBaseURL = () => {
+  const customUrl = localStorage.getItem('api_base_url');
+  const defaultUrl = import.meta.env.VITE_API_URL || 'https://pharmacy-api-exn3.onrender.com/api/';
+  const url = customUrl || defaultUrl;
   return url.endsWith('/') ? url : `${url}/`;
+};
+
+export const setApiBaseURL = (newUrl) => {
+  if (newUrl) {
+    const formatted = newUrl.endsWith('/') ? newUrl : `${newUrl}/`;
+    localStorage.setItem('api_base_url', formatted);
+  } else {
+    localStorage.removeItem('api_base_url');
+  }
 };
 
 const api = axios.create({
@@ -17,6 +28,7 @@ const isValidToken = (token) => {
 // Interceptor to add the auth token to requests
 api.interceptors.request.use(
   (config) => {
+    config.baseURL = getBaseURL();
     const token = localStorage.getItem('access_token');
     if (isValidToken(token)) {
       config.headers.Authorization = `Bearer ${token}`;

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import settingsService from '../services/settingsService';
+import syncService from '../services/syncService';
+import { getBaseURL, setApiBaseURL } from '../services/api';
 import toast from 'react-hot-toast';
-import { FaSave, FaUserShield, FaStore, FaPlus, FaTrash, FaEdit, FaTimes, FaBell } from 'react-icons/fa';
+import { FaSave, FaUserShield, FaStore, FaPlus, FaTrash, FaEdit, FaTimes, FaBell, FaDatabase, FaSyncAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
@@ -11,12 +13,44 @@ const Settings = () => {
     const [newAdmin, setNewAdmin] = useState({ username: '', password: '' });
     const [editingUser, setEditingUser] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [apiUrl, setApiUrl] = useState(getBaseURL());
+    const [pendingSyncCount, setPendingSyncCount] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchSettings();
         fetchUsers();
+        checkPendingSync();
     }, []);
+
+    const checkPendingSync = async () => {
+        const count = await syncService.getPendingSyncCount();
+        setPendingSyncCount(count);
+    };
+
+    const handleSaveApiUrl = (e) => {
+        e.preventDefault();
+        setApiBaseURL(apiUrl);
+        toast.success("Backend API URL updated successfully!");
+        setTimeout(() => window.location.reload(), 800);
+    };
+
+    const handleManualSync = async () => {
+        try {
+            setLoading(true);
+            const res = await syncService.sync();
+            if (res.success) {
+                toast.success(`Sync completed! Synced ${res.syncedCount || 0} items.`);
+            } else {
+                toast.error(`Sync skipped: ${res.reason}`);
+            }
+            checkPendingSync();
+        } catch (err) {
+            toast.error("Sync failed: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchSettings = async () => {
         try {
@@ -307,6 +341,68 @@ const Settings = () => {
                                 ))}
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Database & Synchronization Settings */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <FaDatabase className="text-indigo-500" />
+                        <h2 className="text-[12px] font-black uppercase tracking-widest">Database Host & Synchronization</h2>
+                    </div>
+                    <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                        Pending Sync Items: {pendingSyncCount}
+                    </span>
+                </div>
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form onSubmit={handleSaveApiUrl} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Active Backend Server URL</label>
+                            <input
+                                value={apiUrl}
+                                onChange={(e) => setApiUrl(e.target.value)}
+                                placeholder="https://pharmacy-api-exn3.onrender.com/api/"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 font-black text-[13px] outline-none focus:ring-2 focus:ring-indigo-50"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setApiUrl('https://pharmacy-api-exn3.onrender.com/api/')}
+                                className="text-[11px] font-black px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                            >
+                                Render Cloud DB
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setApiUrl('http://localhost:8000/api/')}
+                                className="text-[11px] font-black px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                            >
+                                Local SQLite Server
+                            </button>
+                        </div>
+                        <button disabled={loading} className="w-full bg-indigo-600 text-white rounded-xl py-2.5 text-[12px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
+                            <FaSave /> Apply Server Endpoint
+                        </button>
+                    </form>
+
+                    <div className="flex flex-col justify-between bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-4">
+                        <div>
+                            <h3 className="text-[12px] font-black uppercase tracking-widest text-slate-800">Local-First Offline Synchronization</h3>
+                            <p className="text-[11px] text-slate-500 mt-1">
+                                Stores local sales, inventory, and records on your device and syncs with the central database when connected.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleManualSync}
+                            disabled={loading}
+                            className="w-full bg-emerald-500 text-white rounded-xl py-2.5 text-[12px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-100"
+                        >
+                            <FaSyncAlt className={loading ? 'animate-spin' : ''} /> Synchronize Now
+                        </button>
                     </div>
                 </div>
             </div>

@@ -2,38 +2,56 @@ import api from './api';
 import { db } from './db';
 
 const syncService = {
+  getPendingSyncCount: async () => {
+    try {
+      return await db.syncQueue.count();
+    } catch {
+      return 0;
+    }
+  },
+
   sync: async () => {
-    if (!navigator.onLine) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
       console.log('App is offline, skipping sync.');
-      return;
+      return { success: false, reason: 'offline' };
     }
 
     const queue = await db.syncQueue.toArray();
     if (queue.length === 0) {
       console.log('Sync queue is empty.');
-      return;
+      return { success: true, syncedCount: 0 };
     }
 
     console.log(`Starting sync for ${queue.length} items...`);
+    let syncedCount = 0;
     
     for (const item of queue) {
       try {
         let response;
+        const endpoint = item.table.endsWith('/') ? item.table : `${item.table}/`;
+
         if (item.action === 'CREATE') {
-          response = await api.post(`${item.table}/`, item.data);
+          response = await api.post(endpoint, item.data);
         } else if (item.action === 'UPDATE') {
-          response = await api.put(`${item.table}/${item.data.id}/`, item.data);
+          const itemId = item.data?.id || item.id;
+          response = await api.put(`${endpoint}${itemId}/`, item.data);
+        } else if (item.action === 'PATCH') {
+          const itemId = item.data?.id || item.id;
+          response = await api.patch(`${endpoint}${itemId}/`, item.data);
+        } else if (item.action === 'DELETE') {
+          const itemId = item.data?.id || item.id;
+          response = await api.delete(`${endpoint}${itemId}/`);
         }
         
-        if (response && (response.status === 200 || response.status === 201)) {
+        if (response && (response.status >= 200 && response.status < 300)) {
           await db.syncQueue.delete(item.id);
+          syncedCount++;
           console.log(`Successfully synced ${item.table} item.`);
         }
       } catch (error) {
         console.error(`Sync failed for ${item.table} item:`, error.message);
         
-        // If it's a 4xx error (except 429), it might be invalid data, 
-        // we might want to skip it to avoid blocking the queue.
+        // If it's a 4xx error (except 429), skip it to avoid blocking the queue
         if (error.response && error.response.status >= 400 && error.response.status < 500 && error.response.status !== 429) {
            console.warn("Skipping item due to client error (4xx).");
            await db.syncQueue.delete(item.id);
@@ -43,8 +61,16 @@ const syncService = {
         }
       }
     }
-    console.log('Sync process completed/paused.');
+    console.log(`Sync process completed/paused. Synced: ${syncedCount}`);
+    return { success: true, syncedCount };
   }
 };
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    console.log('Network status online: initiating background sync...');
+    syncService.sync();
+  });
+}
 
 export default syncService;
