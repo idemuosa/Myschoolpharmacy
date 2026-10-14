@@ -283,3 +283,33 @@ class StaffApiTestCase(TestCase):
         self.assertEqual(res.data['full_name'], 'Optional Field User')
         self.assertIsNone(res.data['email'])
         self.assertTrue(User.objects.filter(username='ep-optional-1').exists())
+
+
+class CustomExceptionHandlingTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_custom_handler404_json_response(self):
+        response = self.client.get('/non-existent-path-for-testing/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.headers.get('Content-Type'), 'application/json')
+        data = response.json()
+        self.assertIn('detail', data)
+
+    def test_custom_handler500_json_response(self):
+        from api.exceptions import custom_handler500
+        from django.test import RequestFactory
+        factory = RequestFactory()
+        request = factory.get('/api/test-500/')
+        response = custom_handler500(request)
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.headers.get('Content-Type'), 'application/json')
+        data = response.content.decode('utf-8')
+        self.assertIn('Server Error (500)', data)
+
+    def test_custom_exception_handler_drf(self):
+        from api.exceptions import custom_exception_handler
+        response = custom_exception_handler(RuntimeError("Test error"), {})
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertIn('detail', response.data)
