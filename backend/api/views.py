@@ -348,8 +348,13 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         total_sales_count = pharmacy_sales_count + supermarket_sales_count
 
         profit = total_revenue - total_expenses
+        balance = profit
         
         return Response({
+            'total_revenue': float(total_revenue),
+            'total_expenses': float(total_expenses),
+            'net_profit': float(profit),
+            'balance': float(balance),
             'revenue': float(total_revenue),
             'expenses': float(total_expenses),
             'profit': float(profit),

@@ -24,7 +24,9 @@ const StaffManagement = () => {
       const response = await api.get('staff/', { signal });
       setStaffData(response.data.results || response.data || []);
     } catch (error) {
-       console.error("Error fetching staff:", error);
+       if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
+         console.error("Error fetching staff:", error);
+       }
     } finally {
        setLoading(false);
     }

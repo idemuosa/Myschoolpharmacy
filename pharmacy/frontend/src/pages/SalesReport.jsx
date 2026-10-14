@@ -46,8 +46,10 @@ const SalesReport = () => {
         avgValue: count > 0 ? (total / count) : 0
       });
     } catch (error) {
-       console.error("Error fetching sales:", error);
-       toast.error("Failed to sync sales audit trail. Check connection.");
+       if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
+         console.error("Error fetching sales:", error);
+         toast.error("Failed to sync sales audit trail. Check connection.");
+       }
     } finally {
        setLoading(false);
     }

@@ -13,7 +13,9 @@ const InventoryTurnover = () => {
       const response = await api.get('drugs/', { signal });
       setDrugs(response.data?.results || response.data || []);
     } catch (error) {
-       console.error("Error fetching inventory for report:", error);
+       if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
+         console.error("Error fetching inventory for report:", error);
+       }
     }
   };
 
