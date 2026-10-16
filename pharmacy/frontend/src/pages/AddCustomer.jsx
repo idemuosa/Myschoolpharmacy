@@ -15,6 +15,9 @@ const AddCustomer = () => {
     phone_number: '',
     email: '',
     address: '',
+    genotype: 'AA',
+    ward: '',
+    bed: '',
     allergies: '',
     chronic_conditions: '',
     medications: '',
@@ -225,6 +228,55 @@ const AddCustomer = () => {
                             onChange={handleChange}
                             className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[13px] font-black text-slate-900 outline-none tabular-nums"
                           />
+                          </div>
+                       </div>
+                    </section>
+
+                    {/* Ward & Genotype Admission Section */}
+                    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                       <div className="flex items-center gap-2 mb-6 border-b border-slate-50 pb-3">
+                          <FaUserPlus className="text-emerald-500 text-xs" />
+                          <span className="text-[12px] font-black text-slate-900 uppercase tracking-widest">Admission & Genotype Information</span>
+                       </div>
+
+                       <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Genotype</label>
+                             <select
+                                name="genotype"
+                                value={formData.genotype}
+                                onChange={handleChange}
+                                className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-black text-slate-900 outline-none"
+                             >
+                                <option value="AA">AA</option>
+                                <option value="AS">AS</option>
+                                <option value="SS">SS</option>
+                                <option value="AC">AC</option>
+                                <option value="SC">SC</option>
+                                <option value="CC">CC</option>
+                             </select>
+                          </div>
+                          <div className="space-y-1.5">
+                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Admitted Ward</label>
+                             <input
+                               type="text"
+                               name="ward"
+                               placeholder="e.g. Male Ward / Ward A"
+                               value={formData.ward}
+                               onChange={handleChange}
+                               className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-black text-slate-900 outline-none uppercase"
+                             />
+                          </div>
+                          <div className="space-y-1.5">
+                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Bed Designation</label>
+                             <input
+                               type="text"
+                               name="bed"
+                               placeholder="e.g. Bed 04"
+                               value={formData.bed}
+                               onChange={handleChange}
+                               className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[12px] font-black text-slate-900 outline-none uppercase"
+                             />
                        </div>
                     </div>
                  </section>

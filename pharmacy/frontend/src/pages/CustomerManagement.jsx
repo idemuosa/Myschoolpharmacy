@@ -34,11 +34,14 @@ const CustomerManagement = () => {
 
   const exportCustomersCSV = () => {
     if (customers.length === 0) return;
-    const headers = ["ID", "Name", "Phone", "DOB", "Address"];
+    const headers = ["ID", "Name", "Phone", "Genotype", "Ward", "Bed", "DOB", "Address"];
     const rows = customers.map(c => [
         c.id,
         `${c.first_name} ${c.last_name}`,
         c.phone_number,
+        c.genotype || 'N/A',
+        c.ward || 'N/A',
+        c.bed || 'N/A',
         c.date_of_birth,
         c.address || ''
     ]);
@@ -138,15 +141,16 @@ const CustomerManagement = () => {
                 <tr className="bg-slate-50/50 border-b border-slate-100">
                   <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Patient Name</th>
                   <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Control ID</th>
-                  <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Contact Information</th>
-                  <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Alerts</th>
+                  <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Genotype</th>
+                  <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Ward / Bed</th>
+                  <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
                   <th className="px-5 py-3 text-[11px] font-black text-slate-900 uppercase tracking-widest">Date of Birth</th>
                   <th className="px-5 py-3 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Records</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
-                   <tr><td colSpan="6" className="px-5 py-10 text-center text-slate-400 font-bold italic text-[12px]">Decoding...</td></tr>
+                   <tr><td colSpan="7" className="px-5 py-10 text-center text-slate-400 font-bold italic text-[12px]">Decoding...</td></tr>
                 ) : (
                   customers.filter(c => (c.first_name + ' ' + c.last_name).toLowerCase().includes(searchTerm.toLowerCase())).map((cust) => (
                     <tr key={cust.id} className="hover:bg-slate-50 transition-all cursor-pointer group" onClick={() => navigate(`/customers/detail/${cust.id}`)}>
@@ -162,12 +166,13 @@ const CustomerManagement = () => {
                         <span className="font-bold text-slate-400 text-[11px] tracking-widest">RX-{cust.id.toString().padStart(4, '0')}</span>
                       </td>
                       <td className="px-5 py-3">
-                        <span className="text-[12px] font-bold text-slate-600 tabular-nums">{cust.phone_number}</span>
+                        <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-[11px] font-black uppercase">{cust.genotype || 'N/A'}</span>
                       </td>
-                      <td className="px-5 py-3 text-center">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${cust.address ? 'bg-red-50 text-red-700' : 'bg-slate-50 text-slate-400'}`}>
-                          {cust.address ? "ALERT" : "CLEAR"}
-                        </span>
+                      <td className="px-5 py-3">
+                        <span className="text-[12px] font-black text-slate-700 uppercase">{cust.ward ? `${cust.ward} ${cust.bed ? `(${cust.bed})` : ''}` : 'Unassigned'}</span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="text-[12px] font-bold text-slate-600 tabular-nums">{cust.phone_number}</span>
                       </td>
                       <td className="px-5 py-3 tabular-nums text-[12px] font-bold text-slate-500">
                         {cust.date_of_birth || "00-00-0000"}
