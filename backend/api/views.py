@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
@@ -342,6 +343,12 @@ def reset_password(request):
 @authentication_classes([])
 def health_check(request):
     return Response({"status": "healthy", "version": "1.0.2", "message": "Pharmacy API is running"})
+
+def custom_500_handler(request):
+    return JsonResponse(
+        {"error": "Server Error (500)", "message": "An internal server error occurred."},
+        status=500
+    )
 
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.all().order_by('-date')
