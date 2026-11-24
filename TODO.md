@@ -1,5 +1,13 @@
 # Delivery outcomes
 
+- [x] Non-admin staff can add and edit pharmacy drugs and supermarket products, update their stock, and cannot add or change unit prices; the API preserves existing prices on staff writes and defaults staff-created items to zero price. Admins can set and change prices.
+- [x] Staff registration and directory changes persist through linked Django accounts, expose the login username for editing, cache staff data locally, and queue supported offline create/update/delete actions for synchronization.
+- [x] Local/offline database mode uses SQLite when `OFFLINE_MODE=true`; non-debug online mode requires PostgreSQL and rejects MySQL or SQLite URLs. Render remains the hosting target.
+- [x] Pharmacy and supermarket inventory lists provide a separate out-of-stock filter and label zero-stock products distinctly.
+- [x] Both POS receipts show the admin-configured business address near the login-page logo, not the customer's address; customer registration captures and saves an optional customer address in the profile.
+- [x] Administrators can edit and delete customer records from the registry; the API rejects customer edits and deletions from non-admin users while preserving staff customer registration.
+- [ ] Configure Render's PostgreSQL `DATABASE_URL` and apply migration `0020_staff_user_link.py` after the user supplies/authorizes the hosted database operation; no live Render database has been accessed or changed.
+
 - [ ] Sales attendants and sales reps open directly to Pharmacy POS after sign-in and can switch to Supermarket POS.
 - [ ] Sales attendants and sales reps can access the dashboard and inventory, while price entry is hidden from their navigation/forms and rejected by the API.
 - [ ] Both POS receipts include the signed-in attendant/sales representative name, item quantities, total, customer name, and customer phone number.

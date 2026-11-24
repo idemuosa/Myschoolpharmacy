@@ -7,7 +7,7 @@ import barcodeService from '../services/barcodeService';
 import toast from 'react-hot-toast';
 import {
   FaPlus, FaMinus, FaSearch, FaTimes,
-  FaShoppingCart, FaUserMd, FaUndo, FaReceipt, FaPrint, FaBarcode, FaCamera
+  FaShoppingCart, FaUserMd, FaUndo, FaPrint, FaBarcode, FaCamera
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -15,6 +15,7 @@ import customerService from '../services/customerService';
 import settingsService from '../services/settingsService';
 import { AuthContext } from '../context/AuthContext';
 import CustomerSelector from '../components/CustomerSelector';
+import PharmacyLogo from '../components/PharmacyLogo';
 
 const PointOfSales = () => {
   const { user } = useContext(AuthContext);
@@ -256,7 +257,6 @@ const PointOfSales = () => {
         sellerName: staffList.find(s => s.id == staffId)?.full_name || 'N/A',
         customerName: customer ? `${customer.first_name} ${customer.last_name}` : 'Walk-in Customer',
         customerPhone: customer?.phone_number || '—',
-        customerAddress: customer?.address || '—',
         items: cart,
         total: totalAmount,
         date: new Date().toLocaleString()
@@ -494,9 +494,9 @@ const PointOfSales = () => {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 font-mono no-print">
           <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="text-center mb-6">
-              <FaReceipt className="text-3xl text-emerald-500 mx-auto mb-2" />
+              <PharmacyLogo className="w-16 h-16 mx-auto mb-2" />
               <h2 className="text-lg font-black text-slate-900 uppercase">{receiptSettings.shop_name}</h2>
-              <p className="text-xs text-slate-500">{receiptSettings.address || 'Address not configured'}</p>
+              <p className="text-xs text-slate-500">{receiptSettings.address || receiptSettings.location || 'Address not configured'}</p>
               <p className="text-xs text-slate-400">Pharmacy Receipt · Success</p>
             </div>
             <div className="space-y-2 text-[12px] mb-4 pb-4 border-b border-dashed">
@@ -504,7 +504,6 @@ const PointOfSales = () => {
               <div className="flex justify-between"><span>Attendant:</span><span className="font-black">{lastSale.sellerName}</span></div>
               <div className="flex justify-between"><span>Customer:</span><span className="font-black">{lastSale.customerName}</span></div>
               <div className="flex justify-between"><span>Phone:</span><span className="font-black">{lastSale.customerPhone}</span></div>
-              <div className="flex justify-between gap-2"><span>Address:</span><span className="font-black text-right break-words">{lastSale.customerAddress}</span></div>
               <div className="flex justify-between"><span>Total:</span><span className="font-black">₦{lastSale.total.toFixed(2)}</span></div>
             </div>
             <div className="mb-4 text-[12px] max-h-32 overflow-y-auto pr-1">
@@ -532,8 +531,8 @@ const PointOfSales = () => {
       )}
       <div className="hidden print:block print:fixed print:inset-0 print:bg-white print:z-[200]">
         {lastSale && <div className="p-8 w-full max-w-xs mx-auto text-black font-mono">
-          <div className="text-center mb-5"><img src="/pharmacy-logo.jpeg" alt="Pharmacy" className="w-16 h-16 object-contain mx-auto" /><h1 className="text-lg font-bold uppercase">{receiptSettings.shop_name}</h1><p className="text-xs">{receiptSettings.address || 'Address not configured'}</p><p className="text-xs">Pharmacy Receipt</p></div>
-          <div className="text-xs space-y-1 border-b border-dashed pb-3 mb-3"><div>Transaction: {lastSale.id}</div><div>Date: {lastSale.date}</div><div>Attendant: {lastSale.sellerName}</div><div>Customer: {lastSale.customerName}</div><div>Phone: {lastSale.customerPhone}</div><div>Address: {lastSale.customerAddress}</div></div>
+          <div className="text-center mb-5"><PharmacyLogo className="w-16 h-16 mx-auto" /><h1 className="text-lg font-bold uppercase">{receiptSettings.shop_name}</h1><p className="text-xs">{receiptSettings.address || receiptSettings.location || 'Address not configured'}</p><p className="text-xs">Pharmacy Receipt</p></div>
+          <div className="text-xs space-y-1 border-b border-dashed pb-3 mb-3"><div>Transaction: {lastSale.id}</div><div>Date: {lastSale.date}</div><div>Attendant: {lastSale.sellerName}</div><div>Customer: {lastSale.customerName}</div><div>Phone: {lastSale.customerPhone}</div></div>
           <div className="text-xs space-y-2 border-b border-dashed pb-3 mb-3">{lastSale.items.map((item) => <div key={item.id} className="flex justify-between"><span>{item.name} x{item.quantity}</span><span>₦{(item.unitPrice * item.quantity).toFixed(2)}</span></div>)}</div>
           <div className="flex justify-between font-bold"><span>TOTAL</span><span>₦{lastSale.total.toFixed(2)}</span></div>
         </div>}

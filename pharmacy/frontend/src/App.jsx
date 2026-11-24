@@ -236,21 +236,21 @@ function App() {
               </PrivateRoute>
             } />
           <Route path="/inventory" element={
-            <PrivateRoute allowedRoles={['sales_attendant', 'sales_rep']}>
+            <PrivateRoute>
               <Layout>
                 <InventoryManagement />
               </Layout>
             </PrivateRoute>
           } />
           <Route path="/inventory/new" element={
-            <PrivateRoute allowedRoles={['sales_attendant', 'sales_rep']}>
+            <PrivateRoute>
               <Layout>
                 <AddNewDrugs />
               </Layout>
             </PrivateRoute>
           } />
           <Route path="/inventory/edit/:id" element={
-            <PrivateRoute allowedRoles={['sales_attendant', 'sales_rep']}>
+            <PrivateRoute>
               <Layout>
                 <AddNewDrugs />
               </Layout>
@@ -260,6 +260,13 @@ function App() {
              <PrivateRoute allowedRoles={['sales_attendant', 'sales_rep', 'pharmacist', 'nurse']}>
                <Layout>
                  <CustomerManagement />
+               </Layout>
+             </PrivateRoute>
+           } />
+           <Route path="/customers/:customerId/edit" element={
+             <PrivateRoute adminOnly={true}>
+               <Layout>
+                 <AddCustomer />
                </Layout>
              </PrivateRoute>
            } />
@@ -287,21 +294,21 @@ function App() {
               </PrivateRoute>
             } />
             <Route path="/supermarket/inventory" element={
-              <PrivateRoute allowedRoles={['sales_attendant', 'sales_rep']}>
+              <PrivateRoute>
                 <Layout>
                   <SupermarketInventory />
                 </Layout>
               </PrivateRoute>
             } />
             <Route path="/supermarket/inventory/new" element={
-              <PrivateRoute allowedRoles={['sales_attendant', 'sales_rep']}>
+              <PrivateRoute>
                 <Layout>
                   <AddNewProduct />
                 </Layout>
               </PrivateRoute>
             } />
             <Route path="/supermarket/inventory/edit/:id" element={
-              <PrivateRoute allowedRoles={['sales_attendant', 'sales_rep']}>
+              <PrivateRoute>
                 <Layout>
                   <AddNewProduct />
                 </Layout>

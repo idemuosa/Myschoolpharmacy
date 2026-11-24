@@ -14,6 +14,7 @@ import customerService from '../services/customerService';
 import settingsService from '../services/settingsService';
 import { AuthContext } from '../context/AuthContext';
 import CustomerSelector from '../components/CustomerSelector';
+import PharmacyLogo from '../components/PharmacyLogo';
 
 const SupermarketPOS = () => {
   const { user } = useContext(AuthContext);
@@ -220,7 +221,6 @@ const SupermarketPOS = () => {
            cashier: staffList.find(s => s.id == staffId),
            customerName: customer ? `${customer.first_name} ${customer.last_name}` : 'Walk-in Customer',
            customerPhone: customer?.phone_number || '—',
-           customerAddress: customer?.address || '—',
            items: cart,
            total: totalAmount,
            date: new Date().toLocaleString()
@@ -513,11 +513,9 @@ const SupermarketPOS = () => {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 font-mono no-print">
            <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-300">
               <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-xl shadow-lg">
-                  <FaShoppingCart />
-                </div>
+                <PharmacyLogo className="w-16 h-16 mx-auto mb-2" />
                 <h2 className="text-lg font-black text-slate-900 font-outfit uppercase">{receiptSettings.shop_name}</h2>
-                <p className="text-[12px] font-bold text-slate-500">{receiptSettings.address || 'Address not configured'}</p>
+                <p className="text-[12px] font-bold text-slate-500">{receiptSettings.address || receiptSettings.location || 'Address not configured'}</p>
                 <p className="text-[12px] font-bold text-slate-400">Retail Receipt · VISIT US AGAIN SOON</p>
               </div>
               <div className="space-y-2 text-[12px] mb-4 border-b border-dashed border-slate-200 pb-4">
@@ -525,7 +523,7 @@ const SupermarketPOS = () => {
                  <div className="flex justify-between"><span>Date:</span><span className="font-black text-slate-900 font-sans">{lastSale.date}</span></div>
                  <div className="flex justify-between"><span>Attendant:</span><span className="font-black text-slate-900">{lastSale.cashier?.full_name || 'N/A'}</span></div>
                  <div className="flex justify-between"><span>Customer:</span><span className="font-black text-slate-900">{lastSale.customerName}</span></div>
-                 <div className="flex justify-between"><span>Phone:</span><span className="font-black text-slate-900">{lastSale.customerPhone}</span></div><div className="flex justify-between gap-2"><span>Address:</span><span className="font-black text-slate-900 text-right break-words">{lastSale.customerAddress}</span></div>
+                 <div className="flex justify-between"><span>Phone:</span><span className="font-black text-slate-900">{lastSale.customerPhone}</span></div>
               </div>
               <div className="space-y-2 border-b border-dashed border-slate-200 mb-4 pb-4">
                  {lastSale.items.map(item => (
@@ -557,8 +555,9 @@ const SupermarketPOS = () => {
           {lastSale && (
             <div className="p-8 w-full max-w-xs mx-auto text-black font-mono">
                 <div className="text-center mb-8">
+                    <PharmacyLogo className="w-16 h-16 mx-auto mb-2" />
                     <h1 className="text-xl font-bold uppercase">{receiptSettings.shop_name}</h1>
-                    <p className="text-xs">{receiptSettings.address || 'Address not configured'}</p>
+                    <p className="text-xs">{receiptSettings.address || receiptSettings.location || 'Address not configured'}</p>
                     <p className="text-xs">Supermarket Receipt · Retail & Quality Goods</p>
                 </div>
                 <div className="mb-4 border-b border-dashed pb-4 text-xs space-y-1">
@@ -566,7 +565,7 @@ const SupermarketPOS = () => {
                     <div className="flex justify-between"><span>Date:</span><span>{lastSale.date}</span></div>
                     <div className="flex justify-between"><span>Attendant:</span><span>{lastSale.cashier?.full_name || 'N/A'}</span></div>
                     <div className="flex justify-between"><span>Customer:</span><span>{lastSale.customerName}</span></div>
-                    <div className="flex justify-between"><span>Phone:</span><span>{lastSale.customerPhone}</span></div><div className="flex justify-between gap-2"><span>Address:</span><span className="text-right break-words">{lastSale.customerAddress}</span></div>
+                    <div className="flex justify-between"><span>Phone:</span><span>{lastSale.customerPhone}</span></div>
                 </div>
                 <div className="mb-4 border-b border-dashed pb-4 text-xs space-y-2">
                     {lastSale.items.map(item => (

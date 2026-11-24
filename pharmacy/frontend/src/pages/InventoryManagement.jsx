@@ -12,8 +12,8 @@ import {
 
 const InventoryManagement = () => {
   const { user } = useContext(AuthContext);
-  const role = (user?.role || '').toLowerCase();
-  const canManageInventory = user?.isAdmin || role.includes('admin') || role.includes('manager') || role.includes('rep');
+  const canManageInventory = Boolean(user);
+  const canEditInventory = Boolean(user);
   const [inventoryData, setInventoryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,7 +22,7 @@ const InventoryManagement = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Low Stock', '30 Days Expiry', '100 Days Expiry'
+  const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Low Stock', 'Out of Stock', expiry filters
 
   useEffect(() => {
     fetchDrugs();
@@ -198,9 +198,11 @@ const InventoryManagement = () => {
 
     const daysToExpiry = getDaysToExpiry(item.expiry_date);
     const isLow = (parseInt(item.stock) || 0) <= (parseInt(item.reorder_level) || 10);
+    const isOutOfStock = (parseInt(item.stock, 10) || 0) <= 0;
     
     let matchesFilter = true;
     if (activeFilter === 'Low Stock') matchesFilter = isLow;
+    else if (activeFilter === 'Out of Stock') matchesFilter = isOutOfStock;
     else if (activeFilter === '30 Days Expiry') matchesFilter = daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 30;
     else if (activeFilter === '100 Days Expiry') matchesFilter = daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 100;
 
@@ -245,9 +247,9 @@ const InventoryManagement = () => {
               >
                 <FaEdit /> Edit Categories
               </button>
-              <Link to="/inventory/new" className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border flex-1 sm:flex-initial justify-center">
+              {canEditInventory && <Link to="/inventory/new" className="btn-pharmacy px-3 py-2 text-xs whitespace-nowrap shadow-none border flex-1 sm:flex-initial justify-center">
                 <FaPlus /> New Entry
-              </Link>
+              </Link>}
             </div>
           )}
         </div>
@@ -352,6 +354,12 @@ const InventoryManagement = () => {
           >
             <FaFilter /> Low Stock
           </button>
+          <button
+            onClick={() => setActiveFilter(activeFilter === 'Out of Stock' ? 'All' : 'Out of Stock')}
+            className={`btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none transition-all flex-1 md:flex-initial justify-center ${activeFilter === 'Out of Stock' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white'}`}
+          >
+            <FaBox /> Out of Stock
+          </button>
           <button 
             onClick={handleExportCSV}
             className="btn-pharmacy text-[11px] py-1.5 px-3 border shadow-none bg-white hover:bg-slate-50 transition-all flex-1 md:flex-initial justify-center"
@@ -380,6 +388,7 @@ const InventoryManagement = () => {
             <tbody className="divide-y divide-slate-50">
               {filteredData.map((item) => {
                   const isLow = (item.stock || 0) <= (item.reorder_level || 10);
+                  const isOutOfStock = (parseInt(item.stock, 10) || 0) <= 0;
 
                   // Expiry alert: within 2 months (60 days)
                   const isExpiring = item.expiry_date &&
@@ -413,12 +422,12 @@ const InventoryManagement = () => {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${isLow ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                          {isLow ? "Low Stock" : "In Stock"}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${isOutOfStock ? 'bg-slate-100 text-slate-700' : isLow ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          {isOutOfStock ? "Out of Stock" : isLow ? "Low Stock" : "In Stock"}
                         </span>
                       </td>
                       <td className="px-5 py-3">
-                        {canManageInventory && (
+                        {canEditInventory && (
                           <div className="flex justify-center items-center gap-1">
                             <Link to={`/inventory/edit/${item.id}`} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Edit Medication">
                               <FaEdit className="text-sm" />
